@@ -1,0 +1,105 @@
+<!DOCTYPE html>
+<html lang="it">
+<head>
+  <meta charset="UTF-8">
+  <title>Visualizzazione Dati - ThingSpeak</title>
+  <style>
+    body { font-family: "Segoe UI", sans-serif; background-color: #e8f5e9; margin: 0; padding: 20px; }
+    h1 { font-size: 2.5em; color: #003366; text-align: center; margin-bottom: 10px; text-shadow: 2px 2px 6px rgba(122, 10, 10, 0.315); }
+    h3 { font-size: 1.3em; color: #555; text-align: center; font-weight: 600; margin: -5px 0 30px; font-style: italic; }
+    .input-container { text-align: center; margin-bottom: 30px; }
+    .input-container label { font-weight: bold; margin: 0 5px; }
+    .input-container input, .input-container button { font-size: 1em; padding: 6px 10px; margin: 0 5px; }
+    .grid-container { display: grid; grid-template-columns: repeat(3,1fr); gap: 20px; max-width: 1500px; margin: auto; }
+    .chart-box { background: white; border: 2px solid #999; border-radius: 10px; padding: 10px; box-shadow: 3px 3px 10px rgba(0,0,0,0.15); text-align: center; }
+    .chart-box iframe { width: 100%; height: 260px; border: 3px solid #ccc; border-radius: 4px; }
+  </style>
+</head>
+<body>
+
+  <h1>Air Quality Index Device [AQI_01]</h1>
+  <h3 id="subtitle">Inizio rilevamento dati: </h3>
+
+  <div class="input-container">
+    <label for="start-date">Seleziona data inizio:</label>
+    <input type="date" id="start-date">
+    <button onclick="aggiornaGrafici()">Aggiorna</button>
+  </div>
+
+  <div class="grid-container" id="grafici-container"></div>
+
+  <script>
+    const channelID = 2789658;
+
+    // Definiamo per ogni campo titolo grafico e etichette assi
+    const campi = [
+      { id: 1, title: 'Umidità - Sensore BME680', xaxis: 'Data', yaxis: '[%]', min: 0,   max: 100  },
+      { id: 2, title: 'Temperatura - Sensore BME680', xaxis: 'Data', yaxis: '[°C]', min: 10,  max: 40   },
+      { id: 3, title: 'Pressione - Sensore BME680',   xaxis: 'Data', yaxis: '[Pa]', min: 950, max: 1050 },
+      { id: 5, title: 'PM1 - Sensore PMS5003',         xaxis: 'Data', yaxis: '[µg/m³]', min: 0,   max: 100  },
+      { id: 6, title: 'PM2.5 - Sensore PMS5003',       xaxis: 'Data', yaxis: '[µg/m³]', min: 0,   max: 100  },
+      { id: 7, title: 'PM10 - Sensore PMS5003',        xaxis: 'Data', yaxis: '[µg/m³]', min: 0,   max: 100  }
+    ];
+
+    function formatStart(dt) {
+      const Y = dt.getFullYear(),
+            M = ('0'+(dt.getMonth()+1)).slice(-2),
+            D = ('0'+dt.getDate()).slice(-2);
+      return `${Y}-${M}-${D}%2000:00:00`;
+    }
+
+    async function init() {
+      // Recupera ultima acquisizione per impostare max del date picker
+      let lastDate;
+      try {
+        const res = await fetch(`https://api.thingspeak.com/channels/${channelID}/feeds.json?results=1`);
+        const js  = await res.json();
+        lastDate = new Date(js.feeds[0].created_at);
+      } catch {
+        lastDate = new Date();
+      }
+      const isoLast = lastDate.toISOString().slice(0,10);
+      const startInput = document.getElementById('start-date');
+      startInput.min = '2025-05-25';
+      startInput.max = isoLast;
+      startInput.value = startInput.min;
+      aggiornaGrafici();
+    }
+
+    function aggiornaGrafici() {
+      const raw = document.getElementById('start-date').value;
+      if (!raw) return;
+
+      const dateObj = new Date(raw + 'T00:00:00');
+      const opts = { year:'numeric', month:'long', day:'numeric' };
+      document.getElementById('subtitle').textContent =
+        'Inizio rilevamento dati: ' + dateObj.toLocaleDateString('it-IT', opts);
+
+      const startParam = formatStart(dateObj);
+      const noc        = Date.now();
+      const container  = document.getElementById('grafici-container');
+      container.innerHTML = '';
+
+      campi.forEach(c => {
+        const src =
+          `https://thingspeak.com/channels/${channelID}/charts/${c.id}` +
+          `?bgcolor=%23ffffff&color=%23d62020&type=line` +
+          `&title=${encodeURIComponent(c.title)}` +
+          `&xaxis=${encodeURIComponent(c.xaxis)}` +
+          `&yaxis=${encodeURIComponent(c.yaxis)}` +
+          `&start=${startParam}` +
+          `&yaxismin=${c.min}&yaxismax=${c.max}` +
+          `&_=${noc}`;
+
+        const box = document.createElement('div');
+        box.className = 'chart-box';
+        box.innerHTML = `<iframe src="${src}"></iframe>`;
+        container.appendChild(box);
+      });
+    }
+
+    document.addEventListener('DOMContentLoaded', init);
+  </script>
+
+</body>
+</html>
