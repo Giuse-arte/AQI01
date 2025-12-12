@@ -66,16 +66,6 @@
     <header>
       <div class="title">
         <h1>Air Quality Index Device — AQI_01 (v2)</h1>
-
-  <div id="aqi-widget" style="max-width:400px;margin:20px auto;padding:20px;border-radius:14px;border:2px solid #999;background:#fff;box-shadow:3px 3px 10px rgba(0,0,0,0.15);text-align:center;font-family:'Segoe UI',sans-serif;">
-    <h2 style="margin-top:0;font-size:1.4em;color:#003366;">AQI stimato (EPA USA)</h2>
-    <div id="aqi-category" style="display:inline-block;padding:6px 12px;border-radius:8px;font-weight:bold;margin-bottom:10px;background:#ccc;color:#000;">Calcolo...</div>
-    <div id="aqi-value" style="font-size:3em;font-weight:bold;color:#003366;">--</div>
-    <div style="margin-top:10px;font-size:1.1em;color:#333;">
-      PM2.5: <span id="pm25-val">--</span><br>
-      PM10: <span id="pm10-val">--</span>
-    </div>
-  </div>
         <div class="subtitle" id="subtitle">Inizio rilevamento dati:</div>
       </div>
 
@@ -251,27 +241,19 @@
         container.appendChild(card);
       });
 
-      // // append EPA AQI card (SOSTITUISCE la precedente)
-const aqiCard = document.createElement('div');
-aqiCard.className = 'card';
-
-aqiCard.innerHTML = `
-  <div style="display:flex;align-items:center;width:100%">
-    <div style="flex:1">
-      <div class="label">AQI (EPA) – PM2.5 / PM10</div>
-      <div class="value">${aqi_final !== null ? aqi_final : '—'}</div>
-      <div style="font-size:0.9rem;color:var(--muted)">
-        PM2.5: ${aqi_pm25 ?? '—'} · PM10: ${aqi_pm10 ?? '—'}
-      </div>
-    </div>
-    <div class="aqi-badge" style="background:${cat.color}">
-      ${cat.cat}
-    </div>
-  </div>
-`;
-
-container.appendChild(aqiCard);
-
+      // append AQI card
+      const aqiCard = document.createElement('div');
+      aqiCard.className='card';
+      aqiCard.innerHTML = `<div style='display:flex;width:100%;align-items:center'>
+        <div style='flex:1'>
+          <div class='label'>AQI stimato (PM2.5 / PM10)</div>
+          <div class='value'>${aqi_final !== null ? aqi_final : '—'}</div>
+          <div style='font-size:0.9rem;color:var(--muted)'>PM2.5: ${aqi_pm25!==null?aqi_pm25:'—'} · PM10: ${aqi_pm10!==null?aqi_pm10:'—'}</div>
+        </div>
+        <div class='aqi-badge' style='background:${cat.color};color:white'>${cat.cat}</div>
+      </div>`;
+      container.appendChild(aqiCard);
+    }
 
     /* ==================== CHART BUILD ==================== */
     function genIframeSrc(c, startParam, endParam){
@@ -419,72 +401,9 @@ container.appendChild(aqiCard);
     }
 
     /* ==================== START ==================== */
-    
-    async function calcolaAQI() {
-      try {
-        const res = await fetch(`https://api.thingspeak.com/channels/${channelID}/feeds.json?results=1`);
-        const js = await res.json();
-        const feed = js.feeds[0];
-
-        const pm25 = parseFloat(feed.field6);
-        const pm10 = parseFloat(feed.field7);
-
-        document.getElementById('pm25-val').textContent = pm25;
-        document.getElementById('pm10-val').textContent = pm10;
-
-        function aqiFromBreakpoint(C, BPlo, BPhi, Ilo, Ihi) {
-          return ((Ihi - Ilo) / (BPhi - BPlo)) * (C - BPlo) + Ilo;
-        }
-
-        function aqiPM25(C) {
-          if (C <= 12.0) return aqiFromBreakpoint(C, 0, 12, 0, 50);
-          if (C <= 35.4) return aqiFromBreakpoint(C, 12.1, 35.4, 51, 100);
-          if (C <= 55.4) return aqiFromBreakpoint(C, 35.5, 55.4, 101, 150);
-          if (C <= 150.4) return aqiFromBreakpoint(C, 55.5, 150.4, 151, 200);
-          if (C <= 250.4) return aqiFromBreakpoint(C, 150.5, 250.4, 201, 300);
-          if (C <= 350.4) return aqiFromBreakpoint(C, 250.5, 350.4, 301, 400);
-          return aqiFromBreakpoint(C, 350.5, 500.4, 401, 500);
-        }
-
-        function aqiPM10(C) {
-          if (C <= 54) return aqiFromBreakpoint(C, 0, 54, 0, 50);
-          if (C <= 154) return aqiFromBreakpoint(C, 55, 154, 51, 100);
-          if (C <= 254) return aqiFromBreakpoint(C, 155, 254, 101, 150);
-          if (C <= 354) return aqiFromBreakpoint(C, 255, 354, 151, 200);
-          if (C <= 424) return aqiFromBreakpoint(C, 355, 424, 201, 300);
-          if (C <= 504) return aqiFromBreakpoint(C, 425, 504, 301, 400);
-          return aqiFromBreakpoint(C, 505, 604, 401, 500);
-        }
-
-        const aqi25 = aqiPM25(pm25);
-        const aqi10 = aqiPM10(pm10);
-        const aqi = Math.round(Math.max(aqi25, aqi10));
-
-        document.getElementById('aqi-value').textContent = aqi;
-
-        let categoria = '';
-        let colore = '';
-        if (aqi <= 50) { categoria = 'Buona'; colore = '#4caf50'; }
-        else if (aqi <= 100) { categoria = 'Moderata'; colore = '#ffeb3b'; }
-        else if (aqi <= 150) { categoria = 'Insalubre per gruppi sensibili'; colore = '#ff9800'; }
-        else if (aqi <= 200) { categoria = 'Insalubre'; colore = '#f44336'; }
-        else if (aqi <= 300) { categoria = 'Molto Insalubre'; colore = '#9c27b0'; }
-        else { categoria = 'Pericolosa'; colore = '#7e0023'; }
-
-        const catBox = document.getElementById('aqi-category');
-        catBox.textContent = categoria;
-        catBox.style.background = colore;
-        catBox.style.color = '#000';
-      } catch (e) {
-        document.getElementById('aqi-value').textContent = 'ERR';
-      }
-    }
-
-    document.addEventListener('DOMContentLoaded', () => {
-      init();
-      calcolaAQI();
-    });('DOMContentLoaded', init);
+    document.addEventListener('DOMContentLoaded', init);
   </script>
 </body>
 </html>
+
 
