@@ -28,7 +28,7 @@
     .kpi{background:var(--card);border-radius:var(--radius);box-shadow:var(--shadow);
       padding:14px 10px;text-align:center;aspect-ratio:1/1;
       display:flex;flex-direction:column;justify-content:center}
-    .kpi .title{font-size:.9rem;font-weight:700;color:#374151}
+    .kpi .title{font-size:.95rem;font-weight:700;color:#374151}
     .kpi .sensor{font-size:.72rem;color:var(--muted);margin-top:2px}
     .kpi .value{margin-top:8px;font-size:1.15rem;font-weight:700}
     .aqi-badge{margin-top:6px;display:inline-block;padding:3px 8px;border-radius:999px;font-size:.7rem;color:#fff;font-weight:600}
@@ -36,7 +36,7 @@
     .layout{display:grid;grid-template-columns:300px 1fr;gap:20px}
     .panel{background:var(--card);border-radius:var(--radius);box-shadow:var(--shadow);
       padding:16px;font-size:.8rem;aspect-ratio:1/1;width:300px}
-    .panel h3{margin:0 0 8px;font-size:.95rem;color:var(--primary)}
+    .panel h3{margin:0 0 8px;font-size:1rem;color:var(--primary)}
     .panel small{display:block;margin-bottom:10px;color:var(--muted);line-height:1.3}
     .panel label{display:block;margin-bottom:6px}
 
@@ -164,12 +164,15 @@ function renderCharts(){
   document.querySelectorAll('aside input[data-id]:checked').forEach(ch=>{
     const id=ch.dataset.id;
     const m=meta[id];
+    const startISO=new Date(startVal+'T00:00:00').toISOString();
+    const endISO=new Date(endVal+'T23:59:59').toISOString();
+    const titleFmt=m.t.split(' - ')[0].toUpperCase()+'  —  '+m.t.split(' - ')[1];
     const src=`https://thingspeak.com/channels/${CHANNEL}/charts/${id}`+
       `?bgcolor=%23ffffff&type=line&color=%23dc2626`+
-      `&title=${encodeURIComponent(m.t)}`+
+      `&title=${encodeURIComponent(titleFmt)}`+
       `&xaxis=${encodeURIComponent(m.x)}`+
       `&yaxis=${encodeURIComponent(m.y)}`+
-      `&start=${startVal}T00:00:00Z&end=${endVal}T23:59:59Z&_=${nocache}`;
+      `&start=${startISO}&end=${endISO}&_=${nocache}`;
     const d=document.createElement('div');
     d.className='chart';
     d.innerHTML=`<iframe src="${src}" loading="lazy"></iframe>`;
@@ -194,6 +197,8 @@ document.addEventListener('DOMContentLoaded',()=>{
 
 </body>
 </html>
+
+
 
 
 
