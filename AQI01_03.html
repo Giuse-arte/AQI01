@@ -22,9 +22,8 @@
     .filters input,.filters select,.filters button{padding:6px 10px;border-radius:6px;border:1px solid #d1d5db;font-size:.8rem}
     .filters button{background:#dc2626;color:#fff;border:none;cursor:pointer}
 
-    main{padding:0 28px 40px}
+    main{padding:0 28px 40px;max-width:1200px;margin:0 auto}
 
-    /* KPI */
     .kpi-row{display:grid;grid-template-columns:repeat(7,1fr);gap:14px;margin:14px 0 26px}
     .kpi{background:var(--card);border-radius:var(--radius);box-shadow:var(--shadow);
       padding:14px 10px;text-align:center;aspect-ratio:1/1;
@@ -34,19 +33,16 @@
     .kpi .value{margin-top:8px;font-size:1.15rem;font-weight:700}
     .aqi-badge{margin-top:6px;display:inline-block;padding:3px 8px;border-radius:999px;font-size:.7rem;color:#fff;font-weight:600}
 
-    /* Layout */
-    .layout{display:grid;grid-template-columns:260px 1fr;gap:20px}
+    .layout{display:grid;grid-template-columns:300px 1fr;gap:20px}
     .panel{background:var(--card);border-radius:var(--radius);box-shadow:var(--shadow);
-      padding:14px;font-size:.8rem;aspect-ratio:1/1}
+      padding:16px;font-size:.8rem;aspect-ratio:1/1;width:300px}
     .panel h3{margin:0 0 8px;font-size:.95rem;color:var(--primary)}
     .panel small{display:block;margin-bottom:10px;color:var(--muted);line-height:1.3}
     .panel label{display:block;margin-bottom:6px}
-    .panel button{margin-right:6px;margin-bottom:10px;padding:4px 8px;font-size:.7rem}
 
-    /* Charts: 2 colonne x 3 righe */
     .charts{display:grid;grid-template-columns:repeat(2,1fr);gap:20px}
     .chart{background:var(--card);border-radius:var(--radius);box-shadow:var(--shadow);padding:10px}
-    iframe{width:100%;height:260px;border:0;border-radius:8px}
+    iframe{width:100%;height:220px;border:0;border-radius:8px}
 
     footer{margin-top:30px;text-align:center;font-size:.75rem;color:var(--muted)}
 
@@ -146,23 +142,41 @@ async function init(){
   aqiVal.textContent=fmt(aqi);
   aqiBadge.textContent=lab;aqiBadge.style.background=col;
 
-  subtitle.textContent='Inizio rilevamento dati: '+new Date(feeds[0].created_at).toLocaleDateString('it-IT')+' | Fine: '+new Date(last.created_at).toLocaleDateString('it-IT');
-
   renderCharts();
 }
 
 function renderCharts(){
   charts.innerHTML='';
-  const startVal=start.value||new Date().toISOString().slice(0,10);
-  const endVal=end.value||startVal;
+  const startVal=start.value;
+  const endVal=end.value;
+  if(!startVal||!endVal) return;
   const nocache=Date.now();
+
+  const meta={
+    1:{t:'UMIDITÀ - BME680',y:'%',x:'Data'},
+    2:{t:'TEMPERATURA - BME680',y:'°C',x:'Data'},
+    3:{t:'PRESSIONE - BME680',y:'hPa',x:'Data'},
+    5:{t:'PM1 - PMS5003',y:'µg/m³',x:'Data'},
+    6:{t:'PM2.5 - PMS5003',y:'µg/m³',x:'Data'},
+    7:{t:'PM10 - PMS5003',y:'µg/m³',x:'Data'}
+  };
 
   document.querySelectorAll('aside input[data-id]:checked').forEach(ch=>{
     const id=ch.dataset.id;
-    const src=`https://thingspeak.com/channels/${CHANNEL}/charts/${id}?bgcolor=%23ffffff&type=line&color=%23dc2626&title=Campo+${id}&xaxis=Data&yaxis=Valore&start=${startVal}T00:00:00Z&end=${endVal}T23:59:59Z&_=${nocache}`;
-    const d=document.createElement('div');d.className='chart';d.innerHTML=`<iframe src="${src}" loading="lazy"></iframe>`;
+    const m=meta[id];
+    const src=`https://thingspeak.com/channels/${CHANNEL}/charts/${id}`+
+      `?bgcolor=%23ffffff&type=line&color=%23dc2626`+
+      `&title=${encodeURIComponent(m.t)}`+
+      `&xaxis=${encodeURIComponent(m.x)}`+
+      `&yaxis=${encodeURIComponent(m.y)}`+
+      `&start=${startVal}T00:00:00Z&end=${endVal}T23:59:59Z&_=${nocache}`;
+    const d=document.createElement('div');
+    d.className='chart';
+    d.innerHTML=`<iframe src="${src}" loading="lazy"></iframe>`;
     charts.appendChild(d);
   });
+
+  subtitle.textContent='Inizio rilevamento dati: '+new Date(startVal).toLocaleDateString('it-IT')+' | Fine: '+new Date(endVal).toLocaleDateString('it-IT');
   savePrefs();
 }
 
@@ -172,11 +186,13 @@ document.querySelectorAll('aside input').forEach(c=>c.addEventListener('change',
 
 document.addEventListener('DOMContentLoaded',()=>{
   const today=new Date().toISOString().slice(0,10);
-  start.value=today;end.value=today;
+  start.value=today;
+  end.value=today;
   init();
 });
 </script>
 
 </body>
 </html>
+
 
