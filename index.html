@@ -17,7 +17,34 @@
     header h1{margin:0;font-size:1.7rem;color:var(--primary)}
     header p{margin:6px 0 0;font-size:.9rem;color:var(--muted)}
 
-    .filters{display:flex;gap:8px;align-items:center;flex-wrap:wrap}
+    .filters{
+      display:grid;
+      grid-template-columns:auto auto auto auto auto;
+      gap:10px;
+      align-items:end;
+      background:var(--card);
+      padding:12px 14px;
+      border-radius:var(--radius);
+      box-shadow:var(--shadow)
+    }
+    .filters label{font-size:.7rem;color:var(--muted);margin-bottom:2px}
+    .filters input,.filters select{
+      padding:7px 10px;
+      border-radius:8px;
+      border:1px solid #d1d5db;
+      font-size:.8rem;
+      min-width:120px
+    }
+    .filters button{
+      padding:8px 14px;
+      border-radius:10px;
+      background:#dc2626;
+      color:#fff;
+      border:none;
+      font-size:.8rem;
+      font-weight:600;
+      cursor:pointer
+    }
     .filters label{font-size:.8rem;color:var(--muted)}
     .filters input,.filters select,.filters button{padding:6px 10px;border-radius:6px;border:1px solid #d1d5db;font-size:.8rem}
     .filters button{background:#dc2626;color:#fff;border:none;cursor:pointer}
@@ -197,6 +224,8 @@ document.addEventListener('DOMContentLoaded',()=>{
 
 </body>
 </html>
+
+
 
 
 
