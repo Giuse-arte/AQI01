@@ -146,7 +146,7 @@ function renderCharts(){
 
   const meta = {
     1:{t:'UMIDITÀ',s:'BME680',y:'%',x:'Data',min:0,max:100},
-    2:{t:'TEMPERATURA',s:'BME680',y:'°C',x:'Data',min:0,max:100},
+    2:{t:'TEMPERATURA',s:'BME680',y:'°C',x:'Data',min:-10,max:60},
     3:{t:'PRESSIONE',s:'BME680',y:'hPa',x:'Data',min:900,max:1100},
     5:{t:'PM1',s:'PMS5003',y:'µg/m³',x:'Data',min:0,max:100},
     
@@ -188,6 +188,7 @@ document.addEventListener('DOMContentLoaded', () => {
 
 </body>
 </html>
+
 
 
 
