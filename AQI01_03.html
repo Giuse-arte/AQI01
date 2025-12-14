@@ -3,7 +3,7 @@
 <head>
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1" />
-  <title>Pagina AQI – Versione Professionale (v6.3)</title>
+  <title>Pagina AQI – Versione Professionale (v6.4)</title>
 
   <style>
     :root{
@@ -60,7 +60,10 @@
     <label>Inizio</label><input type="date" id="start">
     <label>Fine</label><input type="date" id="end">
     <label>Standard</label>
-    <select id="mode"><option value="EPA">EPA (USA)</option><option value="EU">EU (EEA)</option></select>
+    <select id="mode">
+      <option value="EPA">EPA (USA)</option>
+      <option value="EEA">EEA (UE)</option>
+    </select>
     <button id="update">Aggiorna</button>
   </div>
 </header>
@@ -74,7 +77,7 @@
   <div class="kpi"><div class="title">PM1 (istantaneo)</div><div class="sensor">PMS5003</div><div class="value" id="pm1">— µg/m³</div></div>
   <div class="kpi"><div class="title">PM2.5 (24h)</div><div class="sensor">PMS5003</div><div class="value" id="pm25">— µg/m³ (24h)</div></div>
   <div class="kpi"><div class="title">PM10 (24h)</div><div class="sensor">PMS5003</div><div class="value" id="pm10">— µg/m³ (24h)</div></div>
-  <div class="kpi"><div class="title">Indice Qualità Aria (AQI)</div><div class="sensor">EPA / EU</div><div class="value" id="aqiVal">—</div><span id="aqiBadge" class="aqi-badge"></span></div>
+  <div class="kpi"><div class="title">Indice Qualità Aria (AQI)</div><div class="sensor">EPA / EEA</div><div class="value" id="aqiVal">—</div><span id="aqiBadge" class="aqi-badge"></span></div>
 </section>
 
 <section class="layout">
@@ -89,7 +92,6 @@
     <label><input type="checkbox" checked data-id="5"> PM1 – PMS5003</label>
     <label><input type="checkbox" checked data-id="6"> PM2.5 – PMS5003</label>
     <label><input type="checkbox" checked data-id="7"> PM10 – PMS5003</label>
-
     <hr>
     <label><input type="checkbox" id="remember"> Ricorda preferenze</label>
     <small>Puoi mostrare/nascondere singoli grafici, impostare intervallo e tema.<br>Le preferenze sono salvate nel tuo browser se attivi "Ricorda".</small>
@@ -101,74 +103,84 @@
   </div>
 </section>
 
-<footer>Versione 6.3 — Dashboard AQI professionale</footer>
+<footer>Versione 6.4 — Dashboard AQI professionale</footer>
 </main>
 
 <script>
-const CHANNEL=2789658;
-const fmt=v=>(v===null||v===undefined||v==='')?'—':Number(v).toFixed(2);
+const CHANNEL = 2789658;
+const fmt = v => (v === null || v === undefined || v === '') ? '—' : Number(v).toFixed(2);
+
+function computeAQI(pm25, standard){
+  if(isNaN(pm25)) return null;
+  return standard === 'EPA' ? pm25 : pm25 * 0.8;
+}
 
 async function loadKPIs(){
   try{
-    const r=await fetch(`https://api.thingspeak.com/channels/${CHANNEL}/feeds.json?results=1`);
-    const j=await r.json();
-    const f=j.feeds[0];
-    hum.textContent=fmt(f.field1)+' %';
-    temp.textContent=fmt(f.field2)+' °C';
-    press.textContent=fmt(f.field3)+' hPa';
-    pm1.textContent=fmt(f.field5)+' µg/m³';
-    pm25.textContent=fmt(f.field6)+' µg/m³ (24h)';
-    pm10.textContent=fmt(f.field7)+' µg/m³ (24h)';
+    const r = await fetch(`https://api.thingspeak.com/channels/${CHANNEL}/feeds.json?results=1`);
+    const j = await r.json();
+    const f = j.feeds[0];
 
-    const aqi=Number(f.field6||0);
-    aqiVal.textContent=fmt(aqi);
-    aqiBadge.textContent=aqi<50?'Buona':aqi<100?'Moderata':'Scarsa';
-    aqiBadge.style.background=aqi<50?'#16a34a':aqi<100?'#f59e0b':'#dc2626';
-  }catch(e){console.error(e)}
+    hum.textContent = fmt(f.field1) + ' %';
+    temp.textContent = fmt(f.field2) + ' °C';
+    press.textContent = fmt(f.field3) + ' hPa';
+    pm1.textContent = fmt(f.field5) + ' µg/m³';
+    pm25.textContent = fmt(f.field6) + ' µg/m³ (24h)';
+    pm10.textContent = fmt(f.field7) + ' µg/m³ (24h)';
+
+    const aqi = computeAQI(Number(f.field6), mode.value);
+    aqiVal.textContent = fmt(aqi);
+    if(aqi !== null){
+      aqiBadge.textContent = aqi < 50 ? 'Buona' : aqi < 100 ? 'Moderata' : 'Scarsa';
+      aqiBadge.style.background = aqi < 50 ? '#16a34a' : aqi < 100 ? '#f59e0b' : '#dc2626';
+    }
+  }catch(e){ console.error(e); }
 }
 
 function renderCharts(){
-  charts.innerHTML='';
-  const startVal=start.value;
-  const endVal=end.value;
-  if(!startVal||!endVal) return;
+  charts.innerHTML = '';
+  if(!start.value || !end.value) return;
 
-  subtitle.textContent='Inizio rilevamento dati: '+new Date(startVal).toLocaleDateString('it-IT')+' | Fine: '+new Date(endVal).toLocaleDateString('it-IT');
+  subtitle.textContent = 'Inizio rilevamento dati: ' + new Date(start.value).toLocaleDateString('it-IT') +
+    ' | Fine: ' + new Date(end.value).toLocaleDateString('it-IT');
 
-  const meta={
-    1:{t:'UMIDITÀ (BME680)',y:'%',x:'Data'},
-    2:{t:'TEMPERATURA (BME680)',y:'°C',x:'Data'},
-    3:{t:'PRESSIONE (BME680)',y:'hPa',x:'Data'},
-    5:{t:'PM1 (PMS5003)',y:'µg/m³',x:'Data'},
-    6:{t:'PM2.5 (PMS5003)',y:'µg/m³',x:'Data'},
-    7:{t:'PM10 (PMS5003)',y:'µg/m³',x:'Data'}
+  const meta = {
+    1:{t:'UMIDITÀ',s:'BME680',y:'%',x:'Data',min:0,max:100},
+    2:{t:'TEMPERATURA',s:'BME680',y:'°C',x:'Data',min:0,max:100},
+    3:{t:'PRESSIONE',s:'BME680',y:'hPa',x:'Data',min:900,max:1100},
+    5:{t:'PM1',s:'PMS5003',y:'µg/m³',x:'Data',min:0,max:100},
+    
+    6:{t:'PM2.5',s:'PMS5003',y:'µg/m³',x:'Data',min:0,max:100},
+    
+    7:{t:'PM10',s:'PMS5003',y:'µg/m³',x:'Data',min:0,max:100}
   };
 
-  document.querySelectorAll('aside input[data-id]:checked').forEach(ch=>{
-    const id=ch.dataset.id;
-    const m=meta[id];
-    const startTS=startVal+' 00:00:00';
-    const endTS=endVal+' 23:59:59';
-    const src=`https://thingspeak.com/channels/${CHANNEL}/charts/${id}`+
-      `?bgcolor=%23ffffff&type=line&color=%23dc2626`+
-      `&title=${encodeURIComponent(m.t)}`+
-      `&xaxis=${encodeURIComponent(m.x)}`+
-      `&yaxis=${encodeURIComponent(m.y)}`+
-      `&start=${encodeURIComponent(startTS)}`+
-      `&end=${encodeURIComponent(endTS)}`;
-    const d=document.createElement('div');
-    d.className='chart';
-    d.innerHTML=`<iframe src="${src}" loading="lazy" referrerpolicy="no-referrer"></iframe>`;
+  document.querySelectorAll('aside input[data-id]:checked').forEach(ch => {
+    const id = ch.dataset.id;
+    const m = meta[id];
+    const src = `https://thingspeak.com/channels/${CHANNEL}/charts/${id}` +
+      `?bgcolor=%23ffffff&type=line&color=%23dc2626` +
+      `&title=${encodeURIComponent(m.t)}%20(${encodeURIComponent(m.s)})` +
+      `&xaxis=${encodeURIComponent(m.x)}` +
+      `&yaxis=${encodeURIComponent(m.y)}` +
+      (m.min !== undefined ? `&yaxismin=${m.min}&yaxismax=${m.max}` : '') +
+      `&start=${start.value} 00:00:00&end=${end.value} 23:59:59`;
+
+    const d = document.createElement('div');
+    d.className = 'chart';
+    d.innerHTML = `<iframe src="${src}" loading="lazy"></iframe>`;
     charts.appendChild(d);
   });
 }
 
-update.addEventListener('click',renderCharts);
-document.querySelectorAll('aside input').forEach(c=>c.addEventListener('change',renderCharts));
+update.addEventListener('click', () => { renderCharts(); loadKPIs(); });
+mode.addEventListener('change', loadKPIs);
+document.querySelectorAll('aside input').forEach(c => c.addEventListener('change', renderCharts));
 
-document.addEventListener('DOMContentLoaded',()=>{
-  const today=new Date().toISOString().slice(0,10);
-  start.value=today;end.value=today;
+document.addEventListener('DOMContentLoaded', () => {
+  const today = new Date().toISOString().slice(0,10);
+  start.value = today;
+  end.value = today;
   loadKPIs();
   renderCharts();
 });
@@ -176,6 +188,7 @@ document.addEventListener('DOMContentLoaded',()=>{
 
 </body>
 </html>
+
 
 
 
