@@ -19,7 +19,6 @@
 
     .filters{display:flex;align-items:flex-end;gap:10px;background:var(--card);padding:12px 14px;border-radius:var(--radius);box-shadow:var(--shadow)}
     .filters label{font-size:.7rem;color:var(--muted)}
-    .filters label{font-size:.7rem;color:var(--muted)}
     .filters input,.filters select{padding:7px 10px;border-radius:8px;border:1px solid #d1d5db;font-size:.8rem}
     .filters button{padding:8px 14px;border-radius:10px;background:#dc2626;color:#fff;border:none;font-weight:600;cursor:pointer}
 
@@ -73,8 +72,8 @@
   <div class="kpi"><div class="title">Temperatura</div><div class="sensor">BME680</div><div class="value" id="temp">— °C</div></div>
   <div class="kpi"><div class="title">Pressione</div><div class="sensor">BME680</div><div class="value" id="press">— hPa</div></div>
   <div class="kpi"><div class="title">PM1 (istantaneo)</div><div class="sensor">PMS5003</div><div class="value" id="pm1">— µg/m³</div></div>
-  <div class="kpi"><div class="title">PM2.5 (24h)</div><div class="sensor">PMS5003</div><div class="value" id="pm25"></div></div>
-  <div class="kpi"><div class="title">PM10 (24h)</div><div class="sensor">PMS5003</div><div class="value" id="pm10"></div></div>
+  <div class="kpi"><div class="title">PM2.5 (24h)</div><div class="sensor">PMS5003</div><div class="value" id="pm25">— µg/m³ (24h)</div></div>
+  <div class="kpi"><div class="title">PM10 (24h)</div><div class="sensor">PMS5003</div><div class="value" id="pm10">— µg/m³ (24h)</div></div>
   <div class="kpi"><div class="title">Indice Qualità Aria (AQI)</div><div class="sensor">EPA / EU</div><div class="value" id="aqiVal">—</div><span id="aqiBadge" class="aqi-badge"></span></div>
 </section>
 
@@ -120,6 +119,11 @@ async function loadKPIs(){
     pm1.textContent=fmt(f.field5)+' µg/m³';
     pm25.textContent=fmt(f.field6)+' µg/m³ (24h)';
     pm10.textContent=fmt(f.field7)+' µg/m³ (24h)';
+
+    const aqi=Number(f.field6||0);
+    aqiVal.textContent=fmt(aqi);
+    aqiBadge.textContent=aqi<50?'Buona':aqi<100?'Moderata':'Scarsa';
+    aqiBadge.style.background=aqi<50?'#16a34a':aqi<100?'#f59e0b':'#dc2626';
   }catch(e){console.error(e)}
 }
 
@@ -172,6 +176,7 @@ document.addEventListener('DOMContentLoaded',()=>{
 
 </body>
 </html>
+
 
 
 
