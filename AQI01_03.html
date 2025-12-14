@@ -17,10 +17,8 @@
     header h1{margin:0;font-size:1.7rem;color:var(--primary)}
     header p{margin:6px 0 0;font-size:.9rem;color:var(--muted)}
 
-    .filters{
-      display:grid;grid-template-columns:auto auto auto auto auto;gap:10px;align-items:end;
-      background:var(--card);padding:12px 14px;border-radius:var(--radius);box-shadow:var(--shadow)
-    }
+    .filters{display:flex;align-items:flex-end;gap:10px;background:var(--card);padding:12px 14px;border-radius:var(--radius);box-shadow:var(--shadow)}
+    .filters label{font-size:.7rem;color:var(--muted)}
     .filters label{font-size:.7rem;color:var(--muted)}
     .filters input,.filters select{padding:7px 10px;border-radius:8px;border:1px solid #d1d5db;font-size:.8rem}
     .filters button{padding:8px 14px;border-radius:10px;background:#dc2626;color:#fff;border:none;font-weight:600;cursor:pointer}
@@ -74,10 +72,10 @@
   <div class="kpi"><div class="title">Umidità</div><div class="sensor">BME680</div><div class="value" id="hum">— %</div></div>
   <div class="kpi"><div class="title">Temperatura</div><div class="sensor">BME680</div><div class="value" id="temp">— °C</div></div>
   <div class="kpi"><div class="title">Pressione</div><div class="sensor">BME680</div><div class="value" id="press">— hPa</div></div>
-  <div class="kpi"><div class="title">PM1</div><div class="sensor">PMS5003</div><div class="value" id="pm1">— µg/m³</div></div>
+  <div class="kpi"><div class="title">PM1 (istantaneo)</div><div class="sensor">PMS5003</div><div class="value" id="pm1">— µg/m³</div></div>
   <div class="kpi"><div class="title">PM2.5 (24h)</div><div class="sensor">PMS5003</div><div class="value" id="pm25"></div></div>
   <div class="kpi"><div class="title">PM10 (24h)</div><div class="sensor">PMS5003</div><div class="value" id="pm10"></div></div>
-  <div class="kpi"><div class="title">Indice Qualità Aria (AQI)</div><div class="sensor">EPA / EU</div><div class="value" id="aqiVal"></div><span id="aqiBadge" class="aqi-badge"></span></div>
+  <div class="kpi"><div class="title">Indice Qualità Aria (AQI)</div><div class="sensor">EPA / EU</div><div class="value" id="aqiVal">—</div><span id="aqiBadge" class="aqi-badge"></span></div>
 </section>
 
 <section class="layout">
@@ -174,6 +172,7 @@ document.addEventListener('DOMContentLoaded',()=>{
 
 </body>
 </html>
+
 
 
 
