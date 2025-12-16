@@ -1,52 +1,59 @@
 <!DOCTYPE html>
 <html lang="it">
 <head>
-  <meta charset="UTF-8" />
-  <meta name="viewport" content="width=device-width, initial-scale=1" />
-  <title>Pagina AQI – Versione Professionale (v6.7)</title>
+<meta charset="UTF-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1" />
+<title>Pagina AQI – Versione Professionale (v6.7)</title>
 
-  <style>
-    :root{
-      --bg:#eef6ee;--card:#ffffff;--primary:#0b3c5d;--muted:#6b7280;
-      --shadow:0 6px 18px rgba(0,0,0,.08);--radius:12px
-    }
-    *{box-sizing:border-box}
-    body{margin:0;font-family:"Segoe UI",Roboto,Arial,sans-serif;background:var(--bg);color:#111827}
+<style>
+:root{
+  --bg:#eef6ee;--card:#ffffff;--primary:#0b3c5d;--muted:#6b7280;
+  --shadow:0 6px 18px rgba(0,0,0,.08);--radius:12px
+}
+*{box-sizing:border-box}
+body{margin:0;font-family:"Segoe UI",Roboto,Arial,sans-serif;background:var(--bg);color:#111827}
 
-    header{padding:20px 28px 10px;display:flex;justify-content:space-between;flex-wrap:wrap;gap:16px;align-items:flex-start}
+header{padding:20px 28px 10px;display:flex;justify-content:space-between;flex-wrap:wrap;gap:16px;align-items:flex-start}
 header > div:first-child{text-align:left}
 header .filters{margin-left:auto}
-    header h1{margin:0;font-size:1.7rem;color:var(--primary)}
-    header p{margin:6px 0 0;font-size:.9rem;color:var(--muted)}
+header h1{margin:0;font-size:1.7rem;color:var(--primary)}
+header p{margin:6px 0 0;font-size:.9rem;color:var(--muted)}
 
-    .filters{display:flex;align-items:flex-end;gap:10px;background:var(--card);padding:12px 14px;border-radius:var(--radius);box-shadow:var(--shadow)}
-    .filters label{font-size:.7rem;color:var(--muted)}
-    .filters input,.filters select{padding:7px 10px;border-radius:8px;border:1px solid #d1d5db;font-size:.8rem}
-    .filters button{padding:8px 14px;border-radius:10px;background:#dc2626;color:#fff;border:none;font-weight:600;cursor:pointer}
+.filters{display:flex;align-items:flex-end;gap:10px;background:var(--card);padding:12px 14px;border-radius:var(--radius);box-shadow:var(--shadow)}
+.filters label{font-size:.7rem;color:var(--muted)}
+.filters input,.filters select{padding:7px 10px;border-radius:8px;border:1px solid #d1d5db;font-size:.8rem}
+.filters button{padding:8px 14px;border-radius:10px;background:#dc2626;color:#fff;border:none;font-weight:600;cursor:pointer}
 
-    main{padding:0 28px 40px;max-width:1200px;margin:0 auto}
+main{padding:0 28px 40px;max-width:1200px;margin:0 auto}
 
-    .kpi-row{display:grid;grid-template-columns:repeat(7,1fr);gap:14px;margin:14px 0 26px}
-    .kpi{background:var(--card);border-radius:var(--radius);box-shadow:var(--shadow);
-      padding:14px 10px;text-align:center;aspect-ratio:1/1;display:flex;flex-direction:column;justify-content:center}
-    .kpi .title{font-size:.95rem;font-weight:700;color:#374151}
-    .kpi .sensor{font-size:.72rem;color:var(--muted)}
-    .kpi .value{margin-top:8px;font-size:1.15rem;font-weight:700}
-    .aqi-badge{margin-top:6px;display:inline-block;padding:3px 8px;border-radius:999px;font-size:.7rem;color:#fff;font-weight:600}
+.kpi-row{display:grid;grid-template-columns:repeat(7,1fr);gap:14px;margin:14px 0 26px}
+.kpi{background:var(--card);border-radius:var(--radius);box-shadow:var(--shadow);
+  padding:14px 10px;text-align:center;aspect-ratio:1/1;display:flex;flex-direction:column;justify-content:center}
+.kpi .title{font-size:.95rem;font-weight:700;color:#374151}
+.kpi .sensor{font-size:.72rem;color:var(--muted)}
+.kpi .value{margin-top:8px;font-size:1.15rem;font-weight:700}
+.aqi-badge{margin-top:6px;display:inline-block;padding:3px 8px;border-radius:999px;font-size:.7rem;color:#fff;font-weight:600}
 
-    .layout{display:grid;grid-template-columns:300px 1fr;gap:20px}
-    .panel{background:var(--card);border-radius:var(--radius);box-shadow:var(--shadow);
-      padding:16px;font-size:.8rem;width:300px;display:flex;flex-direction:column;gap:10px}
-    .panel h3{margin:0 0 8px;font-size:1rem;color:var(--primary)}
+.layout{display:grid;grid-template-columns:300px 1fr;gap:20px}
+.panel{background:var(--card);border-radius:var(--radius);box-shadow:var(--shadow);
+  padding:16px;font-size:.8rem;width:300px;display:flex;flex-direction:column;gap:10px}
+.panel h3{margin:0 0 8px;font-size:1rem;color:var(--primary)}
 
-    .charts-wrapper{background:var(--card);border-radius:var(--radius);box-shadow:var(--shadow);padding:16px}
-    .charts-title{margin:0 0 12px;font-size:1.05rem;color:var(--primary)}
-    .charts{display:grid;grid-template-columns:repeat(2,1fr);gap:24px}
-    .chart{background:var(--card);border-radius:var(--radius);box-shadow:var(--shadow);padding:10px}
-    iframe{width:100%;height:220px;border:0;border-radius:8px}
+.charts-wrapper{background:var(--card);border-radius:var(--radius);box-shadow:var(--shadow);padding:16px}
+.charts-title{margin:0 0 12px;font-size:1.05rem;color:var(--primary)}
+.charts{display:grid;grid-template-columns:repeat(2,1fr);gap:24px}
+.chart{background:var(--card);border-radius:var(--radius);box-shadow:var(--shadow);padding:10px}
+.chart-title{font-weight:700;margin-bottom:4px}
+.chart-sensor{font-size:.8rem;color:#6b7280;margin-left:6px}
+iframe{width:100%;height:220px;border:0;border-radius:8px}
 
-    footer{text-align:center;margin-top:30px;font-size:.75rem;color:var(--muted)}
-  </style>
+footer{text-align:center;margin-top:30px;font-size:.75rem;color:var(--muted)}
+
+@media(max-width:768px){
+  .layout{grid-template-columns:1fr;grid-template-rows:auto auto;gap:20px}
+  .panel{width:100%;aspect-ratio:1/1;}
+}
+</style>
 </head>
 <body>
 
@@ -76,7 +83,7 @@ header .filters{margin-left:auto}
   <div class="kpi"><div class="title">PM1</div><div class="sensor">PMS5003</div><div class="value" id="pm1">— µg/m³</div></div>
   <div class="kpi"><div class="title">PM2.5 (24h)</div><div class="sensor">PMS5003</div><div class="value" id="pm25">— µg/m³</div></div>
   <div class="kpi"><div class="title">PM10 (24h)</div><div class="sensor">PMS5003</div><div class="value" id="pm10">— µg/m³</div></div>
-  <div class="kpi"><div class="title">AQI (EPA 24h)</div><div class="sensor">PM2.5 / PM10</div><div class="value" id="aqiVal">—</div><span id="aqiBadge" class="aqi-badge"></span></div>
+  <div class="kpi"><div class="title">AQI</div><div class="sensor">EPA / EEA</div><div class="value" id="aqiVal">—</div><span id="aqiBadge" class="aqi-badge"></span></div>
 </section>
 
 <section class="layout">
@@ -104,64 +111,32 @@ header .filters{margin-left:auto}
   </div>
 </section>
 
-<footer>Versione 6.7 — AQI EPA ufficiale (media mobile 24h)</footer>
+<footer>Versione 6.7 — AQI ufficiale (media mobile 24h)</footer>
 </main>
 
 <script>
-const CHANNEL = 2789658;
+const CHANNEL=2789658;
 
-const bp_pm25 = [
-  {cLo:0.0,cHi:12.0,iLo:0,iHi:50},
-  {cLo:12.1,cHi:35.4,iLo:51,iHi:100},
-  {cLo:35.5,cHi:55.4,iLo:101,iHi:150},
-  {cLo:55.5,cHi:150.4,iLo:151,iHi:200},
-  {cLo:150.5,cHi:250.4,iLo:201,iHi:300},
-  {cLo:250.5,cHi:350.4,iLo:301,iHi:400},
-  {cLo:350.5,cHi:500.4,iLo:401,iHi:500}
-];
+const bp_pm25=[{cLo:0.0,cHi:12.0,iLo:0,iHi:50},{cLo:12.1,cHi:35.4,iLo:51,iHi:100},{cLo:35.5,cHi:55.4,iLo:101,iHi:150},{cLo:55.5,cHi:150.4,iLo:151,iHi:200},{cLo:150.5,cHi:250.4,iLo:201,iHi:300},{cLo:250.5,cHi:350.4,iLo:301,iHi:400},{cLo:350.5,cHi:500.4,iLo:401,iHi:500}];
+const bp_pm10=[{cLo:0,cHi:54,iLo:0,iHi:50},{cLo:55,cHi:154,iLo:51,iHi:100},{cLo:155,cHi:254,iLo:101,iHi:150},{cLo:255,cHi:354,iLo:151,iHi:200},{cLo:355,cHi:424,iLo:201,iHi:300},{cLo:425,cHi:504,iLo:301,iHi:400},{cLo:505,cHi:604,iLo:401,iHi:500}];
 
-const bp_pm10 = [
-  {cLo:0,cHi:54,iLo:0,iHi:50},
-  {cLo:55,cHi:154,iLo:51,iHi:100},
-  {cLo:155,cHi:254,iLo:101,iHi:150},
-  {cLo:255,cHi:354,iLo:151,iHi:200},
-  {cLo:355,cHi:424,iLo:201,iHi:300},
-  {cLo:425,cHi:504,iLo:301,iHi:400},
-  {cLo:505,cHi:604,iLo:401,iHi:500}
-];
+function linearAQI(C,bp){if(C==null||isNaN(C)) return null;for(const s of bp){if(C>=s.cLo && C<=s.cHi){return Math.round((s.iHi-s.iLo)/(s.cHi-s.cLo)*(C-s.cLo)+s.iLo);}} return null;}
 
-function linearAQI(C, bp){
-  if(C==null||isNaN(C)) return null;
-  for(const s of bp){
-    if(C>=s.cLo && C<=s.cHi){
-      return Math.round((s.iHi-s.iLo)/(s.cHi-s.cLo)*(C-s.cLo)+s.iLo);
-    }
-  }
-  return null;
-}
-
-function aqiCategory(aqi){
-  if(aqi==null) return {c:'—',col:'#9ca3af'};
-  if(aqi<=50) return {c:'Buona',col:'#16a34a'};
-  if(aqi<=100) return {c:'Moderata',col:'#f59e0b'};
-  if(aqi<=150) return {c:'Non salutare (gruppi sensibili)',col:'#f97316'};
-  if(aqi<=200) return {c:'Non salutare',col:'#dc2626'};
-  if(aqi<=300) return {c:'Molto non salutare',col:'#7c3aed'};
-  return {c:'Pericolosa',col:'#3b0764'};
-}
+function aqiCategoryEEA(pm25){if(pm25==null) return '—';if(pm25<=15) return 'Bassa'; if(pm25<=25) return 'Media'; if(pm25<=50) return 'Alta'; return 'Molto alta';}
+function aqiCategoryEPA(aqi){if(aqi==null) return {c:'—',col:'#9ca3af'};if(aqi<=50) return {c:'Buona',col:'#16a34a'};if(aqi<=100) return {c:'Moderata',col:'#f59e0b'};if(aqi<=150) return {c:'Non salutare (gruppi sensibili)',col:'#f97316'};if(aqi<=200) return {c:'Non salutare',col:'#dc2626'};if(aqi<=300) return {c:'Molto non salutare',col:'#7c3aed'};return {c:'Pericolosa',col:'#3b0764'};}
 
 const fmt1=v=>v==null||isNaN(v)?'—':Number(v).toFixed(1);
 const fmt0=v=>v==null||isNaN(v)?'—':Math.round(Number(v));
 
 async function loadKPIs(){
-  const r = await fetch(`https://api.thingspeak.com/channels/${CHANNEL}/feeds.json?results=48`);
-  const j = await r.json();
+  const r=await fetch(`https://api.thingspeak.com/channels/${CHANNEL}/feeds.json?results=48`);
+  const j=await r.json();
   const last=j.feeds.at(-1);
 
-  hum.textContent = fmt1(last.field1)+' %';
-  temp.textContent = fmt1(last.field2)+' °C';
-  press.textContent = fmt1(last.field3)+' hPa';
-  pm1.textContent = fmt0(last.field5)+' µg/m³';
+  hum.textContent=fmt1(last.field1)+' %';
+  temp.textContent=fmt1(last.field2)+' °C';
+  press.textContent=fmt1(last.field3)+' hPa';
+  pm1.textContent=fmt0(last.field5)+' µg/m³';
 
   const feeds=j.feeds.filter(f=>f.field6&&f.field7);
   if(feeds.length<48){
@@ -180,51 +155,47 @@ async function loadKPIs(){
   pm25.textContent=fmt0(pm25_24)+' µg/m³';
   pm10.textContent=fmt0(pm10_24)+' µg/m³';
 
-  const aqi=Math.max(linearAQI(pm25_24,bp_pm25),linearAQI(pm10_24,bp_pm10));
-  aqiVal.textContent=aqi;
-  const cat=aqiCategory(aqi);
-  aqiBadge.textContent=cat.c;
-  aqiBadge.style.background=cat.col;
+  const aqiEPA=Math.max(linearAQI(pm25_24,bp_pm25),linearAQI(pm10_24,bp_pm10));
+  aqiVal.textContent=mode.value==='EEA'?aqiCategoryEEA(pm25_24):aqiEPA;
+  if(mode.value==='EPA'){
+    const cat=aqiCategoryEPA(aqiEPA);
+    aqiBadge.textContent=cat.c;
+    aqiBadge.style.background=cat.col;
+  } else {
+    aqiBadge.textContent=aqiCategoryEEA(pm25_24);
+    aqiBadge.style.background='#6b7280';
+  }
 }
 
-function selectAll(v){
-  document.querySelectorAll('aside input[data-id]').forEach(c=>c.checked=v);
-  renderCharts();
-}
+function selectAll(v){document.querySelectorAll('aside input[data-id]').forEach(c=>c.checked=v); renderCharts();}
 
 function renderCharts(){
   charts.innerHTML='';
   if(!start.value||!end.value) return;
-
-  subtitle.textContent='Inizio rilevamento dati: '+new Date(start.value).toLocaleDateString('it-IT')+
-    ' | Fine: '+new Date(end.value).toLocaleDateString('it-IT');
+  subtitle.textContent='Inizio rilevamento dati: '+new Date(start.value).toLocaleDateString('it-IT')+' | Fine: '+new Date(end.value).toLocaleDateString('it-IT');
 
   const meta={
-    1:{t:'UMIDITÀ',y:'%',min:0,max:100},
-    2:{t:'TEMPERATURA',y:'°C',min:-10,max:60},
-    3:{t:'PRESSIONE',y:'hPa',min:900,max:1100},
-    5:{t:'PM1',y:'µg/m³',min:0,max:100},
-    6:{t:'PM2.5',y:'µg/m³',min:0,max:100},
-    7:{t:'PM10',y:'µg/m³',min:0,max:150}
+    1:{t:'Umidità',y:'%',min:0,max:100,s:'BME680'},
+    2:{t:'Temperatura',y:'°C',min:-10,max:60,s:'BME680'},
+    3:{t:'Pressione',y:'hPa',min:900,max:1100,s:'BME680'},
+    5:{t:'PM1',y:'µg/m³',min:0,max:100,s:'PMS5003'},
+    6:{t:'PM2.5',y:'µg/m³',min:0,max:100,s:'PMS5003'},
+    7:{t:'PM10',y:'µg/m³',min:0,max:150,s:'PMS5003'}
   };
 
   document.querySelectorAll('aside input[data-id]:checked').forEach(ch=>{
     const m=meta[ch.dataset.id];
     if(!m) return;
-    const src=`https://thingspeak.com/channels/${CHANNEL}/charts/${ch.dataset.id}`+
-      `?bgcolor=%23ffffff&type=line&color=%23dc2626`+
-      `&title=${encodeURIComponent(m.t)}`+
-      `&yaxis=${encodeURIComponent(m.y)}`+
-      `&yaxismin=${m.min}&yaxismax=${m.max}`+
-      `&start=${start.value} 00:00:00&end=${end.value} 23:59:59`;
+    const src=`https://thingspeak.com/channels/${CHANNEL}/charts/${ch.dataset.id}?bgcolor=%23ffffff&type=line&color=%23dc2626&yaxis=${encodeURIComponent(m.y)}&yaxismin=${m.min}&yaxismax=${m.max}&start=${start.value} 00:00:00&end=${end.value} 23:59:59`;
     const d=document.createElement('div');
     d.className='chart';
-    d.innerHTML=`<iframe src="${src}" loading="lazy"></iframe>`;
+    d.innerHTML=`<div class="chart-title">${m.t}<span class="chart-sensor">${m.s}</span></div><iframe src="${src}" loading="lazy"></iframe>`;
     charts.appendChild(d);
   });
 }
 
 update.addEventListener('click',()=>{renderCharts();loadKPIs();});
+mode.addEventListener('change',loadKPIs);
 
 document.addEventListener('DOMContentLoaded',()=>{
   const d=new Date().toISOString().slice(0,10);
@@ -236,3 +207,4 @@ document.addEventListener('DOMContentLoaded',()=>{
 
 </body>
 </html>
+
