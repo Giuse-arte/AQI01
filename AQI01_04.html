@@ -1,0 +1,188 @@
+<!DOCTYPE html>
+<html lang="it">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width,initial-scale=1">
+  <title>AQI_01 — Dashboard ThingSpeak (v2)</title>
+  <style>
+    :root{
+      --bg:#e8f5e9;--card:#fff;--text:#0b2535;--muted:#5a6b74;--accent:#d62020;--shadow:0 6px 18px rgba(11,37,53,.08)
+    }
+    *{box-sizing:border-box}
+    body{margin:0;font-family:Inter,"Segoe UI",Roboto,Arial,sans-serif;background:var(--bg);color:var(--text)}
+    header{max-width:1400px;margin:12px auto;padding:18px 20px;display:flex;justify-content:space-between;gap:12px}
+    h1{margin:0;font-size:1.4rem}
+    .subtitle{margin-top:6px;color:var(--muted);font-size:.9rem}
+    .controls{display:flex;gap:12px;flex-wrap:wrap}
+    .control-group{background:var(--card);padding:10px;border-radius:8px;box-shadow:var(--shadow);display:flex;align-items:center;gap:8px}
+    input,button{padding:8px 10px;border-radius:6px;border:1px solid #ccc}
+    button.primary{background:var(--accent);color:#fff;border:none;cursor:pointer}
+    main{max-width:1400px;margin:auto;padding:12px}
+    .top-cards{display:grid;grid-template-columns:repeat(auto-fit,minmax(160px,1fr));gap:12px}
+    .card{background:var(--card);padding:12px;border-radius:10px;box-shadow:var(--shadow)}
+    .label{font-size:.85rem;color:var(--muted)}
+    .value{font-size:1.2rem;font-weight:700;margin-top:6px}
+    .aqi-badge{margin-top:8px;padding:6px 10px;border-radius:8px;font-weight:700;color:#fff;display:inline-block}
+    .middle{display:flex;gap:12px;flex-wrap:wrap;margin-top:14px}
+    .panel{background:var(--card);padding:12px;border-radius:10px;box-shadow:var(--shadow)}
+    .charts-grid{display:grid;grid-template-columns:repeat(auto-fit,minmax(300px,1fr));gap:12px;margin-top:12px}
+    .chart-box{background:var(--card);padding:8px;border-radius:8px;box-shadow:var(--shadow);min-height:280px}
+    iframe{width:100%;height:260px;border:0}
+    footer{text-align:center;color:var(--muted);margin:18px}
+  </style>
+</head>
+<body>
+<div id="app">
+<header>
+  <div>
+    <h1>AQI_01 — Dashboard ThingSpeak (v2)</h1>
+    <div class="subtitle" id="subtitle">Inizio rilevamento dati:</div>
+  </div>
+  <div class="controls">
+    <div class="control-group"><label>Inizio</label><input type="date" id="start-date"></div>
+    <div class="control-group"><label>Fine</label><input type="date" id="end-date"></div>
+    <div class="control-group"><button class="primary" id="btn-update">Aggiorna</button></div>
+  </div>
+</header>
+<main>
+  <section class="top-cards" id="last-values"></section>
+  <div class="middle">
+    <aside class="panel" style="min-width:260px">
+      <h3>Configura grafici</h3>
+      <div id="fields-list"></div>
+    </aside>
+    <section class="panel" style="flex:1">
+      <h3>Grafici</h3>
+      <div class="charts-grid" id="grafici-container"></div>
+    </section>
+  </div>
+</main>
+<footer>Versione 2 — AQI EPA ufficiale</footer>
+</div>
+
+<script>
+/* ================= CONFIG ================= */
+const channelID = 2789658;
+
+const campi = [
+  { id: 1, title: 'Umidità', unit: '%' },
+  { id: 2, title: 'Temperatura', unit: '°C' },
+  { id: 3, title: 'Pressione', unit: 'hPa' },
+  { id: 5, title: 'PM1', unit: 'µg/m³' },
+  { id: 6, title: 'PM2.5', unit: 'µg/m³' },
+  { id: 7, title: 'PM10', unit: 'µg/m³' }
+];
+
+/* ================= AQI EPA ================= */
+const bp_pm25 = [
+  {cLo:0, cHi:12, iLo:0, iHi:50},
+  {cLo:12.1, cHi:35.4, iLo:51, iHi:100},
+  {cLo:35.5, cHi:55.4, iLo:101, iHi:150},
+  {cLo:55.5, cHi:150.4, iLo:151, iHi:200},
+  {cLo:150.5, cHi:250.4, iLo:201, iHi:300},
+  {cLo:250.5, cHi:350.4, iLo:301, iHi:400},
+  {cLo:350.5, cHi:500.4, iLo:401, iHi:500}
+];
+
+const bp_pm10 = [
+  {cLo:0, cHi:54, iLo:0, iHi:50},
+  {cLo:55, cHi:154, iLo:51, iHi:100},
+  {cLo:155, cHi:254, iLo:101, iHi:150},
+  {cLo:255, cHi:354, iLo:151, iHi:200},
+  {cLo:355, cHi:424, iLo:201, iHi:300},
+  {cLo:425, cHi:504, iLo:301, iHi:400},
+  {cLo:505, cHi:604, iLo:401, iHi:500}
+];
+
+function linearAQI(C, bp){
+  if (C == null || isNaN(C)) return null;
+  for (const s of bp){
+    if (C >= s.cLo && C <= s.cHi){
+      return Math.round((s.iHi - s.iLo) / (s.cHi - s.cLo) * (C - s.cLo) + s.iLo);
+    }
+  }
+  return null;
+}
+
+function aqiCategory(a){
+  if (a <= 50) return {c:'Buona', col:'#2e7d32'};
+  if (a <= 100) return {c:'Moderata', col:'#f9a825'};
+  if (a <= 150) return {c:'Non salutare (GS)', col:'#ef6c00'};
+  if (a <= 200) return {c:'Non salutare', col:'#d32f2f'};
+  if (a <= 300) return {c:'Molto non salutare', col:'#7e57c2'};
+  return {c:'Pericolosa', col:'#3e2723'};
+}
+
+/* ================= UI ================= */
+function buildFieldsList(){
+  const el = document.getElementById('fields-list');
+  el.innerHTML = '';
+  campi.forEach(c => {
+    el.innerHTML += `<label><input type="checkbox" data-id="${c.id}" checked> ${c.title}</label><br>`;
+  });
+}
+
+function genChart(c, start, end){
+  const base = `https://thingspeak.com/channels/${channelID}/charts/${c.id}`;
+  const p = [];
+  p.push('bgcolor=%23ffffff');
+  p.push('type=line');
+  p.push('dynamic=true');
+  p.push(`title=${encodeURIComponent(c.title)}`);
+  p.push(`yaxis=${encodeURIComponent(c.unit)}`);
+  if (start) p.push(`start=${start}`);
+  if (end) p.push(`end=${end}`);
+  return base + '?' + p.join('&');
+}
+
+function renderCharts(){
+  const grid = document.getElementById('grafici-container');
+  grid.innerHTML = '';
+
+  const start = document.getElementById('start-date').value;
+  const end = document.getElementById('end-date').value;
+
+  document.querySelectorAll('#fields-list input:checked').forEach(cb => {
+    const c = campi.find(x => x.id == cb.dataset.id);
+    const box = document.createElement('div');
+    box.className = 'chart-box';
+    box.innerHTML = `<div style="font-weight:700;margin-bottom:6px">${c.title}</div><iframe src="${genChart(c, start, end)}"></iframe>`;
+    grid.appendChild(box);
+  });
+}
+
+async function fetchLast(){
+  const r = await fetch(`https://api.thingspeak.com/channels/${channelID}/feeds.json?results=1`);
+  const j = await r.json();
+  return j.feeds[0];
+}
+
+function buildCards(last){
+  const el = document.getElementById('last-values');
+  el.innerHTML = '';
+
+  campi.forEach(c => {
+    const v = last['field' + c.id];
+    el.innerHTML += `<div class="card"><div class="label">${c.title}</div><div class="value">${v ?? '—'} ${c.unit}</div></div>`;
+  });
+
+  const pm25 = Number(last.field6);
+  const pm10 = Number(last.field7);
+  const aqi = Math.max(linearAQI(pm25, bp_pm25) || 0, linearAQI(pm10, bp_pm10) || 0);
+  const cat = aqiCategory(aqi);
+
+  el.innerHTML += `<div class="card"><div class="label">AQI EPA (24h)</div><div class="value">${aqi}</div><div class="aqi-badge" style="background:${cat.col}">${cat.c}</div><div style="font-size:.8rem;color:var(--muted)">Standard EPA USA</div></div>`;
+}
+
+async function init(){
+  buildFieldsList();
+  const last = await fetchLast();
+  buildCards(last);
+  renderCharts();
+  document.getElementById('btn-update').addEventListener('click', renderCharts);
+}
+
+document.addEventListener('DOMContentLoaded', init);
+</script>
+</body>
+</html>
