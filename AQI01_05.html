@@ -179,12 +179,12 @@ function renderCharts(){
   subtitle.textContent=`Inizio rilevamento dati: ${start.value} | Fine: ${end.value}`;
 
   const meta={
-    1:{t:'UMIDITÀ',s:'BME680'},
-    2:{t:'TEMPERATURA',s:'BME680'},
-    3:{t:'PRESSIONE',s:'BME680'},
-    5:{t:'PM1',s:'PMS5003'},
-    6:{t:'PM2.5',s:'PMS5003'},
-    7:{t:'PM10',s:'PMS5003'}
+    1:{t:'UMIDITÀ',s:'BME680',min:0,max:100,u:'%'},
+    2:{t:'TEMPERATURA',s:'BME680',min:-10,max:60,u:'°C'},
+    3:{t:'PRESSIONE',s:'BME680',min:900,max:1100,u:'hPa'},
+    5:{t:'PM1',s:'PMS5003',min:0,max:100,u:'µg/m³'},
+    6:{t:'PM2.5',s:'PMS5003',min:0,max:100,u:'µg/m³'},
+    7:{t:'PM10',s:'PMS5003',min:0,max:100,u:'µg/m³'}
   };
 
   document.querySelectorAll('aside input[data-id]:checked').forEach(ch=>{
