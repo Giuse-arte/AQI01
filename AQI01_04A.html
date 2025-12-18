@@ -3,7 +3,7 @@
 <head>
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1" />
-  <title>Pagina AQI – Versione Professionale (v6.8.1)</title>
+  <title>Pagina AQI – Versione Professionale (v6.8 STABILE)</title>
 
   <style>
     :root{
@@ -14,6 +14,8 @@
     body{margin:0;font-family:"Segoe UI",Roboto,Arial,sans-serif;background:var(--bg);color:#111827}
 
     header{padding:20px 28px 10px;display:flex;justify-content:space-between;flex-wrap:wrap;gap:16px;align-items:flex-start}
+    header > div:first-child{text-align:left}
+    header .filters{margin-left:auto}
     header h1{margin:0;font-size:1.7rem;color:var(--primary)}
     header p{margin:6px 0 0;font-size:.9rem;color:var(--muted)}
 
@@ -39,6 +41,9 @@
 
     .panel{background:var(--card);border-radius:var(--radius);box-shadow:var(--shadow);
       padding:16px;font-size:.8rem;width:320px;aspect-ratio:1/1;display:flex;flex-direction:column;gap:8px}
+    @media(max-width:900px){.panel{width:100%}}
+
+    .panel h3{margin:0 0 6px;font-size:1rem;color:var(--primary)}
 
     .charts-wrapper{background:var(--card);border-radius:var(--radius);box-shadow:var(--shadow);padding:16px}
     .charts{display:grid;grid-template-columns:repeat(2,1fr);gap:20px}
@@ -72,6 +77,7 @@
 </header>
 
 <main>
+
 <section class="kpi-section">
   <h2 class="kpi-title">Key Performance Indicator Cards</h2>
   <section class="kpi-row">
@@ -102,21 +108,80 @@
     <label><input type="checkbox" checked data-id="5"> PM1 – PMS5003</label>
     <label><input type="checkbox" checked data-id="6"> PM2.5 – PMS5003</label>
     <label><input type="checkbox" checked data-id="7"> PM10 – PMS5003</label>
-    <label style="display:flex;align-items:center;gap:6px;margin-top:6px"><input type="checkbox"> Ricorda preferenze</label>
-    <small>Puoi mostrare/nascondere singoli grafici, impostare intervallo e tema.<br>Le preferenze sono salvate nel tuo browser se attivi "Ricorda".</small>
   </aside>
 
   <div class="charts-wrapper">
-    <h3>Grafici</h3>
+    <h3 class="charts-title">Grafici</h3>
     <section class="charts" id="charts"></section>
   </div>
 </section>
 
-<footer>Versione 6.8.1 — Dashboard AQI</footer>
+<footer>Versione 6.8 — Dashboard AQI stabile</footer>
 </main>
 
 <script>
 const CHANNEL = 2789658;
+const fmt1 = v => v == null || isNaN(v) ? '—' : Number(v).toFixed(1);
+const fmt0 = v => v == null || isNaN(v) ? '—' : Math.round(Number(v));
+
+function demoData(){
+  return { hum:55.4,temp:22.6,press:1012.3,pm1:8,pm25:14,pm10:20 };
+}
+
+async function loadKPIs(){
+  try{
+    const r = await fetch(`https://api.thingspeak.com/channels/${CHANNEL}/feeds.json?results=48`);
+    if(!r.ok) throw new Error();
+    const j = await r.json();
+    applyKPI(j.feeds || []);
+  }catch{ applyDemoKPI(); }
+}
+
+function applyDemoKPI(){
+  const d = demoData();
+  hum.textContent = fmt1(d.hum) + ' %';
+  temp.textContent = fmt1(d.temp) + ' °C';
+  press.textContent = fmt1(d.press) + ' hPa';
+  pm1.textContent = fmt0(d.pm1) + ' µg/m³';
+  pm25.textContent = fmt0(d.pm25) + ' µg/m³';
+  pm10.textContent = fmt0(d.pm10) + ' µg/m³';
+  computeAQI(d.pm25, d.pm10);
+}
+
+function applyKPI(feeds){
+  if(!feeds.length) return;
+  const last = feeds.at(-1);
+  hum.textContent = fmt1(last.field1) + ' %';
+  temp.textContent = fmt1(last.field2) + ' °C';
+  press.textContent = fmt1(last.field3) + ' hPa';
+  pm1.textContent = fmt0(last.field5) + ' µg/m³';
+
+  const avg = f => feeds.reduce((s,x)=>s+Number(x[f]||0),0)/feeds.length;
+  const pm25_24 = avg('field6');
+  const pm10_24 = avg('field7');
+  pm25.textContent = fmt0(pm25_24) + ' µg/m³';
+  pm10.textContent = fmt0(pm10_24) + ' µg/m³';
+  computeAQI(pm25_24, pm10_24);
+}
+
+function computeAQI(pm25, pm10){
+  if(mode.value === 'EEA'){
+    aqiTitle.textContent = 'AQI (EEA 24h)';
+    const lvl = pm25 < 10 ? 'Bassa' : pm25 < 20 ? 'Media' : pm25 < 25 ? 'Alta' : 'Molto alta';
+    const col = pm25 < 10 ? '#16a34a' : pm25 < 20 ? '#f59e0b' : pm25 < 25 ? '#f97316' : '#dc2626';
+    aqiVal.textContent = '—';
+    aqiBadge.textContent = lvl;
+    aqiBadge.style.background = col;
+  } else {
+    aqiTitle.textContent = 'AQI (EPA 24h)';
+    const aqi = Math.max(pm25, pm10);
+    const col = aqi < 50 ? '#16a34a' : aqi < 100 ? '#f59e0b' : '#dc2626';
+    const txt = aqi < 50 ? 'Buona' : aqi < 100 ? 'Moderata' : 'Scarsa';
+    aqiVal.textContent = Math.round(aqi);
+    aqiBadge.textContent = txt;
+    aqiBadge.style.background = col;
+  }
+}
 
 function selectAll(v){
   document.querySelectorAll('aside input[data-id]').forEach(c=>c.checked=v);
@@ -124,42 +189,48 @@ function selectAll(v){
 }
 
 function renderCharts(){
-  charts.innerHTML='';
-  if(!start.value||!end.value) return;
+  charts.innerHTML = '';
+  if(!start.value || !end.value) return;
 
-  subtitle.textContent='Inizio rilevamento dati: '+new Date(start.value).toLocaleDateString('it-IT')+' | Fine: '+new Date(end.value).toLocaleDateString('it-IT');
+  subtitle.textContent = 'Inizio rilevamento dati: ' + new Date(start.value).toLocaleDateString('it-IT') +
+    ' | Fine: ' + new Date(end.value).toLocaleDateString('it-IT');
 
-  const meta={
-    1:{t:'UMIDITÀ',u:'%',min:0,max:100},
-    2:{t:'TEMPERATURA',u:'°C',min:-10,max:60},
-    3:{t:'PRESSIONE',u:'hPa',min:900,max:1100},
-    5:{t:'PM1',u:'µg/m³',min:0,max:100},
-    6:{t:'PM2.5',u:'µg/m³',min:0,max:100},
-    7:{t:'PM10',u:'µg/m³',min:0,max:100}
+  const meta = {
+    1:{t:'UMIDITÀ',s:'BME680',min:0,max:100,u:'%'},
+    2:{t:'TEMPERATURA',s:'BME680',min:-10,max:60,u:'°C'},
+    3:{t:'PRESSIONE',s:'BME680',min:900,max:1100,u:'hPa'},
+    5:{t:'PM1',s:'PMS5003',min:0,max:100,u:'µg/m³'},
+    6:{t:'PM2.5',s:'PMS5003',min:0,max:100,u:'µg/m³'},
+    7:{t:'PM10',s:'PMS5003',min:0,max:100,u:'µg/m³'}
   };
 
   document.querySelectorAll('aside input[data-id]:checked').forEach(ch=>{
-    const m=meta[ch.dataset.id];
-    const src=`https://thingspeak.com/channels/${CHANNEL}/charts/${ch.dataset.id}`+
-      `?bgcolor=%23ffffff&type=line&color=%23dc2626&title=`+
-      `&yaxis=${encodeURIComponent(m.u)}`+
-      `&yaxismin=${m.min}&yaxismax=${m.max}`+
+    const m = meta[ch.dataset.id];
+    if(!m) return;
+    const src = `https://thingspeak.com/channels/${CHANNEL}/charts/${ch.dataset.id}` +
+      `?bgcolor=%23ffffff&type=line&color=%23dc2626` +
+      `&yaxis=${encodeURIComponent(m.u)}` +
+      `&yaxismin=${m.min}&yaxismax=${m.max}` +
       `&start=${start.value} 00:00:00&end=${end.value} 23:59:59`;
 
-    const d=document.createElement('div');
-    d.className='chart';
-    d.innerHTML=`<div><span class="chart-title">${m.t}</span><span class="chart-sensor">${m.u}</span></div><iframe src="${src}"></iframe>`;
+    const d = document.createElement('div');
+    d.className = 'chart';
+    d.innerHTML = `<div><span class=\"chart-title\">${m.t}</span><span class=\"chart-sensor\">${m.s}</span></div><iframe src=\"${src}\" loading=\"lazy\"></iframe>`;
     charts.appendChild(d);
   });
 }
 
-update.onclick=renderCharts;
+update.addEventListener('click',()=>{renderCharts();loadKPIs();});
+mode.addEventListener('change',loadKPIs);
+
 document.addEventListener('DOMContentLoaded',()=>{
-  const d=new Date().toISOString().slice(0,10);
-  start.value=end.value=d;
+  const d = new Date().toISOString().slice(0,10);
+  start.value = end.value = d;
+  loadKPIs();
   renderCharts();
 });
 </script>
 
 </body>
 </html>
+
