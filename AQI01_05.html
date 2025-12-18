@@ -3,7 +3,7 @@
 <head>
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1" />
-  <title>Pagina AQI – Versione Professionale (v6.8.2 STABILE)</title>
+  <title>Pagina AQI – Versione Professionale (v6.8.4 STABILE)</title>
 
   <style>
     :root{
@@ -22,10 +22,10 @@
     .filters input,.filters select{padding:7px 10px;border-radius:8px;border:1px solid #d1d5db;font-size:.8rem}
     .filters button{padding:8px 14px;border-radius:10px;background:#dc2626;color:#fff;border:none;font-weight:600;cursor:pointer}
 
-    main{padding:0 28px 40px;max-width:100%;margin:0 auto}
+    main{padding:0 28px 40px;max-width:1400px;margin:0 auto}
 
     .kpi-title{margin:20px 0 10px;font-size:1.1rem;color:var(--primary)}
-    .kpi-section{border:1px solid #d1d5db;border-radius:12px;padding:12px;margin-bottom:26px;width:100%}
+    .kpi-section{border:1px solid #d1d5db;border-radius:12px;padding:12px;margin-bottom:26px}
     .kpi-row{display:grid;grid-template-columns:repeat(7,1fr);gap:14px}
 
     .kpi{background:var(--card);border-radius:var(--radius);box-shadow:var(--shadow);
@@ -35,25 +35,32 @@
     .kpi .value{margin-top:8px;font-size:1.15rem;font-weight:700}
     .aqi-badge{margin-top:6px;display:inline-block;padding:4px 10px;border-radius:999px;font-size:.7rem;color:#fff;font-weight:700}
 
-    .layout{display:grid;grid-template-columns:320px 1fr;gap:20px;width:100%}
+    .layout{display:grid;grid-template-columns:1fr 3fr;gap:20px}
     @media(max-width:900px){.layout{grid-template-columns:1fr}}
 
     .panel{background:var(--card);border-radius:var(--radius);box-shadow:var(--shadow);
-      padding:16px;font-size:.8rem;width:320px;display:flex;flex-direction:column;gap:8px}
-    @media(max-width:900px){.panel{width:100%}}
+      padding:16px;font-size:.8rem;display:flex;flex-direction:column;gap:8px}
 
     .panel h3{margin:0 0 6px;font-size:1rem;color:var(--primary)}
 
-    .charts-wrapper{background:var(--card);border-radius:var(--radius);box-shadow:var(--shadow);padding:16px;width:100%}
+    .charts-wrapper{background:var(--card);border-radius:var(--radius);box-shadow:var(--shadow);padding:16px}
     .charts-wrapper h3{margin:0 0 10px;font-size:1rem;color:var(--primary)}
 
     .charts{display:grid;grid-template-columns:repeat(2,1fr);gap:20px}
     @media(max-width:900px){.charts{grid-template-columns:1fr}}
 
-    .chart{background:var(--card);border-radius:var(--radius);box-shadow:var(--shadow);padding:10px}
+    .chart{background:var(--card);border-radius:var(--radius);box-shadow:var(--shadow);padding:6px}
     .chart-title{font-weight:700;font-size:.85rem}
     .chart-sensor{font-size:.7rem;color:var(--muted);margin-left:6px}
-    iframe{width:100%;height:220px;border:0;border-radius:8px}
+
+    /* Grafici a piena area utile */
+    iframe{
+      width:100%;
+      height:260px;
+      border:0;
+      border-radius:8px;
+      display:block;
+    }
 
     footer{text-align:center;margin-top:30px;font-size:.75rem;color:var(--muted)}
   </style>
@@ -124,7 +131,7 @@
   </div>
 </section>
 
-<footer>Versione 6.8.3 — Dashboard AQI stabile</footer>
+<footer>Versione 6.8.4 — Dashboard AQI stabile</footer>
 </main>
 
 <script>
@@ -185,7 +192,8 @@ function renderCharts(){
     if(!m)return;
     const d=document.createElement('div');
     d.className='chart';
-    d.innerHTML=`<div><span class="chart-title">${m.t}</span><span class="chart-sensor">${m.s}</span></div><iframe src="https://thingspeak.com/channels/${CHANNEL}/charts/${ch.dataset.id}"></iframe>`;
+    d.innerHTML=`<div><span class="chart-title">${m.t}</span><span class="chart-sensor">${m.s}</span></div>
+      <iframe src="https://thingspeak.com/channels/${CHANNEL}/charts/${ch.dataset.id}?dynamic=true&results=60&height=260"></iframe>`;
     charts.appendChild(d);
   });
 }
@@ -201,5 +209,6 @@ renderCharts();
 
 </body>
 </html>
+
 
 
