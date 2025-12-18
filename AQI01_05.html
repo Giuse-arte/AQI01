@@ -193,7 +193,7 @@ function renderCharts(){
     const d=document.createElement('div');
     d.className='chart';
     d.innerHTML=`<div><span class="chart-title">${m.t}</span><span class="chart-sensor">${m.s}</span></div>
-      <iframe src="https://thingspeak.com/channels/${CHANNEL}/charts/${ch.dataset.id}?dynamic=true&results=60&height=260"></iframe>`;
+      <iframe src="https://thingspeak.com/channels/${CHANNEL}/charts/${ch.dataset.id}?bgcolor=%23ffffff&type=line&dynamic=true&results=60&height=260&yaxismin=${m.min}&yaxismax=${m.max}&yaxis=${encodeURIComponent(m.u)}"></iframe>`;
     charts.appendChild(d);
   });
 }
@@ -209,6 +209,7 @@ renderCharts();
 
 </body>
 </html>
+
 
 
 
