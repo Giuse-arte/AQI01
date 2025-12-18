@@ -3,7 +3,7 @@
 <head>
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1" />
-  <title>Pagina AQI – Versione Professionale (v6.8.4 STABILE)</title>
+  <title>Pagina AQI – Versione Professionale (v6.8.5 STABILE)</title>
 
   <style>
     :root{
@@ -131,7 +131,7 @@
   </div>
 </section>
 
-<footer>Versione 6.8.4 — Dashboard AQI stabile</footer>
+<footer>Versione 6.8.5 — Dashboard AQI stabile</footer>
 </main>
 
 <script>
@@ -176,7 +176,8 @@ function renderCharts(){
   charts.innerHTML='';
   if(!start.value||!end.value)return;
 
-  subtitle.textContent=`Inizio rilevamento dati: ${start.value} | Fine: ${end.value}`;
+  const fmtDate=d=>d.split('-').reverse().join('-');
+  subtitle.textContent=`Inizio rilevamento dati: ${fmtDate(start.value)} | Fine: ${fmtDate(end.value)}`;
 
   const meta={
     1:{t:'UMIDITÀ',s:'BME680',min:0,max:100,u:'%'},
@@ -193,7 +194,7 @@ function renderCharts(){
     const d=document.createElement('div');
     d.className='chart';
     d.innerHTML=`<div><span class="chart-title">${m.t}</span><span class="chart-sensor">${m.s}</span></div>
-      <iframe src="https://thingspeak.com/channels/${CHANNEL}/charts/${ch.dataset.id}?bgcolor=%23ffffff&type=line&dynamic=true&results=60&height=260&yaxismin=${m.min}&yaxismax=${m.max}&yaxis=${encodeURIComponent(m.u)}"></iframe>`;
+      <iframe src="https://thingspeak.com/channels/${CHANNEL}/charts/${ch.dataset.id}?bgcolor=%23ffffff&type=line&dynamic=true&results=60&height=260&title=&start=${start.value}%2000:00:00&end=${end.value}%2023:59:59&yaxismin=${m.min}&yaxismax=${m.max}&yaxis=${encodeURIComponent(m.u)}"></iframe>`;
     charts.appendChild(d);
   });
 }
@@ -209,6 +210,7 @@ renderCharts();
 
 </body>
 </html>
+
 
 
 
