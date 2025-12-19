@@ -52,7 +52,7 @@
     .chart{background:var(--card);border-radius:var(--radius);box-shadow:var(--shadow);padding:10px}
     .chart-title{font-weight:700;font-size:.85rem}
     .chart-sensor{font-size:.7rem;color:var(--muted);margin-left:6px}
-    iframe{width:100%;height:220px;border:0;border-radius:8px}
+    iframe{width:100%;height:220px;border:0;border-radius:8px; scrolling:no}
 
     footer{text-align:center;margin-top:30px;font-size:.75rem;color:var(--muted)}
   </style>
@@ -132,9 +132,7 @@ const CHANNEL = 2789658;
 const fmt1 = v => v == null || isNaN(v) ? '—' : Number(v).toFixed(1);
 const fmt0 = v => v == null || isNaN(v) ? '—' : Math.round(Number(v));
 
-function demoData(){
-  return { hum:55.4,temp:22.6,press:1012.3,pm1:8,pm25:14,pm10:20 };
-}
+function demoData(){ return { hum:55.4,temp:22.6,press:1012.3,pm1:8,pm25:14,pm10:20 }; }
 
 async function loadKPIs(){
   try{
@@ -175,20 +173,10 @@ function applyKPI(feeds){
 function computeAQI(pm25, pm10){
   if(mode.value === 'EEA'){
     aqiTitle.textContent = 'AQI (EEA 24h)';
-
     const clsPM25 = pm25 <= 10 ? 1 : pm25 <= 20 ? 2 : pm25 <= 25 ? 3 : pm25 <= 50 ? 4 : 5;
     const clsPM10 = pm10 <= 20 ? 1 : pm10 <= 40 ? 2 : pm10 <= 50 ? 3 : pm10 <= 100 ? 4 : 5;
-
     const cls = Math.max(clsPM25, clsPM10);
-
-    const map = {
-      1:{t:'Buona',c:'#16a34a'},
-      2:{t:'Discreta',c:'#65a30d'},
-      3:{t:'Moderata',c:'#facc15'},
-      4:{t:'Scarsa',c:'#f97316'},
-      5:{t:'Molto scarsa',c:'#dc2626'}
-    };
-
+    const map = {1:{t:'Buona',c:'#16a34a'},2:{t:'Discreta',c:'#65a30d'},3:{t:'Moderata',c:'#facc15'},4:{t:'Scarsa',c:'#f97316'},5:{t:'Molto scarsa',c:'#dc2626'}};
     aqiVal.textContent = '—';
     aqiBadge.textContent = map[cls].t;
     aqiBadge.style.background = map[cls].c;
@@ -196,59 +184,48 @@ function computeAQI(pm25, pm10){
   }
 
   aqiTitle.textContent = 'AQI (EPA 24h)';
-  // ... resto calcolo EPA invariato
+  const bpPM25 = [[0,12,0,50],[12.1,35.4,51,100],[35.5,55.4,101,150],[55.5,150.4,151,200],[150.5,250.4,201,300],[250.5,500.4,301,500]];
+  const bpPM10 = [[0,54,0,50],[55,154,51,100],[155,254,101,150],[255,354,151,200],[355,424,201,300],[425,604,301,500]];
+  const calc = (c, bp) => {for(const [Clo,Chi,Ilo,Ihi] of bp){if(c>=Clo && c<=Chi){return Math.round((Ihi-Ilo)/(Chi-Clo)*(c-Clo)+Ilo);}} return null;};
+  const aqi25 = calc(pm25, bpPM25);
+  const aqi10 = calc(pm10, bpPM10);
+  const aqi = Math.max(aqi25 ?? 0, aqi10 ?? 0);
+  let txt='—', col='#6b7280';
+  if(aqi<=50){txt='Buona';col='#16a34a';}
+  else if(aqi<=100){txt='Moderata';col='#f59e0b';}
+  else if(aqi<=150){txt='Non salubre per gruppi sensibili';col='#f97316';}
+  else if(aqi<=200){txt='Non salubre';col='#dc2626';}
+  else if(aqi<=300){txt='Molto non salubre';col='#7c2d12';}
+  else{txt='Pericolosa';col='#4c0519';}
+  aqiVal.textContent = aqi;
+  aqiBadge.textContent = txt;
+  aqiBadge.style.background = col;
 }
 
-function selectAll(v){
-  document.querySelectorAll('aside input[data-id]').forEach(c=>c.checked=v);
-  renderCharts();
-}
+function selectAll(v){document.querySelectorAll('aside input[data-id]').forEach(c=>c.checked=v);renderCharts();}
 
 function renderCharts(){
-  charts.innerHTML = '';
-  if(!start.value || !end.value) return;
-
-  subtitle.textContent = 'Inizio rilevamento dati: ' + new Date(start.value).toLocaleDateString('it-IT') +
-    ' | Fine: ' + new Date(end.value).toLocaleDateString('it-IT');
-
-  const meta = {
-    1:{t:'UMIDITÀ',s:'BME680',min:0,max:100,u:'%'},
-    2:{t:'TEMPERATURA',s:'BME680',min:-10,max:60,u:'°C'},
-    3:{t:'PRESSIONE',s:'BME680',min:900,max:1100,u:'hPa'},
-    5:{t:'PM1',s:'PMS5003',min:0,max:100,u:'µg/m³'},
-    6:{t:'PM2.5',s:'PMS5003',min:0,max:100,u:'µg/m³'},
-    7:{t:'PM10',s:'PMS5003',min:0,max:100,u:'µg/m³'}
-  };
-
+  charts.innerHTML='';
+  if(!start.value||!end.value) return;
+  subtitle.textContent='Inizio rilevamento dati: '+new Date(start.value).toLocaleDateString('it-IT')+' | Fine: '+new Date(end.value).toLocaleDateString('it-IT');
+  const meta={1:{t:'UMIDITÀ',s:'BME680',min:0,max:100,u:'%'},2:{t:'TEMPERATURA',s:'BME680',min:-10,max:60,u:'°C'},3:{t:'PRESSIONE',s:'BME680',min:900,max:1100,u:'hPa'},5:{t:'PM1',s:'PMS5003',min:0,max:100,u:'µg/m³'},6:{t:'PM2.5',s:'PMS5003',min:0,max:100,u:'µg/m³'},7:{t:'PM10',s:'PMS5003',min:0,max:100,u:'µg/m³'}};
   document.querySelectorAll('aside input[data-id]:checked').forEach(ch=>{
-    const m = meta[ch.dataset.id];
-    if(!m) return;
-    const src = `https://thingspeak.com/channels/${CHANNEL}/charts/${ch.dataset.id}` +
-      `?bgcolor=%23ffffff&type=line&color=%23dc2626` +
-      `&yaxis=${encodeURIComponent(m.u)}` +
-      `&yaxismin=${m.min}&yaxismax=${m.max}` +
-      `&start=${start.value} 00:00:00&end=${end.value} 23:59:59`;
-
-    const d = document.createElement('div');
-    d.className = 'chart';
-    d.innerHTML = `<div><span class="chart-title">${m.t}</span><span class="chart-sensor">${m.s}</span></div><iframe src="${src}" loading="lazy" scrolling="no"></iframe>`;
+    const m=meta[ch.dataset.id];if(!m) return;
+    const src=`https://thingspeak.com/channels/${CHANNEL}/charts/${ch.dataset.id}?bgcolor=%23ffffff&type=line&color=%23dc2626&yaxis=${encodeURIComponent(m.u)}&yaxismin=${m.min}&yaxismax=${m.max}&start=${start.value} 00:00:00&end=${end.value} 23:59:59`;
+    const d=document.createElement('div');d.className='chart';
+    d.innerHTML=`<div><span class=\"chart-title\">${m.t}</span><span class=\"chart-sensor\">${m.s}</span></div><iframe scrolling=\"no\" src=\"${src}\" loading=\"lazy\"></iframe>`;
     charts.appendChild(d);
   });
 }
 
 update.addEventListener('click',()=>{renderCharts();loadKPIs();});
 mode.addEventListener('change',loadKPIs);
-
-document.addEventListener('DOMContentLoaded',()=>{
-  const d = new Date().toISOString().slice(0,10);
-  start.value = end.value = d;
-  loadKPIs();
-  renderCharts();
-});
+document.addEventListener('DOMContentLoaded',()=>{const d=new Date().toISOString().slice(0,10);start.value=end.value=d;loadKPIs();renderCharts();});
 </script>
 
 </body>
 </html>
+
 
 
 
