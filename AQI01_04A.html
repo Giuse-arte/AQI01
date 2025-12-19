@@ -86,11 +86,29 @@ iframe{width:100%;height:240px;border:0;border-radius:8px;overflow:hidden;displa
 const CHANNEL=2789658;
 const meta={1:{t:'UMIDITÀ',u:'%',min:0,max:100},2:{t:'TEMPERATURA',u:'°C',min:-10,max:60},3:{t:'PRESSIONE',u:'hPa',min:900,max:1100},5:{t:'PM1',u:'µg/m³',min:0,max:100},6:{t:'PM2.5',u:'µg/m³',min:0,max:100},7:{t:'PM10',u:'µg/m³',min:0,max:100}};
 function toggleAll(v){document.querySelectorAll('aside input[data-id]').forEach(c=>c.checked=v);renderCharts();}
-function renderCharts(){charts.innerHTML='';if(!start.value||!end.value)return;subtitle.textContent='Inizio rilevamento dati: '+new Date(start.value).toLocaleDateString('it-IT')+' | Fine: '+new Date(end.value).toLocaleDateString('it-IT');document.querySelectorAll('aside input[data-id]:checked').forEach(c=>{const m=meta[c.dataset.id];const src=`https://thingspeak.com/channels/${CHANNEL}/charts/${c.dataset.id}?bgcolor=%23ffffff&type=line&title=&yaxis=${encodeURIComponent(m.u)}&yaxismin=${m.min}&yaxismax=${m.max}&start=${start.value}%2000:00:00&end=${end.value}%2023:59:59`;const d=document.createElement('div');d.className='chart';d.innerHTML=`<div><span class="chart-title">${m.t}</span><span class="chart-sensor"> ${m.u}</span></div><iframe scrolling="no" src="${src}"></iframe>`;charts.appendChild(d);});}
+function loadDemoData(){return {hum:55.4,temp:22.6,press:1012.3,pm1:8,pm25:34,pm10:44};}
+function updateKPIs(d){
+  k_h.textContent=d.hum+' %';
+  k_t.textContent=d.temp+' °C';
+  k_p.textContent=d.press+' hPa';
+  k_pm1.textContent=d.pm1+' µg/m³';
+  k_pm25.textContent=d.pm25+' µg/m³';
+  k_pm10.textContent=d.pm10+' µg/m³';
+  const modeSel=mode.value;
+  aqiTitle.textContent=`AQI (${modeSel} 24h)`;
+  if(modeSel==='EPA'){
+    aqiValue.textContent='98';aqiBadge.textContent='Moderata';aqiBadge.style.background='#facc15';
+  }else{
+    aqiValue.textContent='—';aqiBadge.textContent='Scarsa';aqiBadge.style.background='#f97316';
+  }
+}
+function renderCharts(){charts.innerHTML='';if(!start.value||!end.value)return;subtitle.textContent='Inizio rilevamento dati: '+new Date(start.value).toLocaleDateString('it-IT')+' | Fine: '+new Date(end.value).toLocaleDateString('it-IT');document.querySelectorAll('aside input[data-id]:checked').forEach(c=>{const m=meta[c.dataset.id];const src=`https://thingspeak.com/channels/${CHANNEL}/charts/${c.dataset.id}?bgcolor=%23ffffff&type=line&title=&yaxis=${encodeURIComponent(m.u)}&yaxismin=${m.min}&yaxismax=${m.max}&start=${start.value}%2000:00:00&end=${end.value}%2023:59:59`;const d=document.createElement('div');d.className='chart';d.innerHTML=`<div><span class="chart-title">${m.t}</span><span class="chart-sensor"> ${m.u}</span></div><iframe scrolling="no" src="${src}"></iframe>`;charts.appendChild(d);});
+updateKPIs(loadDemoData());}
 update.onclick=renderCharts;document.addEventListener('DOMContentLoaded',()=>{const d=new Date().toISOString().slice(0,10);start.value=end.value=d;renderCharts();});
 </script>
 </body>
 </html>
+
 
 
 
