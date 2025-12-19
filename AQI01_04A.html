@@ -3,7 +3,7 @@
 <head>
 <meta charset="UTF-8" />
 <meta name="viewport" content="width=device-width, initial-scale=1" />
-<title>Dashboard AQI – V04.h</title>
+<title>Dashboard AQI – V04.i</title>
 <style>
 :root{--bg:#eef6ee;--card:#fff;--primary:#0b3c5d;--muted:#6b7280;--shadow:0 6px 18px rgba(0,0,0,.08);--radius:12px}
 *{box-sizing:border-box}
@@ -85,29 +85,66 @@ iframe{width:100%;height:240px;border:0;border-radius:8px;overflow:hidden;displa
 <script>
 const CHANNEL=2789658;
 const meta={1:{t:'UMIDITÀ',u:'%',min:0,max:100},2:{t:'TEMPERATURA',u:'°C',min:-10,max:60},3:{t:'PRESSIONE',u:'hPa',min:900,max:1100},5:{t:'PM1',u:'µg/m³',min:0,max:100},6:{t:'PM2.5',u:'µg/m³',min:0,max:100},7:{t:'PM10',u:'µg/m³',min:0,max:100}};
-function toggleAll(v){document.querySelectorAll('aside input[data-id]').forEach(c=>c.checked=v);renderCharts();}
-function loadDemoData(){return {hum:55.4,temp:22.6,press:1012.3,pm1:8,pm25:34,pm10:44};}
-function updateKPIs(d){
-  k_h.textContent=d.hum+' %';
-  k_t.textContent=d.temp+' °C';
-  k_p.textContent=d.press+' hPa';
-  k_pm1.textContent=d.pm1+' µg/m³';
-  k_pm25.textContent=d.pm25+' µg/m³';
-  k_pm10.textContent=d.pm10+' µg/m³';
-  const modeSel=mode.value;
-  aqiTitle.textContent=`AQI (${modeSel} 24h)`;
-  if(modeSel==='EPA'){
-    aqiValue.textContent='98';aqiBadge.textContent='Moderata';aqiBadge.style.background='#facc15';
-  }else{
-    aqiValue.textContent='—';aqiBadge.textContent='Scarsa';aqiBadge.style.background='#f97316';
+async function fetchData(){
+  try{
+    const res=await fetch(`https://api.thingspeak.com/channels/${CHANNEL}/feeds.json?results=48`);
+    if(!res.ok)throw new Error('HTTP error');
+    const data=await res.json();
+    const feeds=data.feeds||[];
+    if(!feeds.length)throw new Error('No data');
+    updateKPIs(feeds);
+    renderCharts();
+  }catch(e){
+    console.warn('Uso dati demo per anteprima',e);
+    const demo=[{field1:55.4,field2:22.6,field3:1012.3,field5:8,field6:34,field7:44}];
+    updateKPIs(demo);
+    renderCharts();
   }
 }
-function renderCharts(){charts.innerHTML='';if(!start.value||!end.value)return;subtitle.textContent='Inizio rilevamento dati: '+new Date(start.value).toLocaleDateString('it-IT')+' | Fine: '+new Date(end.value).toLocaleDateString('it-IT');document.querySelectorAll('aside input[data-id]:checked').forEach(c=>{const m=meta[c.dataset.id];const src=`https://thingspeak.com/channels/${CHANNEL}/charts/${c.dataset.id}?bgcolor=%23ffffff&type=line&title=&yaxis=${encodeURIComponent(m.u)}&yaxismin=${m.min}&yaxismax=${m.max}&start=${start.value}%2000:00:00&end=${end.value}%2023:59:59`;const d=document.createElement('div');d.className='chart';d.innerHTML=`<div><span class="chart-title">${m.t}</span><span class="chart-sensor"> ${m.u}</span></div><iframe scrolling="no" src="${src}"></iframe>`;charts.appendChild(d);});
-updateKPIs(loadDemoData());}
-update.onclick=renderCharts;document.addEventListener('DOMContentLoaded',()=>{const d=new Date().toISOString().slice(0,10);start.value=end.value=d;renderCharts();});
+function updateKPIs(feeds){
+  const last=feeds[feeds.length-1];
+  k_h.textContent=last.field1.toFixed(1)+' %';
+  k_t.textContent=last.field2.toFixed(1)+' °C';
+  k_p.textContent=last.field3.toFixed(1)+' hPa';
+  k_pm1.textContent=Math.round(last.field5)+' µg/m³';
+
+  if(feeds.length>=48){
+    const avg=(f)=>feeds.reduce((s,x)=>s+Number(x[f]||0),0)/feeds.length;
+    const pm25_24=avg('field6');
+    const pm10_24=avg('field7');
+    k_pm25.textContent=Math.round(pm25_24)+' µg/m³';
+    k_pm10.textContent=Math.round(pm10_24)+' µg/m³';
+
+    const modeSel=mode.value;
+    aqiTitle.textContent=`AQI (${modeSel} 24h)`;
+    if(modeSel==='EPA'){
+      const aqi=Math.max(pm25_24,pm10_24); // semplificato demo
+      aqiValue.textContent=Math.round(aqi);
+      aqiBadge.textContent=aqi<50?'Buona':aqi<100?'Moderata':'Scarsa';
+      aqiBadge.style.background=aqi<50?'#16a34a':aqi<100?'#facc15':'#dc2626';
+    }else{
+      const pm25Class=pm25_24<10?1:pm25_24<20?2:pm25_24<25?3:4;
+      const pm10Class=pm10_24<=20?1:pm10_24<=40?2:pm10_24<=50?3:pm10_24<=100?4:5;
+      const classEEA=Math.max(pm25Class,pm10Class);
+      const labels=['','Bassa','Media','Alta','Scarsa','Molto scarsa'];
+      aqiValue.textContent='—';
+      aqiBadge.textContent=labels[classEEA];
+      aqiBadge.style.background=['','#16a34a','#f59e0b','#f97316','#dc2626','#6b7280'][classEEA];
+    }
+  }
+}
+function toggleAll(v){document.querySelectorAll('aside input[data-id]').forEach(c=>c.checked=v);renderCharts();}
+function renderCharts(){
+  charts.innerHTML='';if(!start.value||!end.value)return;
+  subtitle.textContent='Inizio rilevamento dati: '+new Date(start.value).toLocaleDateString('it-IT')+' | Fine: '+new Date(end.value).toLocaleDateString('it-IT');
+  document.querySelectorAll('aside input[data-id]:checked').forEach(c=>{const m=meta[c.dataset.id];const src=`https://thingspeak.com/channels/${CHANNEL}/charts/${c.dataset.id}?bgcolor=%23ffffff&type=line&title=&yaxis=${encodeURIComponent(m.u)}&yaxismin=${m.min}&yaxismax=${m.max}&start=${start.value}%2000:00:00&end=${end.value}%2023:59:59`;const d=document.createElement('div');d.className='chart';d.innerHTML=`<div><span class="chart-title">${m.t}</span><span class="chart-sensor"> ${m.u}</span></div><iframe scrolling="no" src="${src}"></iframe>`;charts.appendChild(d);});
+}
+update.onclick=fetchData;
+document.addEventListener('DOMContentLoaded',()=>{const d=new Date().toISOString().slice(0,10);start.value=end.value=d;fetchData();});
 </script>
 </body>
 </html>
+
 
 
 
