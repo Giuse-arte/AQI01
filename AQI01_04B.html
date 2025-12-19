@@ -175,20 +175,62 @@ function applyKPI(feeds){
 function computeAQI(pm25, pm10){
   if(mode.value === 'EEA'){
     aqiTitle.textContent = 'AQI (EEA 24h)';
-    const lvl = pm25 < 10 ? 'Bassa' : pm25 < 20 ? 'Media' : pm25 < 25 ? 'Alta' : 'Molto alta';
-    const col = pm25 < 10 ? '#16a34a' : pm25 < 20 ? '#f59e0b' : pm25 < 25 ? '#f97316' : '#dc2626';
-    aqiVal.textContent = '—';
-    aqiBadge.textContent = lvl;
-    aqiBadge.style.background = col;
-  } else {
-    aqiTitle.textContent = 'AQI (EPA 24h)';
-    const aqi = Math.max(pm25, pm10);
-    const col = aqi < 50 ? '#16a34a' : aqi < 100 ? '#f59e0b' : '#dc2626';
-    const txt = aqi < 50 ? 'Buona' : aqi < 100 ? 'Moderata' : 'Scarsa';
-    aqiVal.textContent = Math.round(aqi);
-    aqiBadge.textContent = txt;
-    aqiBadge.style.background = col;
+
+    const clsPM25 = pm25 <= 10 ? 1 : pm25 <= 20 ? 2 : pm25 <= 25 ? 3 : pm25 <= 50 ? 4 : 5;
+    const clsPM10 = pm10 <= 20 ? 1 : pm10 <= 40 ? 2 : pm10 <= 50 ? 3 : pm10 <= 100 ? 4 : 5;
+
+    const cls = Math.max(clsPM25, clsPM10);
+
+    const map = {
+      1:{t:'Buona',c:'#16a34a'},
+      2:{t:'Discreta',c:'#65a30d'},
+      3:{t:'Moderata',c:'#facc15'},
+      4:{t:'Scarsa',c:'#f97316'},
+      5:{t:'Molto scarsa',c:'#dc2626'}
+    };
+
+    aqiVal.textContent = cls;
+    aqiBadge.textContent = map[cls].t;
+    aqiBadge.style.background = map[cls].c;
+    return;
   }
+
+  aqiTitle.textContent = 'AQI (EPA 24h)';
+
+  const bpPM25 = [
+    [0,12,0,50],[12.1,35.4,51,100],[35.5,55.4,101,150],
+    [55.5,150.4,151,200],[150.5,250.4,201,300],[250.5,500.4,301,500]
+  ];
+
+  const bpPM10 = [
+    [0,54,0,50],[55,154,51,100],[155,254,101,150],
+    [255,354,151,200],[355,424,201,300],[425,604,301,500]
+  ];
+
+  const calc = (c, bp) => {
+    for(const [Clo,Chi,Ilo,Ihi] of bp){
+      if(c >= Clo && c <= Chi){
+        return Math.round((Ihi - Ilo) / (Chi - Clo) * (c - Clo) + Ilo);
+      }
+    }
+    return null;
+  };
+
+  const aqi25 = calc(pm25, bpPM25);
+  const aqi10 = calc(pm10, bpPM10);
+  const aqi = Math.max(aqi25 ?? 0, aqi10 ?? 0);
+
+  let txt='—', col='#6b7280';
+  if(aqi<=50){txt='Buona';col='#16a34a';}
+  else if(aqi<=100){txt='Moderata';col='#f59e0b';}
+  else if(aqi<=150){txt='Non salubre per gruppi sensibili';col='#f97316';}
+  else if(aqi<=200){txt='Non salubre';col='#dc2626';}
+  else if(aqi<=300){txt='Molto non salubre';col='#7c2d12';}
+  else{txt='Pericolosa';col='#4c0519';}
+
+  aqiVal.textContent = aqi;
+  aqiBadge.textContent = txt;
+  aqiBadge.style.background = col;
 }
 
 function selectAll(v){
@@ -241,3 +283,4 @@ document.addEventListener('DOMContentLoaded',()=>{
 
 </body>
 </html>
+
