@@ -189,7 +189,7 @@ function computeAQI(pm25, pm10){
       5:{t:'Molto scarsa',c:'#dc2626'}
     };
 
-    aqiVal.textContent = cls;
+    aqiVal.textContent = '—';
     aqiBadge.textContent = map[cls].t;
     aqiBadge.style.background = map[cls].c;
     return;
@@ -283,4 +283,5 @@ document.addEventListener('DOMContentLoaded',()=>{
 
 </body>
 </html>
+
 
