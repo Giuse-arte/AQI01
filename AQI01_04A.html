@@ -14,8 +14,6 @@
     body{margin:0;font-family:"Segoe UI",Roboto,Arial,sans-serif;background:var(--bg);color:#111827}
 
     header{padding:20px 28px 10px;display:flex;justify-content:space-between;flex-wrap:wrap;gap:16px;align-items:flex-start}
-    header > div:first-child{text-align:left}
-    header .filters{margin-left:auto}
     header h1{margin:0;font-size:1.7rem;color:var(--primary)}
     header p{margin:6px 0 0;font-size:.9rem;color:var(--muted)}
 
@@ -29,11 +27,7 @@
     .kpi-section{border:1px solid #d1d5db;border-radius:12px;padding:12px;margin-bottom:26px}
     .kpi-title{margin:0 0 10px;font-size:1.1rem;color:var(--primary)}
     .kpi-row{display:grid;grid-template-columns:repeat(7,1fr);gap:14px}
-    @media(max-width:1100px){.kpi-row{grid-template-columns:repeat(4,1fr)}}
-    @media(max-width:600px){.kpi-row{grid-template-columns:repeat(2,1fr)}}
-
-    .kpi{background:var(--card);border-radius:var(--radius);box-shadow:var(--shadow);
-      padding:14px 10px;text-align:center;aspect-ratio:1/1;display:flex;flex-direction:column;justify-content:center}
+    .kpi{background:var(--card);border-radius:var(--radius);box-shadow:var(--shadow);padding:14px 10px;text-align:center;aspect-ratio:1/1;display:flex;flex-direction:column;justify-content:center}
     .kpi .title{font-size:.95rem;font-weight:700;color:#374151}
     .kpi .sensor{font-size:.72rem;color:var(--muted)}
     .kpi .value{margin-top:8px;font-size:1.15rem;font-weight:700}
@@ -42,168 +36,126 @@
     .layout{display:grid;grid-template-columns:320px 1fr;gap:20px}
     @media(max-width:900px){.layout{grid-template-columns:1fr}}
 
-    .panel{background:var(--card);border-radius:var(--radius);box-shadow:var(--shadow);
-      padding:16px;font-size:.8rem;height:fit-content;display:flex;flex-direction:column;gap:8px}
+    .panel{background:var(--card);border-radius:var(--radius);box-shadow:var(--shadow);padding:16px;font-size:.8rem;aspect-ratio:1/1;display:flex;flex-direction:column;gap:8px}
     .panel h3{margin:0 0 6px;font-size:1rem;color:var(--primary)}
 
     .charts-wrapper{background:var(--card);border-radius:var(--radius);box-shadow:var(--shadow);padding:16px}
-    .charts{display:grid;grid-template-columns:repeat(2,1fr);gap:20px}
-    @media(max-width:1100px){.charts{grid-template-columns:1fr}}
+    .charts{display:grid;grid-template-columns:repeat(3,1fr);gap:20px}
+    @media(max-width:900px){.charts{grid-template-columns:1fr}}
 
-    .chart{background:var(--card);border-radius:8px;border:1px solid #eee;padding:10px}
-    .chart-title{font-weight:700;font-size:.85rem;margin-bottom:8px;display:block}
-    iframe{width:100%;height:220px;border:0;border-radius:8px;background:#f9f9f9}
+    .chart{background:#fff;border:2px solid #999;border-radius:10px;padding:8px;box-shadow:3px 3px 10px rgba(0,0,0,.15)}
+    iframe{width:100%;height:260px;border:3px solid #ccc;border-radius:4px}
 
-    footer{text-align:center;margin-top:30px;padding-bottom:20px;font-size:.75rem;color:var(--muted)}
+    footer{text-align:center;margin-top:30px;font-size:.75rem;color:var(--muted)}
   </style>
 </head>
 <body>
 
 <header>
   <div>
-    <h1>AQI Device — [AQI_01]</h1>
-    <p id="subtitle">Caricamento dati...</p>
+    <h1>Air Quality Index Device — AQI_01</h1>
+    <p id="subtitle">Inizio rilevamento dati: — | Fine: —</p>
   </div>
   <div class="filters">
-    <div>
-      <label>Inizio Rilevamento</label><br>
-      <input type="date" id="start-date">
-    </div>
-    <button onclick="aggiornaDashboard()">Aggiorna</button>
+    <label>Inizio</label><input type="date" id="start">
+    <label>Fine</label><input type="date" id="end">
+    <label>Standard</label>
+    <select id="mode">
+      <option value="EEA" selected>EEA (UE)</option>
+      <option value="EPA">EPA (USA)</option>
+    </select>
+    <button id="update">Aggiorna</button>
   </div>
 </header>
 
 <main>
-
 <section class="kpi-section">
-  <h2 class="kpi-title">Stato Sensori (Ultimo aggiornamento)</h2>
+  <h2 class="kpi-title">Key Performance Indicator Cards</h2>
   <section class="kpi-row">
-    <div class="kpi"><div class="title">Umidità</div><div class="sensor">BME680</div><div class="value" id="kpi-hum">—</div></div>
-    <div class="kpi"><div class="title">Temperatura</div><div class="sensor">BME680</div><div class="value" id="kpi-temp">—</div></div>
-    <div class="kpi"><div class="title">Pressione</div><div class="sensor">BME680</div><div class="value" id="kpi-press">—</div></div>
-    <div class="kpi"><div class="title">PM1</div><div class="sensor">PMS5003</div><div class="value" id="kpi-pm1">—</div></div>
-    <div class="kpi"><div class="title">PM2.5</div><div class="sensor">PMS5003</div><div class="value" id="kpi-pm25">—</div></div>
-    <div class="kpi"><div class="title">PM10</div><div class="sensor">PMS5003</div><div class="value" id="kpi-pm10">—</div></div>
+    <div class="kpi"><div class="title">Umidità</div><div class="sensor">BME680</div><div class="value" id="hum">— %</div></div>
+    <div class="kpi"><div class="title">Temperatura</div><div class="sensor">BME680</div><div class="value" id="temp">— °C</div></div>
+    <div class="kpi"><div class="title">Pressione</div><div class="sensor">BME680</div><div class="value" id="press">— hPa</div></div>
+    <div class="kpi"><div class="title">PM1</div><div class="sensor">PMS5003</div><div class="value" id="pm1">— µg/m³</div></div>
+    <div class="kpi"><div class="title">PM2.5 (24h)</div><div class="sensor">PMS5003</div><div class="value" id="pm25">— µg/m³</div></div>
+    <div class="kpi"><div class="title">PM10 (24h)</div><div class="sensor">PMS5003</div><div class="value" id="pm10">— µg/m³</div></div>
     <div class="kpi">
-      <div class="title">Qualità Aria</div>
-      <div class="sensor">Indice EEA</div>
-      <div class="value" id="aqi-text">—</div>
-      <span id="aqi-badge" class="aqi-badge">—</span>
+      <div class="title" id="aqiTitle">AQI (EEA 24h)</div>
+      <div class="sensor">PM2.5 / PM10</div>
+      <div class="value" id="aqiVal">—</div>
+      <span id="aqiBadge" class="aqi-badge">—</span>
     </div>
   </section>
 </section>
 
 <section class="layout">
   <aside class="panel">
-    <h3>Filtra Grafici</h3>
-    <label><input type="checkbox" checked onchange="aggiornaDashboard()" data-id="1"> Umidità</label>
-    <label><input type="checkbox" checked onchange="aggiornaDashboard()" data-id="2"> Temperatura</label>
-    <label><input type="checkbox" checked onchange="aggiornaDashboard()" data-id="3"> Pressione</label>
-    <label><input type="checkbox" checked onchange="aggiornaDashboard()" data-id="5"> PM1</label>
-    <label><input type="checkbox" checked onchange="aggiornaDashboard()" data-id="6"> PM2.5</label>
-    <label><input type="checkbox" checked onchange="aggiornaDashboard()" data-id="7"> PM10</label>
-    <hr style="width:100%; border:0; border-top:1px solid #eee">
-    <small>Seleziona i parametri da visualizzare nella griglia a destra.</small>
+    <h3>Controlla grafici</h3>
+    <button onclick="selectAll(true)">Seleziona tutti</button>
+    <button onclick="selectAll(false)">Deseleziona tutti</button>
+    <hr>
+    <label><input type="checkbox" checked data-id="1"> Umidità</label>
+    <label><input type="checkbox" checked data-id="2"> Temperatura</label>
+    <label><input type="checkbox" checked data-id="3"> Pressione</label>
+    <label><input type="checkbox" checked data-id="5"> PM1</label>
+    <label><input type="checkbox" checked data-id="6"> PM2.5</label>
+    <label><input type="checkbox" checked data-id="7"> PM10</label>
   </aside>
 
   <div class="charts-wrapper">
-    <h3>Andamento Temporale</h3>
-    <section class="charts" id="grafici-container"></section>
+    <h3>Grafici</h3>
+    <section class="charts" id="charts"></section>
   </div>
 </section>
 
-<footer>Versione 6.8 STABILE — ThingSpeak Channel 2789658</footer>
+<footer>Versione 6.8 — Dashboard AQI stabile</footer>
 </main>
 
 <script>
-const channelID = 2789658;
-const campi = [
-  { id: 1, title: 'Umidità', xaxis: 'Data', yaxis: '[%]', min: 0, max: 100 },
-  { id: 2, title: 'Temperatura', xaxis: 'Data', yaxis: '[°C]', min: 10, max: 40 },
-  { id: 3, title: 'Pressione', xaxis: 'Data', yaxis: '[Pa]', min: 950, max: 1050 },
-  { id: 5, title: 'PM1', xaxis: 'Data', yaxis: '[µg/m³]', min: 0, max: 100 },
-  { id: 6, title: 'PM2.5', xaxis: 'Data', yaxis: '[µg/m³]', min: 0, max: 100 },
-  { id: 7, title: 'PM10', xaxis: 'Data', yaxis: '[µg/m³]', min: 0, max: 100 }
-];
+const CHANNEL = 2789658;
 
-// Inizializzazione
-document.addEventListener('DOMContentLoaded', async () => {
-    const startInput = document.getElementById('start-date');
-    startInput.value = '2025-05-25'; // Data minima come da primo codice
-    
-    await caricaDatiKPI();
-    aggiornaDashboard();
-});
+const campi = {
+  1:{t:'Umidità – Sensore BME680',y:'[%]',min:0,max:100},
+  2:{t:'Temperatura – Sensore BME680',y:'[°C]',min:10,max:40},
+  3:{t:'Pressione – Sensore BME680',y:'[hPa]',min:950,max:1050},
+  5:{t:'PM1 – Sensore PMS5003',y:'[µg/m³]',min:0,max:100},
+  6:{t:'PM2.5 – Sensore PMS5003',y:'[µg/m³]',min:0,max:100},
+  7:{t:'PM10 – Sensore PMS5003',y:'[µg/m³]',min:0,max:100}
+};
 
-async function caricaDatiKPI() {
-    try {
-        const res = await fetch(`https://api.thingspeak.com/channels/${channelID}/feeds.json?results=1`);
-        const data = await res.json();
-        const last = data.feeds[0];
-
-        document.getElementById('kpi-hum').textContent = (last.field1 ? parseFloat(last.field1).toFixed(1) : '—') + ' %';
-        document.getElementById('kpi-temp').textContent = (last.field2 ? parseFloat(last.field2).toFixed(1) : '—') + ' °C';
-        document.getElementById('kpi-press').textContent = (last.field3 ? Math.round(last.field3) : '—') + ' Pa';
-        document.getElementById('kpi-pm1').textContent = (last.field5 ? Math.round(last.field5) : '—') + ' µg';
-        document.getElementById('kpi-pm25').textContent = (last.field6 ? Math.round(last.field6) : '—') + ' µg';
-        document.getElementById('kpi-pm10').textContent = (last.field7 ? Math.round(last.field7) : '—') + ' µg';
-        
-        calcolaAQI(last.field6, last.field7);
-    } catch (e) { console.error("Errore caricamento KPI", e); }
+function selectAll(v){
+  document.querySelectorAll('aside input[data-id]').forEach(c=>c.checked=v);
+  renderCharts();
 }
 
-function calcolaAQI(pm25, pm10) {
-    const v25 = parseFloat(pm25);
-    const v10 = parseFloat(pm10);
-    let cls = 1;
-    
-    if (v25 > 50 || v10 > 100) cls = 5;
-    else if (v25 > 25 || v10 > 50) cls = 4;
-    else if (v25 > 20 || v10 > 40) cls = 3;
-    else if (v25 > 10 || v10 > 20) cls = 2;
+function renderCharts(){
+  charts.innerHTML='';
+  const noc=Date.now();
+  document.querySelectorAll('aside input[data-id]:checked').forEach(ch=>{
+    const c=campi[ch.dataset.id];
+    const src=`https://thingspeak.com/channels/${CHANNEL}/charts/${ch.dataset.id}`+
+      `?bgcolor=%23ffffff&type=line&color=%23d62020`+
+      `&title=${encodeURIComponent(c.t)}`+
+      `&yaxis=${encodeURIComponent(c.y)}`+
+      `&yaxismin=${c.min}&yaxismax=${c.max}`+
+      `&_=${noc}`;
 
-    const map = {
-        1: { t: 'OTTIMA', c: '#16a34a' },
-        2: { t: 'BUONA', c: '#65a30d' },
-        3: { t: 'MODERATA', c: '#facc15' },
-        4: { t: 'SCARSA', c: '#f97316' },
-        5: { t: 'PESSIMA', c: '#dc2626' }
-    };
-
-    const badge = document.getElementById('aqi-badge');
-    document.getElementById('aqi-text').textContent = map[cls].t;
-    badge.textContent = "EEA Level " + cls;
-    badge.style.background = map[cls].c;
+    const box=document.createElement('div');
+    box.className='chart';
+    const iframe=document.createElement('iframe');
+    iframe.src=src;
+    iframe.loading='lazy';
+    iframe.scrolling='no';
+    box.appendChild(iframe);
+    charts.appendChild(box);
+  });
 }
 
-function aggiornaDashboard() {
-    const rawDate = document.getElementById('start-date').value;
-    const dateObj = new Date(rawDate + 'T00:00:00');
-    const startParam = rawDate + '%2000:00:00';
-    
-    document.getElementById('subtitle').textContent = 'Analisi dati a partire dal: ' + dateObj.toLocaleDateString('it-IT', {day:'numeric', month:'long', year:'numeric'});
-
-    const container = document.getElementById('grafici-container');
-    container.innerHTML = '';
-
-    // Recupera quali checkbox sono selezionati
-    const activeIds = Array.from(document.querySelectorAll('.panel input[type="checkbox"]:checked')).map(cb => parseInt(cb.dataset.id));
-
-    campi.forEach(c => {
-        if (activeIds.includes(c.id)) {
-            const src = `https://thingspeak.com/channels/${channelID}/charts/${c.id}?bgcolor=%23ffffff&color=%23d62020&type=line&title=${encodeURIComponent(c.title)}&xaxis=${encodeURIComponent(c.xaxis)}&yaxis=${encodeURIComponent(c.yaxis)}&start=${startParam}&yaxismin=${c.min}&yaxismax=${c.max}&dynamic=true`;
-
-            const div = document.createElement('div');
-            div.className = 'chart';
-            div.innerHTML = `<span class="chart-title">${c.title}</span><iframe src="${src}"></iframe>`;
-            container.appendChild(div);
-        }
-    });
-}
+update.addEventListener('click',renderCharts);
+document.addEventListener('DOMContentLoaded',renderCharts);
 </script>
-
 </body>
 </html>
+
 
 
 
