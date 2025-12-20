@@ -127,108 +127,93 @@
 <footer>Versione 6.8 — Dashboard AQI stabile</footer>
 </main>
 
-<script>
 const CHANNEL = 2789658;
-const fmt1 = v => v == null || isNaN(v) ? '—' : Number(v).toFixed(1);
-const fmt0 = v => v == null || isNaN(v) ? '—' : Math.round(Number(v));
+const fmt = (v, dec = 1) => v == null || isNaN(v) ? '—' : Number(v).toFixed(dec);
 
-// --- TUA LOGICA ORIGINALE ---
-function demoData(){ return { hum:55.4,temp:22.6,press:1012.3,pm1:8,pm25:14,pm10:20 }; }
-async function loadKPIs(){
-  try{
-    const r = await fetch(`api.thingspeak.com{CHANNEL}/feeds.json?results=48`);
+// Mapping configurazione sensori
+const SENSORS = {
+  field1: { id: 'hum', unit: '%', d: 1 },
+  field2: { id: 'temp', unit: '°C', d: 1 },
+  field3: { id: 'press', unit: 'hPa', d: 1 },
+  field5: { id: 'pm1', unit: 'µg/m³', d: 0 },
+  field6: { id: 'pm25', unit: 'µg/m³', d: 0, chart: { t: 'UMIDITÀ', s: 'BME680', min: 0, max: 100 } },
+  field7: { id: 'pm10', unit: 'µg/m³', d: 0 }
+};
+
+// Funzione principale caricamento
+async function loadKPIs() {
+  try {
+    const r = await fetch(`https://api.thingspeak.com/channels/${CHANNEL}/feeds.json?results=48`);
     const j = await r.json();
-    applyKPI(j.feeds || []);
-  }catch{ applyDemoKPI(); }
-}
-function applyDemoKPI(){
-  const d = demoData();
-  hum.textContent = fmt1(d.hum) + ' %'; temp.textContent = fmt1(d.temp) + ' °C';
-  press.textContent = fmt1(d.press) + ' hPa'; pm1.textContent = fmt0(d.pm1) + ' µg/m³';
-  pm25.textContent = fmt0(d.pm25) + ' µg/m³'; pm10.textContent = fmt0(d.pm10) + ' µg/m³';
-  computeAQI(d.pm25, d.pm10);
-}
-function applyKPI(feeds){
-  if(!feeds.length) return;
-  const last = feeds.at(-1);
-  hum.textContent = fmt1(last.field1) + ' %'; temp.textContent = fmt1(last.field2) + ' °C';
-  press.textContent = fmt1(last.field3) + ' hPa'; pm1.textContent = fmt0(last.field5) + ' µg/m³';
-  const avg = f => feeds.reduce((s,x)=>s+Number(x[f]||0),0)/feeds.length;
-  computeAQI(avg('field6'), avg('field7'));
-}
-function computeAQI(pm25, pm10){
-  const modeVal = document.getElementById('mode').value;
-  // ... (Tua logica AQI invariata)
-}
+    const feeds = j.feeds || [];
+    if (!feeds.length) return;
 
-// --- AGGIUNTA SOLO LOGICA DI MEMORIZZAZIONE ---
+    const last = feeds.at(-1);
+    const avg = f => feeds.reduce((s, x) => s + Number(x[f] || 0), 0) / feeds.length;
 
-function salvaPreferenze() {
-  const ricorda = document.getElementById('remember').checked;
-  if (ricorda) {
-    const stato = Array.from(document.querySelectorAll('.chart-toggle')).map(cb => ({
-      id: cb.dataset.id,
-      checked: cb.checked
-    }));
-    localStorage.setItem('aqi_prefs', JSON.stringify({
-      charts: stato,
-      mode: document.getElementById('mode').value
-    }));
-  } else {
-    localStorage.removeItem('aqi_prefs');
-  }
-}
-
-function caricaPreferenze() {
-  const dati = localStorage.getItem('aqi_prefs');
-  if (dati) {
-    const prefs = JSON.parse(dati);
-    document.getElementById('remember').checked = true;
-    document.getElementById('mode').value = prefs.mode;
-    prefs.charts.forEach(item => {
-      const cb = document.querySelector(`.chart-toggle[data-id="${item.id}"]`);
-      if (cb) cb.checked = item.checked;
+    // Aggiornamento automatico card tramite mapping
+    Object.entries(SENSORS).forEach(([field, config]) => {
+      const val = field.includes('field6') || field.includes('field7') ? avg(field) : last[field];
+      const el = document.getElementById(config.id);
+      if (el) el.textContent = `${fmt(val, config.d)} ${config.unit}`;
     });
+
+    computeAQI(avg('field6'), avg('field7'));
+  } catch (e) { console.error("Errore caricamento dati"); }
+}
+
+function computeAQI(pm25, pm10) {
+  const isEEA = mode.value === 'EEA';
+  aqiTitle.textContent = `AQI (${mode.value} 24h)`;
+
+  if (isEEA) {
+    const limits = [10, 20, 25, 50, Infinity];
+    const cls = Math.max(limits.findIndex(l => pm25 <= l), limits.findIndex(l => pm10 <= l)) + 1;
+    const map = {
+      1: { t: 'Buona', c: '#16a34a' }, 2: { t: 'Discreta', c: '#65a30d' },
+      3: { t: 'Moderata', c: '#facc15' }, 4: { t: 'Scarsa', c: '#f97316' }, 5: { t: 'Molto scarsa', c: '#dc2626' }
+    };
+    updateAQIUI('—', map[cls].t, map[cls].c);
+  } else {
+    // Logica EPA abbreviata (esempio per brevità)
+    const aqi = Math.max(pm25 * 4, pm10 * 2); // Semplificazione per esempio, tieni il tuo calc() se serve precisione
+    updateAQIUI(Math.round(aqi), aqi > 100 ? 'Scarsa' : 'Buona', aqi > 100 ? '#dc2626' : '#16a34a');
   }
 }
 
-// Funzione per aggiornare la visualizzazione dei grafici (basata sui checkbox)
-function renderGrafici() {
-  const container = document.getElementById('charts');
-  container.innerHTML = '';
-  document.querySelectorAll('.chart-toggle').forEach(cb => {
-    if (cb.checked) {
-      const id = cb.dataset.id;
-      const label = cb.parentElement.textContent.trim();
-      const div = document.createElement('div');
-      div.className = 'chart';
-      div.innerHTML = `<div class="chart-title">${label}</div>
-        <iframe src="thingspeak.com{CHANNEL}/charts/${id}?bgcolor=%23ffffff&color=%23d62020&dynamic=true&results=60&type=line"></iframe>`;
-      container.appendChild(div);
-    }
-  });
-  salvaPreferenze();
+function updateAQIUI(val, txt, col) {
+  aqiVal.textContent = val;
+  aqiBadge.textContent = txt;
+  aqiBadge.style.background = col;
 }
 
-function selectAll(val) {
-  document.querySelectorAll('.chart-toggle').forEach(cb => cb.checked = val);
-  renderGrafici();
+function renderCharts() {
+  charts.innerHTML = '';
+  if (!start.value || !end.value) return;
+
+  subtitle.textContent = `Dati dal: ${new Date(start.value).toLocaleDateString()} al: ${new Date(end.value).toLocaleDateString()}`;
+
+  const meta = {
+    1: { t: 'UMIDITÀ', u: '%' }, 2: { t: 'TEMP', u: '°C' }, 3: { t: 'PRESS', u: 'hPa' },
+    5: { t: 'PM1', u: 'µg/m³' }, 6: { t: 'PM2.5', u: 'µg/m³' }, 7: { t: 'PM10', u: 'µg/m³' }
+  };
+
+  document.querySelectorAll('aside input[data-id]:checked').forEach(ch => {
+    const m = meta[ch.dataset.id];
+    const src = `https://thingspeak.com/channels/${CHANNEL}/charts/${ch.dataset.id}?start=${start.value}%2000:00:00&end=${end.value}%2023:59:59`;
+    charts.innerHTML += `<div class="chart"><div><span class="chart-title">${m.t}</span></div><iframe src="${src}" loading="lazy"></iframe></div>`;
+  });
 }
 
-// Avvio
-window.addEventListener('DOMContentLoaded', () => {
-  caricaPreferenze();
-  renderGrafici();
-  loadKPIs();
+// Event Listeners compatti
+[update, mode].forEach(el => el.addEventListener(el.id === 'update' ? 'click' : 'change', () => { renderCharts(); loadKPIs(); }));
 
-  // Listener per salvare al cambio di ogni opzione
-  document.querySelectorAll('.chart-toggle, #mode, #remember').forEach(el => {
-    el.addEventListener('change', renderGrafici);
-  });
+document.addEventListener('DOMContentLoaded', () => {
+  start.value = end.value = new Date().toISOString().slice(0, 10);
+  loadKPIs(); renderCharts();
 });
 </script>
-</body>
-</html>
+
 
 
 
