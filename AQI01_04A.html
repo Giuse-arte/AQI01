@@ -310,6 +310,328 @@
 <!-- CONTENUTO PRINCIPALE -->
 <main>
 
+<script>
+/* =========================
+   COSTANTI E FUNZIONI DI FORMATTAZIONE
+   ========================= */
+
+/* ID del canale ThingSpeak da cui leggere i dati */
+const CHANNEL = 2789658;
+
+/*
+  fmt1 → formatta un valore numerico con 1 decimale
+  - Se il valore è null, undefined o NaN → restituisce '—'
+  - Usato per sensori continui (umidità, temperatura, pressione)
+*/
+const fmt1 = v => v == null || isNaN(v) ? '—' : Number(v).toFixed(1);
+
+/*
+  fmt0 → formatta un valore numerico come intero
+  - Arrotonda con Math.round
+  - Usato per PM e valori medi
+*/
+const fmt0 = v => v == null || isNaN(v) ? '—' : Math.round(Number(v));
+
+/* =========================
+   DATI DI DEMO (FALLBACK)
+   ========================= */
+
+/*
+  Restituisce un oggetto con valori simulati.
+  Viene usato SOLO se la chiamata API fallisce
+  (offline, rate limit, errore di rete, ecc.)
+*/
+function demoData(){
+  return {
+    hum:55.4,
+    temp:22.6,
+    press:1012.3,
+    pm1:8,
+    pm25:14,
+    pm10:20
+  };
+}
+
+/* =========================
+   CARICAMENTO KPI DA API
+   ========================= */
+
+/*
+  Recupera gli ultimi dati dal canale ThingSpeak.
+  - results=48 → ~24 ore se campionamento ogni 30 min
+  - Se qualcosa va storto → fallback su dati demo
+*/
+async function loadKPIs(){
+  try{
+    const r = await fetch(
+      `https://api.thingspeak.com/channels/${CHANNEL}/feeds.json?results=48`
+    );
+
+    /* Se risposta HTTP non OK → errore */
+    if(!r.ok) throw new Error();
+
+    /* Parsing JSON */
+    const j = await r.json();
+
+    /* Applica i KPI reali */
+    applyKPI(j.feeds || []);
+  }catch{
+    /* Fallback se fetch fallisce */
+    applyDemoKPI();
+  }
+}
+
+/* =========================
+   APPLICAZIONE KPI (DEMO)
+   ========================= */
+
+/*
+  Popola le KPI card usando i valori fittizi
+*/
+function applyDemoKPI(){
+  const d = demoData();
+
+  hum.textContent   = fmt1(d.hum)   + ' %';
+  temp.textContent  = fmt1(d.temp)  + ' °C';
+  press.textContent = fmt1(d.press) + ' hPa';
+
+  pm1.textContent  = fmt0(d.pm1)  + ' µg/m³';
+  pm25.textContent = fmt0(d.pm25) + ' µg/m³';
+  pm10.textContent = fmt0(d.pm10) + ' µg/m³';
+
+  /* Calcolo AQI su dati demo */
+  computeAQI(d.pm25, d.pm10);
+}
+
+/* =========================
+   APPLICAZIONE KPI REALI
+   ========================= */
+
+/*
+  feeds → array di misurazioni ThingSpeak
+*/
+function applyKPI(feeds){
+  /* Se non ci sono dati → esce */
+  if(!feeds.length) return;
+
+  /* Ultima misurazione disponibile */
+  const last = feeds.at(-1);
+
+  /* KPI istantanei (ultimo valore) */
+  hum.textContent   = fmt1(last.field1) + ' %';
+  temp.textContent  = fmt1(last.field2) + ' °C';
+  press.textContent = fmt1(last.field3) + ' hPa';
+  pm1.textContent   = fmt0(last.field5) + ' µg/m³';
+
+  /*
+    Funzione helper:
+    calcola la media di un campo su tutte le misurazioni
+  */
+  const avg = f =>
+    feeds.reduce((s,x)=>s + Number(x[f] || 0), 0) / feeds.length;
+
+  /* Medie 24h per PM2.5 e PM10 */
+  const pm25_24 = avg('field6');
+  const pm10_24 = avg('field7');
+
+  pm25.textContent = fmt0(pm25_24) + ' µg/m³';
+  pm10.textContent = fmt0(pm10_24) + ' µg/m³';
+
+  /* Calcolo AQI basato sulle medie */
+  computeAQI(pm25_24, pm10_24);
+}
+
+/* =========================
+   CALCOLO AQI (EEA / EPA)
+   ========================= */
+
+function computeAQI(pm25, pm10){
+
+  /* ===== STANDARD EEA ===== */
+  if(mode.value === 'EEA'){
+    aqiTitle.textContent = 'AQI (EEA 24h)';
+
+    /* Classificazione PM secondo soglie EEA */
+    const clsPM25 =
+      pm25 <= 10 ? 1 :
+      pm25 <= 20 ? 2 :
+      pm25 <= 25 ? 3 :
+      pm25 <= 50 ? 4 : 5;
+
+    const clsPM10 =
+      pm10 <= 20 ? 1 :
+      pm10 <= 40 ? 2 :
+      pm10 <= 50 ? 3 :
+      pm10 <= 100 ? 4 : 5;
+
+    /* Si prende la classe peggiore */
+    const cls = Math.max(clsPM25, clsPM10);
+
+    /* Mappa testo + colore */
+    const map = {
+      1:{t:'Buona',c:'#16a34a'},
+      2:{t:'Discreta',c:'#65a30d'},
+      3:{t:'Moderata',c:'#facc15'},
+      4:{t:'Scarsa',c:'#f97316'},
+      5:{t:'Molto scarsa',c:'#dc2626'}
+    };
+
+    /* EEA non usa valore numerico AQI */
+    aqiVal.textContent = '—';
+    aqiBadge.textContent = map[cls].t;
+    aqiBadge.style.background = map[cls].c;
+    return;
+  }
+
+  /* ===== STANDARD EPA ===== */
+  aqiTitle.textContent = 'AQI (EPA 24h)';
+
+  /* Breakpoint ufficiali EPA */
+  const bpPM25 = [
+    [0,12,0,50],[12.1,35.4,51,100],[35.5,55.4,101,150],
+    [55.5,150.4,151,200],[150.5,250.4,201,300],[250.5,500.4,301,500]
+  ];
+
+  const bpPM10 = [
+    [0,54,0,50],[55,154,51,100],[155,254,101,150],
+    [255,354,151,200],[355,424,201,300],[425,604,301,500]
+  ];
+
+  /*
+    Calcolo AQI lineare tra breakpoint
+  */
+  const calc = (c, bp) => {
+    for(const [Clo,Chi,Ilo,Ihi] of bp){
+      if(c >= Clo && c <= Chi){
+        return Math.round(
+          (Ihi - Ilo) / (Chi - Clo) * (c - Clo) + Ilo
+        );
+      }
+    }
+    return null;
+  };
+
+  const aqi25 = calc(pm25, bpPM25);
+  const aqi10 = calc(pm10, bpPM10);
+
+  /* AQI finale = valore peggiore */
+  const aqi = Math.max(aqi25 ?? 0, aqi10 ?? 0);
+
+  /* Testo e colore */
+  let txt='—', col='#6b7280';
+  if(aqi<=50){txt='Buona';col='#16a34a';}
+  else if(aqi<=100){txt='Moderata';col='#f59e0b';}
+  else if(aqi<=150){txt='Non salubre per gruppi sensibili';col='#f97316';}
+  else if(aqi<=200){txt='Non salubre';col='#dc2626';}
+  else if(aqi<=300){txt='Molto non salubre';col='#7c2d12';}
+  else{txt='Pericolosa';col='#4c0519';}
+
+  aqiVal.textContent = aqi;
+  aqiBadge.textContent = txt;
+  aqiBadge.style.background = col;
+}
+
+/* =========================
+   SELEZIONE GRAFICI
+   ========================= */
+
+/*
+  Seleziona o deseleziona tutti i checkbox
+*/
+function selectAll(v){
+  document
+    .querySelectorAll('aside input[data-id]')
+    .forEach(c => c.checked = v);
+
+  renderCharts();
+}
+
+/* =========================
+   RENDERING GRAFICI
+   ========================= */
+
+function renderCharts(){
+  /* Svuota area grafici */
+  charts.innerHTML = '';
+
+  /* Se date non impostate → esce */
+  if(!start.value || !end.value) return;
+
+  /* Aggiorna sottotitolo con date in formato italiano */
+  subtitle.textContent =
+    'Inizio rilevamento dati: ' +
+    new Date(start.value).toLocaleDateString('it-IT') +
+    ' | Fine: ' +
+    new Date(end.value).toLocaleDateString('it-IT');
+
+  /* Metadati dei grafici */
+  const meta = {
+    1:{t:'UMIDITÀ',s:'BME680',min:0,max:100,u:'%'},
+    2:{t:'TEMPERATURA',s:'BME680',min:-10,max:60,u:'°C'},
+    3:{t:'PRESSIONE',s:'BME680',min:900,max:1100,u:'hPa'},
+    5:{t:'PM1',s:'PMS5003',min:0,max:100,u:'µg/m³'},
+    6:{t:'PM2.5',s:'PMS5003',min:0,max:100,u:'µg/m³'},
+    7:{t:'PM10',s:'PMS5003',min:0,max:100,u:'µg/m³'}
+  };
+
+  /* Per ogni checkbox selezionato */
+  document
+    .querySelectorAll('aside input[data-id]:checked')
+    .forEach(ch => {
+
+      const m = meta[ch.dataset.id];
+      if(!m) return;
+
+      /* URL iframe ThingSpeak */
+      const src =
+        `https://thingspeak.com/channels/${CHANNEL}/charts/${ch.dataset.id}` +
+        `?bgcolor=%23ffffff&type=line&color=%23dc2626` +
+        `&yaxis=${encodeURIComponent(m.u)}` +
+        `&yaxismin=${m.min}&yaxismax=${m.max}` +
+        `&start=${start.value} 00:00:00&end=${end.value} 23:59:59`;
+
+      /* Costruzione card grafico */
+      const d = document.createElement('div');
+      d.className = 'chart';
+      d.innerHTML =
+        `<div>
+           <span class="chart-title">${m.t}</span>
+           <span class="chart-sensor">${m.s}</span>
+         </div>
+         <iframe src="${src}" loading="lazy"></iframe>`;
+
+      charts.appendChild(d);
+    });
+}
+
+/* =========================
+   EVENT LISTENER
+   ========================= */
+
+/* Aggiorna grafici + KPI */
+update.addEventListener('click', ()=>{
+  renderCharts();
+  loadKPIs();
+});
+
+/* Cambio standard AQI */
+mode.addEventListener('change', loadKPIs);
+
+/* =========================
+   INIZIALIZZAZIONE
+   ========================= */
+
+document.addEventListener('DOMContentLoaded', ()=>{
+  /* Imposta data odierna */
+  const d = new Date().toISOString().slice(0,10);
+  start.value = end.value = d;
+
+  /* Primo caricamento */
+  loadKPIs();
+  renderCharts();
+});
+</script>
+
 
 
 
