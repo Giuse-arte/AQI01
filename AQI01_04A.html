@@ -1,315 +1,314 @@
 <!DOCTYPE html>
 <html lang="it">
 <head>
+  <!-- Imposta la codifica UTF-8 per supportare caratteri speciali (accenti, simboli, ecc.) -->
   <meta charset="UTF-8" />
+
+  <!-- Viewport responsive: rende la pagina leggibile su mobile e tablet -->
   <meta name="viewport" content="width=device-width, initial-scale=1" />
+
+  <!-- Titolo della pagina (compare nel tab del browser) -->
   <title>Pagina AQI – Versione Professionale (v6.8 STABILE)</title>
 
   <style>
+    /* =========================
+       VARIABILI CSS GLOBALI
+       ========================= */
     :root{
-      --bg:#eef6ee;--card:#ffffff;--primary:#0b3c5d;--muted:#6b7280;
-      --shadow:0 6px 18px rgba(0,0,0,.08);--radius:12px
+      /* Colore di sfondo generale */
+      --bg:#eef6ee;
+
+      /* Colore base delle card */
+      --card:#ffffff;
+
+      /* Colore primario (titoli) */
+      --primary:#0b3c5d;
+
+      /* Colore testo secondario */
+      --muted:#6b7280;
+
+      /* Ombra standard delle card */
+      --shadow:0 6px 18px rgba(0,0,0,.08);
+
+      /* Raggio standard degli angoli */
+      --radius:12px
     }
+
+    /* Imposta box-sizing globale per evitare problemi di layout */
     *{box-sizing:border-box}
-    body{margin:0;font-family:"Segoe UI",Roboto,Arial,sans-serif;background:var(--bg);color:#111827}
 
-    header{padding:20px 28px 10px;display:flex;justify-content:space-between;flex-wrap:wrap;gap:16px;align-items:flex-start}
+    /* Stile base del body */
+    body{
+      margin:0;
+      font-family:"Segoe UI",Roboto,Arial,sans-serif;
+      background:var(--bg);
+      color:#111827
+    }
+
+    /* =========================
+       HEADER
+       ========================= */
+    header{
+      padding:20px 28px 10px;
+      display:flex;
+      justify-content:space-between;
+      flex-wrap:wrap;
+      gap:16px;
+      align-items:flex-start
+    }
+
+    /* Allineamento del blocco titolo */
     header > div:first-child{text-align:left}
+
+    /* Spinge i filtri a destra */
     header .filters{margin-left:auto}
-    header h1{margin:0;font-size:1.7rem;color:var(--primary)}
-    header p{margin:6px 0 0;font-size:.9rem;color:var(--muted)}
 
-    .filters{display:flex;align-items:flex-end;gap:10px;background:var(--card);padding:12px 14px;border-radius:var(--radius);box-shadow:var(--shadow)}
-    .filters label{font-size:.7rem;color:var(--muted)}
-    .filters input,.filters select{padding:7px 10px;border-radius:8px;border:1px solid #d1d5db;font-size:.8rem}
-    .filters button{padding:8px 14px;border-radius:10px;background:#dc2626;color:#fff;border:none;font-weight:600;cursor:pointer}
+    header h1{
+      margin:0;
+      font-size:1.7rem;
+      color:var(--primary)
+    }
 
-    main{padding:0 28px 40px;max-width:1200px;margin:0 auto}
+    header p{
+      margin:6px 0 0;
+      font-size:.9rem;
+      color:var(--muted)
+    }
 
-    .kpi-section{border:1px solid #d1d5db;border-radius:12px;padding:12px;margin-bottom:26px}
-    .kpi-title{margin:0 0 10px;font-size:1.1rem;color:var(--primary)}
-    .kpi-row{display:grid;grid-template-columns:repeat(7,1fr);gap:14px}
-    .kpi{background:var(--card);border-radius:var(--radius);box-shadow:var(--shadow);
-      padding:14px 10px;text-align:center;aspect-ratio:1/1;display:flex;flex-direction:column;justify-content:center}
-    .kpi .title{font-size:.95rem;font-weight:700;color:#374151}
-    .kpi .sensor{font-size:.72rem;color:var(--muted)}
-    .kpi .value{margin-top:8px;font-size:1.15rem;font-weight:700}
-    .aqi-badge{margin-top:6px;display:inline-block;padding:4px 10px;border-radius:999px;font-size:.7rem;color:#fff;font-weight:700}
+    /* =========================
+       FILTRI DATA / STANDARD
+       ========================= */
+    .filters{
+      display:flex;
+      align-items:flex-end;
+      gap:10px;
+      background:var(--card);
+      padding:12px 14px;
+      border-radius:var(--radius);
+      box-shadow:var(--shadow)
+    }
 
-    .layout{display:grid;grid-template-columns:320px 1fr;gap:20px}
-    @media(max-width:900px){.layout{grid-template-columns:1fr}}
+    .filters label{
+      font-size:.7rem;
+      color:var(--muted)
+    }
 
-    .panel{background:var(--card);border-radius:var(--radius);box-shadow:var(--shadow);
-      padding:16px;font-size:.8rem;width:320px;aspect-ratio:1/1;display:flex;flex-direction:column;gap:8px}
-    @media(max-width:900px){.panel{width:100%}}
+    .filters input,
+    .filters select{
+      padding:7px 10px;
+      border-radius:8px;
+      border:1px solid #d1d5db;
+      font-size:.8rem
+    }
 
-    .panel h3{margin:0 0 6px;font-size:1rem;color:var(--primary)}
+    .filters button{
+      padding:8px 14px;
+      border-radius:10px;
+      background:#dc2626;
+      color:#fff;
+      border:none;
+      font-weight:600;
+      cursor:pointer
+    }
 
-    .charts-wrapper{background:var(--card);border-radius:var(--radius);box-shadow:var(--shadow);padding:16px}
-    .charts{display:grid;grid-template-columns:repeat(2,1fr);gap:20px}
-    @media(max-width:900px){.charts{grid-template-columns:1fr}}
+    /* =========================
+       CONTENUTO PRINCIPALE
+       ========================= */
+    main{
+      padding:0 28px 40px;
+      max-width:1200px;
+      margin:0 auto
+    }
 
-    .chart{background:var(--card);border-radius:var(--radius);box-shadow:var(--shadow);padding:10px}
-    .chart-title{font-weight:700;font-size:.85rem}
-    .chart-sensor{font-size:.7rem;color:var(--muted);margin-left:6px}
-    iframe{width:100%;height:220px;border:0;border-radius:8px}
+    /* =========================
+       KPI SECTION
+       ========================= */
+    .kpi-section{
+      border:1px solid #d1d5db;
+      border-radius:12px;
+      padding:12px;
+      margin-bottom:26px
+    }
 
-    footer{text-align:center;margin-top:30px;font-size:.75rem;color:var(--muted)}
+    .kpi-title{
+      margin:0 0 10px;
+      font-size:1.1rem;
+      color:var(--primary)
+    }
+
+    /* Griglia 7 colonne per le KPI */
+    .kpi-row{
+      display:grid;
+      grid-template-columns:repeat(7,1fr);
+      gap:14px
+    }
+
+    /* Singola card KPI */
+    .kpi{
+      background:var(--card);
+      border-radius:var(--radius);
+      box-shadow:var(--shadow);
+      padding:14px 10px;
+      text-align:center;
+      aspect-ratio:1/1;
+      display:flex;
+      flex-direction:column;
+      justify-content:center
+    }
+
+    .kpi .title{
+      font-size:.95rem;
+      font-weight:700;
+      color:#374151
+    }
+
+    .kpi .sensor{
+      font-size:.72rem;
+      color:var(--muted)
+    }
+
+    .kpi .value{
+      margin-top:8px;
+      font-size:1.15rem;
+      font-weight:700
+    }
+
+    /* Badge AQI colorato */
+    .aqi-badge{
+      margin-top:6px;
+      display:inline-block;
+      padding:4px 10px;
+      border-radius:999px;
+      font-size:.7rem;
+      color:#fff;
+      font-weight:700
+    }
+
+    /* =========================
+       LAYOUT GRAFICI
+       ========================= */
+    .layout{
+      display:grid;
+      grid-template-columns:320px 1fr;
+      gap:20px
+    }
+
+    /* Layout mobile */
+    @media(max-width:900px){
+      .layout{grid-template-columns:1fr}
+    }
+
+    /* Pannello controllo grafici */
+    .panel{
+      background:var(--card);
+      border-radius:var(--radius);
+      box-shadow:var(--shadow);
+      padding:16px;
+      font-size:.8rem;
+      width:320px;
+      aspect-ratio:1/1;
+      display:flex;
+      flex-direction:column;
+      gap:8px
+    }
+
+    @media(max-width:900px){
+      .panel{width:100%}
+    }
+
+    .panel h3{
+      margin:0 0 6px;
+      font-size:1rem;
+      color:var(--primary)
+    }
+
+    /* Contenitore dei grafici */
+    .charts-wrapper{
+      background:var(--card);
+      border-radius:var(--radius);
+      box-shadow:var(--shadow);
+      padding:16px
+    }
+
+    /* Griglia 2x3 dei grafici */
+    .charts{
+      display:grid;
+      grid-template-columns:repeat(2,1fr);
+      gap:20px
+    }
+
+    @media(max-width:900px){
+      .charts{grid-template-columns:1fr}
+    }
+
+    /* Singolo grafico */
+    .chart{
+      background:var(--card);
+      border-radius:var(--radius);
+      box-shadow:var(--shadow);
+      padding:10px
+    }
+
+    .chart-title{
+      font-weight:700;
+      font-size:.85rem
+    }
+
+    .chart-sensor{
+      font-size:.7rem;
+      color:var(--muted);
+      margin-left:6px
+    }
+
+    /* Iframe ThingSpeak */
+    iframe{
+      width:100%;
+      height:220px;
+      border:0;
+      border-radius:8px
+    }
+
+    footer{
+      text-align:center;
+      margin-top:30px;
+      font-size:.75rem;
+      color:var(--muted)
+    }
   </style>
 </head>
+
+<!-- =========================
+     BODY
+     ========================= -->
 <body>
 
+<!-- HEADER CON TITOLO E FILTRI -->
 <header>
   <div>
     <h1>Air Quality Index Device — AQI_01</h1>
+    <!-- Qui viene aggiornato dinamicamente l'intervallo date -->
     <p id="subtitle">Inizio rilevamento dati: — | Fine: —</p>
   </div>
+
+  <!-- Filtri temporali e standard AQI -->
   <div class="filters">
     <label>Inizio</label><input type="date" id="start">
     <label>Fine</label><input type="date" id="end">
     <label>Standard</label>
+
+    <!-- Scelta standard AQI -->
     <select id="mode">
       <option value="EEA" selected>EEA (UE)</option>
       <option value="EPA">EPA (USA)</option>
     </select>
+
+    <!-- Pulsante aggiornamento -->
     <button id="update">Aggiorna</button>
   </div>
 </header>
 
+<!-- CONTENUTO PRINCIPALE -->
 <main>
-
-<section class="kpi-section">
-  <h2 class="kpi-title">Key Performance Indicator Cards</h2>
-  <section class="kpi-row">
-    <div class="kpi"><div class="title">Umidità</div><div class="sensor">BME680</div><div class="value" id="hum">— %</div></div>
-    <div class="kpi"><div class="title">Temperatura</div><div class="sensor">BME680</div><div class="value" id="temp">— °C</div></div>
-    <div class="kpi"><div class="title">Pressione</div><div class="sensor">BME680</div><div class="value" id="press">— hPa</div></div>
-    <div class="kpi"><div class="title">PM1</div><div class="sensor">PMS5003</div><div class="value" id="pm1">— µg/m³</div></div>
-    <div class="kpi"><div class="title">PM2.5 (24h)</div><div class="sensor">PMS5003</div><div class="value" id="pm25">— µg/m³</div></div>
-    <div class="kpi"><div class="title">PM10 (24h)</div><div class="sensor">PMS5003</div><div class="value" id="pm10">— µg/m³</div></div>
-    <div class="kpi">
-      <div class="title" id="aqiTitle">AQI (EEA 24h)</div>
-      <div class="sensor">PM2.5 / PM10</div>
-      <div class="value" id="aqiVal">—</div>
-      <span id="aqiBadge" class="aqi-badge">—</span>
-    </div>
-  </section>
-</section>
-
-<section class="layout">
-  <aside class="panel">
-    <h3>Controlla grafici</h3>
-    <button onclick="selectAll(true)">Seleziona tutti</button>
-    <button onclick="selectAll(false)">Deseleziona tutti</button>
-    <hr>
-    <label><input type="checkbox" checked data-id="1"> Umidità – BME680</label>
-    <label><input type="checkbox" checked data-id="2"> Temperatura – BME680</label>
-    <label><input type="checkbox" checked data-id="3"> Pressione – BME680</label>
-    <label><input type="checkbox" checked data-id="5"> PM1 – PMS5003</label>
-    <label><input type="checkbox" checked data-id="6"> PM2.5 – PMS5003</label>
-    <label><input type="checkbox" checked data-id="7"> PM10 – PMS5003</label>
-
-    <label style="display:flex;align-items:center;gap:6px;margin-top:6px">
-      <input type="checkbox" id="remember"> Ricorda preferenze
-    </label>
-    <small>
-      Puoi mostrare/nascondere singoli grafici, impostare intervallo e tema.<br>
-      Le preferenze sono salvate nel tuo browser se attivi "Ricorda".
-    </small>
-  </aside>
-
-  <div class="charts-wrapper">
-    <h3>Grafici</h3>
-    <section class="charts" id="charts"></section>
-  </div>
-</section>
-
-<footer>Versione 6.8 — Dashboard AQI stabile</footer>
-</main>
-
-<script>
-const CHANNEL = 2789658;
-const fmt1 = v => v == null || isNaN(v) ? '—' : Number(v).toFixed(1);
-const fmt0 = v => v == null || isNaN(v) ? '—' : Math.round(Number(v));
-
-// Riferimenti agli elementi DOM
-const startInput = document.getElementById('start');
-const endInput = document.getElementById('end');
-const modeSelect = document.getElementById('mode');
-const chartsContainer = document.getElementById('charts');
-const rememberCheck = document.getElementById('remember');
-const subtitleEl = document.getElementById('subtitle');
-
-function demoData(){
-  return { hum:55.4,temp:22.6,press:1012.3,pm1:8,pm25:14,pm10:20 };
-}
-
-async function loadKPIs(){
-  try{
-    const r = await fetch(`api.thingspeak.com{CHANNEL}/feeds.json?results=48`);
-    if(!r.ok) throw new Error();
-    const j = await r.json();
-    applyKPI(j.feeds || []);
-  }catch{ applyDemoKPI(); }
-}
-
-function applyDemoKPI(){
-  const d = demoData();
-  document.getElementById('hum').textContent = fmt1(d.hum) + ' %';
-  document.getElementById('temp').textContent = fmt1(d.temp) + ' °C';
-  document.getElementById('press').textContent = fmt1(d.press) + ' hPa';
-  document.getElementById('pm1').textContent = fmt0(d.pm1) + ' µg/m³';
-  document.getElementById('pm25').textContent = fmt0(d.pm25) + ' µg/m³';
-  document.getElementById('pm10').textContent = fmt0(d.pm10) + ' µg/m³';
-  computeAQI(d.pm25, d.pm10);
-}
-
-function applyKPI(feeds){
-  if(!feeds.length) return;
-  const last = feeds.at(-1);
-  document.getElementById('hum').textContent = fmt1(last.field1) + ' %';
-  document.getElementById('temp').textContent = fmt1(last.field2) + ' °C';
-  document.getElementById('press').textContent = fmt1(last.field3) + ' hPa';
-  document.getElementById('pm1').textContent = fmt0(last.field5) + ' µg/m³';
-
-  const avg = f => feeds.reduce((s,x)=>s+Number(x[f]||0),0)/feeds.length;
-  const pm25_24 = avg('field6');
-  const pm10_24 = avg('field7');
-  document.getElementById('pm25').textContent = fmt0(pm25_24) + ' µg/m³';
-  document.getElementById('pm10').textContent = fmt0(pm10_24) + ' µg/m³';
-  computeAQI(pm25_24, pm10_24);
-}
-
-function computeAQI(pm25, pm10){
-  const aqiTitle = document.getElementById('aqiTitle');
-  const aqiVal = document.getElementById('aqiVal');
-  const aqiBadge = document.getElementById('aqiBadge');
-
-  if(modeSelect.value === 'EEA'){
-    aqiTitle.textContent = 'AQI (EEA 24h)';
-    const clsPM25 = pm25 <= 10 ? 1 : pm25 <= 20 ? 2 : pm25 <= 25 ? 3 : pm25 <= 50 ? 4 : 5;
-    const clsPM10 = pm10 <= 20 ? 1 : pm10 <= 40 ? 2 : pm10 <= 50 ? 3 : pm10 <= 100 ? 4 : 5;
-    const cls = Math.max(clsPM25, clsPM10);
-    const map = {
-      1:{t:'Buona',c:'#16a34a'}, 2:{t:'Discreta',c:'#65a30d'},
-      3:{t:'Moderata',c:'#facc15'}, 4:{t:'Scarsa',c:'#f97316'}, 5:{t:'Molto scarsa',c:'#dc2626'}
-    };
-    aqiVal.textContent = '—';
-    aqiBadge.textContent = map[cls].t;
-    aqiBadge.style.background = map[cls].c;
-    return;
-  }
-
-  aqiTitle.textContent = 'AQI (EPA 24h)';
-  const bpPM25 = [[0,12,0,50],[12.1,35.4,51,100],[35.5,55.4,101,150],[55.5,150.4,151,200],[150.5,250.4,201,300],[250.5,500.4,301,500]];
-  const bpPM10 = [[0,54,0,50],[55,154,51,100],[155,254,101,150],[255,354,151,200],[355,424,201,300],[425,604,301,500]];
-  const calc = (c, bp) => {
-    for(const [Clo,Chi,Ilo,Ihi] of bp){
-      if(c >= Clo && c <= Chi) return Math.round((Ihi - Ilo) / (Chi - Clo) * (c - Clo) + Ilo);
-    }
-    return null;
-  };
-  const aqi = Math.max(calc(pm25, bpPM25) ?? 0, calc(pm10, bpPM10) ?? 0);
-  let txt='—', col='#6b7280';
-  if(aqi<=50){txt='Buona';col='#16a34a';}
-  else if(aqi<=100){txt='Moderata';col='#f59e0b';}
-  else if(aqi<=150){txt='Non salubre per gruppi sensibili';col='#f97316';}
-  else if(aqi<=200){txt='Non salubre';col='#dc2626';}
-  else if(aqi<=300){txt='Molto non salubre';col='#7c2d12';}
-  else{txt='Pericolosa';col='#4c0519';}
-  aqiVal.textContent = aqi;
-  aqiBadge.textContent = txt;
-  aqiBadge.style.background = col;
-}
-
-function selectAll(v){
-  document.querySelectorAll('aside input[data-id]').forEach(c=>c.checked=v);
-  renderCharts();
-}
-
-function renderCharts(){
-  // Verifichiamo che l'elemento esista prima di resettarlo
-  if(!chartsContainer) return;
-  chartsContainer.innerHTML = '';
-  
-  if(!startInput.value || !endInput.value) return;
-
-  subtitleEl.textContent = 'Inizio rilevamento dati: ' + new Date(startInput.value).toLocaleDateString('it-IT') +
-    ' | Fine: ' + new Date(endInput.value).toLocaleDateString('it-IT');
-
-  const meta = {
-    1:{t:'UMIDITÀ',s:'BME680',min:0,max:100,u:'%'},
-    2:{t:'TEMPERATURA',s:'BME680',min:-10,max:60,u:'°C'},
-    3:{t:'PRESSIONE',s:'BME680',min:900,max:1100,u:'hPa'},
-    5:{t:'PM1',s:'PMS5003',min:0,max:100,u:'µg/m³'},
-    6:{t:'PM2.5',s:'PMS5003',min:0,max:100,u:'µg/m³'},
-    7:{t:'PM10',s:'PMS5003',min:0,max:100,u:'µg/m³'}
-  };
-
-  const selectedIds = [];
-  document.querySelectorAll('aside input[data-id]:checked').forEach(ch=>{
-    const id = ch.dataset.id;
-    selectedIds.push(id);
-    const m = meta[id];
-    
-    // Costruzione URL ultra-stabile per ThingSpeak
-    const baseUrl = `thingspeak.com{CHANNEL}/charts/${id}`;
-    const params = new URLSearchParams({
-      bgcolor: '#ffffff',
-      type: 'line',
-      color: '#dc2626',
-      yaxis: m.u,
-      yaxismin: m.min,
-      yaxismax: m.max,
-      start: `${startInput.value} 00:00:00`,
-      end: `${endInput.value} 23:59:59`
-    });
-
-    const src = `${baseUrl}?${params.toString()}`;
-    
-    const d = document.createElement('div');
-    d.className = 'chart';
-    d.innerHTML = `<div><span class="chart-title">${m.t}</span><span class="chart-sensor">${m.s}</span></div>
-                   <iframe src="${src}" loading="lazy"></iframe>`;
-    chartsContainer.appendChild(d);
-  });
-
-  // Salvataggio preferenze
-  if(rememberCheck.checked) {
-    localStorage.setItem('aqi_prefs', JSON.stringify({ ids: selectedIds, mode: modeSelect.value }));
-  } else {
-    localStorage.removeItem('aqi_prefs');
-  }
-}
-
-// Assicurati che i pulsanti abbiano i listener corretti
-document.getElementById('update').onclick = () => { renderCharts(); loadKPIs(); };
-modeSelect.onchange = () => { loadKPIs(); renderCharts(); };
-
-document.addEventListener('DOMContentLoaded',()=>{
-  const d = new Date().toISOString().slice(0,10);
-  startInput.value = endInput.value = d;
-
-  // Caricamento preferenze
-  const saved = localStorage.getItem('aqi_prefs');
-  if(saved) {
-    const prefs = JSON.parse(saved);
-    rememberCheck.checked = true;
-    modeSelect.value = prefs.mode || 'EEA';
-    document.querySelectorAll('aside input[data-id]').forEach(input => {
-      input.checked = prefs.ids.includes(input.dataset.id);
-    });
-  }
-
-  loadKPIs();
-  renderCharts();
-});
-</script>
-
-
-</body>
-</html>
-
 
 
 
