@@ -310,6 +310,55 @@
 <!-- CONTENUTO PRINCIPALE -->
 <main>
 
+<section class="kpi-section">
+  <h2 class="kpi-title">Key Performance Indicator Cards</h2>
+  <section class="kpi-row">
+    <div class="kpi"><div class="title">Umidità</div><div class="sensor">BME680</div><div class="value" id="hum">— %</div></div>
+    <div class="kpi"><div class="title">Temperatura</div><div class="sensor">BME680</div><div class="value" id="temp">— °C</div></div>
+    <div class="kpi"><div class="title">Pressione</div><div class="sensor">BME680</div><div class="value" id="press">— hPa</div></div>
+    <div class="kpi"><div class="title">PM1</div><div class="sensor">PMS5003</div><div class="value" id="pm1">— µg/m³</div></div>
+    <div class="kpi"><div class="title">PM2.5 (24h)</div><div class="sensor">PMS5003</div><div class="value" id="pm25">— µg/m³</div></div>
+    <div class="kpi"><div class="title">PM10 (24h)</div><div class="sensor">PMS5003</div><div class="value" id="pm10">— µg/m³</div></div>
+    <div class="kpi">
+      <div class="title" id="aqiTitle">AQI (EEA 24h)</div>
+      <div class="sensor">PM2.5 / PM10</div>
+      <div class="value" id="aqiVal">—</div>
+      <span id="aqiBadge" class="aqi-badge">—</span>
+    </div>
+  </section>
+</section>
+
+<section class="layout">
+  <aside class="panel">
+    <h3>Controlla grafici</h3>
+    <button onclick="selectAll(true)">Seleziona tutti</button>
+    <button onclick="selectAll(false)">Deseleziona tutti</button>
+    <hr>
+    <label><input type="checkbox" checked data-id="1"> Umidità – BME680</label>
+    <label><input type="checkbox" checked data-id="2"> Temperatura – BME680</label>
+    <label><input type="checkbox" checked data-id="3"> Pressione – BME680</label>
+    <label><input type="checkbox" checked data-id="5"> PM1 – PMS5003</label>
+    <label><input type="checkbox" checked data-id="6"> PM2.5 – PMS5003</label>
+    <label><input type="checkbox" checked data-id="7"> PM10 – PMS5003</label>
+
+    <label style="display:flex;align-items:center;gap:6px;margin-top:6px">
+      <input type="checkbox" id="remember"> Ricorda preferenze
+    </label>
+    <small>
+      Puoi mostrare/nascondere singoli grafici, impostare intervallo e tema.<br>
+      Le preferenze sono salvate nel tuo browser se attivi "Ricorda".
+    </small>
+  </aside>
+
+  <div class="charts-wrapper">
+    <h3>Grafici</h3>
+    <section class="charts" id="charts"></section>
+  </div>
+</section>
+
+<footer>Versione 6.8 — Dashboard AQI stabile</footer>
+</main>
+
 <script>
 /* =========================
    COSTANTI E FUNZIONI DI FORMATTAZIONE
@@ -634,6 +683,37 @@ document.addEventListener('DOMContentLoaded', ()=>{
 
 </body>
 </html>
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
 
 
 
