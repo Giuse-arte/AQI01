@@ -494,6 +494,47 @@ function demoData(){
 }
 
 /* =========================
+   PREFERENZE UTENTE (LOCAL STORAGE)
+   ========================= */
+
+// chiave unica per tutte le preferenze della dashboard
+const PREF_KEY = 'aqi_dashboard_preferences';
+
+/* =========================
+   SALVATAGGIO PREFERENZE
+   ========================= */
+
+/*
+  Salva le preferenze correnti nel localStorage.
+  Viene chiamata SOLO se l'utente ha attivato
+  la checkbox "Ricorda preferenze".
+*/
+function savePreferences(){
+
+  // se "Ricorda preferenze" NON è attivo, non salvare nulla
+  if(!remember.checked){
+    localStorage.removeItem(PREF_KEY);
+    return;
+  }
+
+  // raccoglie ID dei grafici selezionati
+  const selectedCharts = [...document.querySelectorAll('aside input[data-id]:checked')]
+    .map(c => c.dataset.id);
+
+  // oggetto preferenze completo
+  const prefs = {
+    charts: selectedCharts,
+    start: start.value,
+    end: end.value,
+    mode: mode.value
+  };
+
+  // salvataggio persistente nel browser
+  localStorage.setItem(PREF_KEY, JSON.stringify(prefs));
+}
+
+
+/* =========================
    CARICAMENTO KPI DA API
    ========================= */
 
