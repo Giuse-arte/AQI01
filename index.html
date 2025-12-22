@@ -771,7 +771,7 @@ function renderCharts(){
       if(!m) return;
 
       /* Costruzione URL ThingSpeak senza titoli e senza barre */
-      const src = "thingspeak.com" + CHANNEL + "/charts/" + ch.dataset.id +
+      const src = "https://thingspeak.com" + /channels/ + "/charts/" + ch.dataset.id +
                   "?bgcolor=%23ffffff&type=line&color=%23dc2626" +
                   "&yaxis=" + encodeURIComponent(m.u) +
                   "&yaxismin=" + m.min +
@@ -872,6 +872,7 @@ document.addEventListener('DOMContentLoaded', () => {
 
 </body>
 </html>
+
 
 
 
