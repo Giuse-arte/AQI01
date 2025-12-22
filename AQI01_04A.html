@@ -764,14 +764,15 @@ function renderCharts(){
       const m = meta[ch.dataset.id];
       if(!m) return;
 
-      /* URL iframe ThingSpeak */
+           /* URL iframe ThingSpeak */
       const src =
         `https://thingspeak.com/channels/${CHANNEL}/charts/${ch.dataset.id}` +
         `?bgcolor=%23ffffff&type=line&color=%23dc2626` +
         `&yaxis=${encodeURIComponent(m.u)}` +
         `&yaxismin=${m.min}&yaxismax=${m.max}` +
-        `&start=${start.value} 00:00:00&end=${end.value} 23:59:59`;
-        `&title=`; // <--- AGGIUNGI QUESTA RIGA PER ELIMINARE IL TITOLO
+        `&start=${start.value} 00:00:00&end=${end.value} 23:59:59` + // <--- Qui serve il +
+        `&title=`; // <--- Qui finisce il comando con ;
+
 
       /* Costruzione card grafico */
       const d = document.createElement('div');
