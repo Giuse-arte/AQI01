@@ -236,11 +236,12 @@
     }
 
     /* Griglia 2x3 dei grafici */
-    .charts{
-      display:grid;
-      grid-template-columns:repeat(2,1fr);
-      gap:20px
+    .charts {
+      display: grid;
+      grid-template-columns: repeat(auto-fit, minmax(480px, 1fr));
+      gap: 20px;
     }
+
 
     @media(max-width:900px){
       .charts{grid-template-columns:1fr}
@@ -877,6 +878,7 @@ document.addEventListener('DOMContentLoaded', () => {
 
 </body>
 </html>
+
 
 
 
