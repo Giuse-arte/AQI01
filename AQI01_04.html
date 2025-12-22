@@ -771,14 +771,9 @@ function renderCharts(){
       if(!m) return;
 
            /* URL iframe ThingSpeak */
-      const src =
-        `thingspeak.com{CHANNEL}/charts/${ch.dataset.id}` +
-        `?bgcolor=%23ffffff&type=line&color=%23dc2626` +
-        `&yaxis=${encodeURIComponent(m.u)}` +
-        `&yaxismin=${m.min}&yaxismax=${m.max}` +
-        `&start=${start.value} 00:00:00&end=${end.value} 23:59:59` +
-        `&title=` + 
-        `&noheader=true`; // <--- AGGIUNGI QUESTA RIGA
+           const src = 
+             `thingspeak.com{CHANNEL}/charts/${ch.dataset.id}?bgcolor=%23ffffff&type=line&color=%23dc2626&yaxis=${encodeURIComponent(m.u)}&yaxismin=${m.min}&yaxismax=${m.max}&start=${start.value}%2000:00:00&end=${end.value}%2023:59:59&title=&noheader=true`;
+
 
 
       /* Costruzione card grafico */
