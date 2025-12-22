@@ -823,6 +823,32 @@ mode.addEventListener('change', loadKPIs);
    ========================= */
 
 document.addEventListener('DOMContentLoaded', ()=>{
+  /* =========================
+   RIPRISTINO PREFERENZE
+   ========================= */
+
+const saved = localStorage.getItem('aqi_preferences');
+if(saved){
+  const prefs = JSON.parse(saved);
+
+  // stato checkbox "Ricorda preferenze"
+  remember.checked = true;
+
+  // intervallo date
+  if(prefs.start) start.value = prefs.start;
+  if(prefs.end) end.value = prefs.end;
+
+  // standard AQI
+  if(prefs.mode) mode.value = prefs.mode;
+
+  // grafici selezionati
+  if(Array.isArray(prefs.charts)){
+    document.querySelectorAll('aside input[data-id]').forEach(cb=>{
+      cb.checked = prefs.charts.includes(cb.dataset.id);
+    });
+  }
+}
+
   /* Imposta data odierna */
   const d = new Date().toISOString().slice(0,10);
   start.value = end.value = d;
