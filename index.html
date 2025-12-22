@@ -739,67 +739,47 @@ function selectAll(v){
    RENDERING GRAFICI
    ========================= */
 
-function renderCharts() {
-  /* Svuota area grafici */
-  const chartsContainer = document.getElementById('charts');
-  if (!chartsContainer) return;
-  chartsContainer.innerHTML = '';
+function renderCharts(){
+  charts.innerHTML = '';
+  if(!start.value || !end.value) return;
 
-  /* Se date non impostate → esce */
-  if (!start.value || !end.value) return;
+  subtitle.textContent = 'Inizio rilevamento dati: ' + new Date(start.value).toLocaleDateString('it-IT') +
+    ' | Fine: ' + new Date(end.value).toLocaleDateString('it-IT');
 
-  /* Aggiorna sottotitolo */
-  const subtitle = document.getElementById('subtitle');
-  if (subtitle) {
-    subtitle.textContent =
-      'Inizio rilevamento dati: ' +
-      new Date(start.value).toLocaleDateString('it-IT') +
-      ' | Fine: ' +
-      new Date(end.value).toLocaleDateString('it-IT');
-  }
-
-  /* Metadati dei grafici */
   const meta = {
-    1: { t: 'UMIDITÀ', s: 'BME680', min: 0, max: 100, u: '%' },
-    2: { t: 'TEMPERATURA', s: 'BME680', min: -10, max: 60, u: '°C' },
-    3: { t: 'PRESSIONE', s: 'BME680', min: 900, max: 1100, u: 'hPa' },
-    5: { t: 'PM1', s: 'PMS5003', min: 0, max: 100, u: 'µg/m³' },
-    6: { t: 'PM2.5', s: 'PMS5003', min: 0, max: 100, u: 'µg/m³' },
-    7: { t: 'PM10', s: 'PMS5003', min: 0, max: 100, u: 'µg/m³' }
+    1:{t:'UMIDITÀ',s:'BME680',min:0,max:100,u:'%'},
+    2:{t:'TEMPERATURA',s:'BME680',min:-10,max:60,u:'°C'},
+    3:{t:'PRESSIONE',s:'BME680',min:900,max:1100,u:'hPa'},
+    5:{t:'PM1',s:'PMS5003',min:0,max:100,u:'µg/m³'},
+    6:{t:'PM2.5',s:'PMS5003',min:0,max:100,u:'µg/m³'},
+    7:{t:'PM10',s:'PMS5003',min:0,max:100,u:'µg/m³'}
   };
 
-  /* Per ogni checkbox selezionato */
-  document.querySelectorAll('aside input[data-id]:checked').forEach(ch => {
+  document.querySelectorAll('aside input[data-id]:checked').forEach(ch=>{
     const m = meta[ch.dataset.id];
-    if (!m) return;
+    if(!m) return;
+    const src = `https://thingspeak.com/channels/${CHANNEL}/charts/${ch.dataset.id}` +
+      `?bgcolor=%23ffffff&type=line&color=%23dc2626` +
+      `&yaxis=${encodeURIComponent(m.u)}` +
+      `&yaxismin=${m.min}&yaxismax=${m.max}` +
+      `&start=${start.value} 00:00:00&end=${end.value} 23:59:59`;
 
-    // COSTRUZIONE URL (Versione ultra-stabile 2025)
-    const baseUrl = "thingspeak.com" + CHANNEL + "/charts/" + ch.dataset.id;
-    const query = "?bgcolor=%23ffffff&type=line&color=%23dc2626" +
-                  "&yaxis=" + encodeURIComponent(m.u) +
-                  "&yaxismin=" + m.min +
-                  "&yaxismax=" + m.max +
-                  "&start=" + start.value + "%2000:00:00" +
-                  "&end=" + end.value + "%2023:59:59" +
-                  "&title=&noheader=true";
-    
-    const finalSrc = baseUrl + query;
-
-    /* Costruzione card grafico */
-    const card = document.createElement('div');
-    card.className = 'chart';
-    card.innerHTML = `
-      <div>
-        <span class="chart-title">${m.t}</span>
-        <span class="chart-sensor">${m.s}</span>
-      </div>
-      <iframe src="${finalSrc}" style="width:100%; height:260px; border:0; overflow:hidden;" scrolling="no"></iframe>
-    `;
-
-    chartsContainer.appendChild(card);
+    const d = document.createElement('div');
+    d.className = 'chart';
+    d.innerHTML = `<div><span class=\"chart-title\">${m.t}</span><span class=\"chart-sensor\">${m.s}</span></div><iframe src=\"${src}\" loading=\"lazy\"></iframe>`;
+    charts.appendChild(d);
   });
 }
 
+update.addEventListener('click',()=>{renderCharts();loadKPIs();});
+mode.addEventListener('change',loadKPIs);
+
+document.addEventListener('DOMContentLoaded',()=>{
+  const d = new Date().toISOString().slice(0,10);
+  start.value = end.value = d;
+  loadKPIs();
+  renderCharts();
+});
 
 
 /* =========================
@@ -878,6 +858,7 @@ document.addEventListener('DOMContentLoaded', () => {
 
 </body>
 </html>
+
 
 
 
