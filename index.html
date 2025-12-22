@@ -241,7 +241,10 @@
       grid-template-columns: repeat(auto-fit, minmax(480px, 1fr));
       gap: 20px;
     }
-
+    .chart {
+      width: 100%;
+      min-width: 0; /* ← RISOLVE IL PROBLEMA 1 grafico per riga */
+    }
 
     @media(max-width:900px){
       .charts{grid-template-columns:1fr}
@@ -878,6 +881,7 @@ document.addEventListener('DOMContentLoaded', () => {
 
 </body>
 </html>
+
 
 
 
