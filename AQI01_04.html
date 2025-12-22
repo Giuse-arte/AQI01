@@ -265,11 +265,13 @@
     }
 
     /* Iframe ThingSpeak */
-    iframe{
-      width:100%;
-      height:220px;
-      border:0;
-      border-radius:8px
+    iframe {
+      width: 100%;
+      height: 260px; /* Aumentato un po' per dare respiro al grafico */
+      border: 0;
+      border-radius: 8px;
+      overflow: hidden; /* Nasconde le scrollbar se presenti */
+      display: block;
     }
 
     footer{
