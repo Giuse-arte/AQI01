@@ -769,16 +769,21 @@ function renderCharts(){
   document.querySelectorAll('aside input[data-id]:checked').forEach(ch => {
       const m = meta[ch.dataset.id];
       if(!m) return;
-
-      /* Costruzione URL ThingSpeak senza titoli e senza barre */
-      const src = "https://thingspeak.com" + /channels/ + "/charts/" + ch.dataset.id +
-                  "?bgcolor=%23ffffff&type=line&color=%23dc2626" +
-                  "&yaxis=" + encodeURIComponent(m.u) +
-                  "&yaxismin=" + m.min +
-                  "&yaxismax=" + m.max +
-                  "&start=" + start.value + "%2000:00:00" +
-                  "&end=" + end.value + "%2023:59:59" +
-                  "&title=&noheader=true";
+    
+/* Costruzione URL ThingSpeak senza titoli e senza header */
+const src =
+  "https://thingspeak.com/channels/" + CHANNEL +
+  "/charts/" + ch.dataset.id +
+  "?bgcolor=%23ffffff" +
+  "&type=line" +
+  "&color=%23dc2626" +
+  "&yaxis=" + encodeURIComponent(m.u) +
+  "&yaxismin=" + m.min +
+  "&yaxismax=" + m.max +
+  "&start=" + start.value + "%2000:00:00" +
+  "&end=" + end.value + "%2023:59:59" +
+  "&title=" +
+  "&noheader=true";
 
       /* Costruzione card grafico */
       const d = document.createElement('div');
@@ -872,6 +877,7 @@ document.addEventListener('DOMContentLoaded', () => {
 
 </body>
 </html>
+
 
 
 
