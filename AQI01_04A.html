@@ -771,6 +771,7 @@ function renderCharts(){
         `&yaxis=${encodeURIComponent(m.u)}` +
         `&yaxismin=${m.min}&yaxismax=${m.max}` +
         `&start=${start.value} 00:00:00&end=${end.value} 23:59:59`;
+        `&title=`; // <--- AGGIUNGI QUESTA RIGA PER ELIMINARE IL TITOLO
 
       /* Costruzione card grafico */
       const d = document.createElement('div');
