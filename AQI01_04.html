@@ -745,7 +745,7 @@ function renderCharts(){
   /* Se date non impostate → esce */
   if(!start.value || !end.value) return;
 
-  /* Aggiorna sottotitolo con date in formato italiano */
+  /* Aggiorna sottotitolo */
   subtitle.textContent =
     'Inizio rilevamento dati: ' +
     new Date(start.value).toLocaleDateString('it-IT') +
@@ -763,18 +763,21 @@ function renderCharts(){
   };
 
   /* Per ogni checkbox selezionato */
-  document
-    .querySelectorAll('aside input[data-id]:checked')
-    .forEach(ch => {
-
+  document.querySelectorAll('aside input[data-id]:checked').forEach(ch => {
       const m = meta[ch.dataset.id];
       if(!m) return;
 
-           /* URL iframe ThingSpeak */
-           const src = 
-             `thingspeak.com{CHANNEL}/charts/${ch.dataset.id}?bgcolor=%23ffffff&type=line&color=%23dc2626&yaxis=${encodeURIComponent(m.u)}&yaxismin=${m.min}&yaxismax=${m.max}&start=${start.value}%2000:00:00&end=${end.value}%2023:59:59&title=&noheader=true`;
+      // COSTRUZIONE URL ROBUSTA
+      const baseUrl = "thingspeak.com" + CHANNEL + "/charts/" + ch.dataset.id;
+      const params = "?bgcolor=%23ffffff&type=line&color=%23dc2626" +
+                     "&yaxis=" + encodeURIComponent(m.u) +
+                     "&yaxismin=" + m.min + 
+                     "&yaxismax=" + m.max +
+                     "&start=" + start.value + "%2000:00:00" +
+                     "&end=" + end.value + "%2023:59:59" +
+                     "&title=&noheader=true";
 
-
+      const src = baseUrl + params;
 
       /* Costruzione card grafico */
       const d = document.createElement('div');
@@ -784,11 +787,12 @@ function renderCharts(){
            <span class="chart-title">${m.t}</span>
            <span class="chart-sensor">${m.s}</span>
          </div>
-         <iframe src="${src}" loading="lazy"></iframe>`;
+         <iframe src="${src}" style="overflow:hidden;" scrolling="no"></iframe>`;
 
       charts.appendChild(d);
     });
 }
+
 
 /* =========================
    EVENTI → SALVA PREFERENZE
