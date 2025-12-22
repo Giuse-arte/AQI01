@@ -1,3 +1,4 @@
+
 <!DOCTYPE html>
 <html lang="it">
 <head>
@@ -235,10 +236,14 @@
     }
 
     /* Griglia 2x3 dei grafici */
-    .charts{
-      display:grid;
-      grid-template-columns:repeat(2,1fr);
-      gap:20px
+    .charts {
+      display: grid;
+      grid-template-columns: repeat(auto-fit, minmax(480px, 1fr));
+      gap: 20px;
+    }
+    .chart {
+      width: 100%;
+      min-width: 0; /* ← RISOLVE IL PROBLEMA 1 grafico per riga */
     }
 
     @media(max-width:900px){
@@ -740,12 +745,14 @@ function selectAll(v){
 
 function renderCharts(){
   /* Svuota area grafici */
-  charts.innerHTML = '';
+  const chartsContainer = document.getElementById('charts');
+  chartsContainer.innerHTML = '';
 
   /* Se date non impostate → esce */
   if(!start.value || !end.value) return;
 
-  /* Aggiorna sottotitolo */
+  /* Aggiorna sottotitolo con date in formato italiano */
+  const subtitle = document.getElementById('subtitle');
   subtitle.textContent =
     'Inizio rilevamento dati: ' +
     new Date(start.value).toLocaleDateString('it-IT') +
@@ -766,18 +773,21 @@ function renderCharts(){
   document.querySelectorAll('aside input[data-id]:checked').forEach(ch => {
       const m = meta[ch.dataset.id];
       if(!m) return;
-
-      // COSTRUZIONE URL ROBUSTA
-      const baseUrl = "thingspeak.com" + CHANNEL + "/charts/" + ch.dataset.id;
-      const params = "?bgcolor=%23ffffff&type=line&color=%23dc2626" +
-                     "&yaxis=" + encodeURIComponent(m.u) +
-                     "&yaxismin=" + m.min + 
-                     "&yaxismax=" + m.max +
-                     "&start=" + start.value + "%2000:00:00" +
-                     "&end=" + end.value + "%2023:59:59" +
-                     "&title=&noheader=true";
-
-      const src = baseUrl + params;
+    
+/* Costruzione URL ThingSpeak senza titoli e senza header */
+const src =
+  "https://thingspeak.com/channels/" + CHANNEL +
+  "/charts/" + ch.dataset.id +
+  "?bgcolor=%23ffffff" +
+  "&type=line" +
+  "&color=%23dc2626" +
+  "&yaxis=" + encodeURIComponent(m.u) +
+  "&yaxismin=" + m.min +
+  "&yaxismax=" + m.max +
+  "&start=" + start.value + "%2000:00:00" +
+  "&end=" + end.value + "%2023:59:59" +
+  "&title=" +
+  "&noheader=true";
 
       /* Costruzione card grafico */
       const d = document.createElement('div');
@@ -787,11 +797,12 @@ function renderCharts(){
            <span class="chart-title">${m.t}</span>
            <span class="chart-sensor">${m.s}</span>
          </div>
-         <iframe src="${src}" style="overflow:hidden;" scrolling="no"></iframe>`;
+         <iframe src="${src}" style="height:260px; width:100%; border:0; overflow:hidden;" scrolling="no"></iframe>`;
 
-      charts.appendChild(d);
+      chartsContainer.appendChild(d);
     });
 }
+
 
 
 /* =========================
@@ -870,6 +881,111 @@ document.addEventListener('DOMContentLoaded', () => {
 
 </body>
 </html>
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
 
 
 
