@@ -822,41 +822,42 @@ mode.addEventListener('change', loadKPIs);
    INIZIALIZZAZIONE
    ========================= */
 
-document.addEventListener('DOMContentLoaded', ()=>{
   /* =========================
    RIPRISTINO PREFERENZE
    ========================= */
+document.addEventListener('DOMContentLoaded', () => {
+  // 1. Cerchiamo se ci sono preferenze salvate
+  const saved = localStorage.getItem('aqi_dashboard_preferences');
 
-const saved = localStorage.getItem('aqi_preferences');
-if(saved){
-  const prefs = JSON.parse(saved);
+  if (saved) {
+    const prefs = JSON.parse(saved);
+    
+    // Ripristiniamo la spunta su "Ricorda preferenze"
+    remember.checked = true;
 
-  // stato checkbox "Ricorda preferenze"
-  remember.checked = true;
+    // Ripristiniamo Date e Standard
+    if (prefs.start) start.value = prefs.start;
+    if (prefs.end) end.value = prefs.end;
+    if (prefs.mode) mode.value = prefs.mode;
 
-  // intervallo date
-  if(prefs.start) start.value = prefs.start;
-  if(prefs.end) end.value = prefs.end;
-
-  // standard AQI
-  if(prefs.mode) mode.value = prefs.mode;
-
-  // grafici selezionati
-  if(Array.isArray(prefs.charts)){
-    document.querySelectorAll('aside input[data-id]').forEach(cb=>{
-      cb.checked = prefs.charts.includes(cb.dataset.id);
-    });
+    // Ripristiniamo i grafici selezionati
+    if (Array.isArray(prefs.charts)) {
+      document.querySelectorAll('aside input[data-id]').forEach(cb => {
+        cb.checked = prefs.charts.includes(cb.dataset.id);
+      });
+    }
+  } else {
+    // 2. SOLO SE NON CI SONO SALVATAGGI, mettiamo la data di oggi (2025)
+    const oggi = new Date().toISOString().slice(0, 10);
+    start.value = oggi;
+    end.value = oggi;
   }
-}
 
-  /* Imposta data odierna */
-  const d = new Date().toISOString().slice(0,10);
-  start.value = end.value = d;
-
-  /* Primo caricamento */
+  // 3. Ora che i campi sono pronti, carichiamo i dati
   loadKPIs();
   renderCharts();
 });
+
 </script>
 
 </body>
