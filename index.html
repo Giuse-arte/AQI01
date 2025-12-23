@@ -240,7 +240,10 @@
     /* Griglia 2x3 dei grafici */
     .charts {
       display: grid;
-      grid-template-columns: repeat(auto-fit, minmax(480px, 1fr));
+      /*grid-template-columns: repeat(auto-fit, minmax(480px, 1fr));*/
+      /* Crea colonne della stessa dimensione, 1fr significa una frazione dello spazio disponibile */
+      grid-template-columns: 1fr 1fr;
+      /* Aggiunge spazio tra i grafici */
       gap: 20px;
     }
     .chart {
@@ -248,7 +251,9 @@
       min-width: 0; /* ← RISOLVE IL PROBLEMA 1 grafico per riga */
     }
 
-    @media(max-width:900px){
+    /* Regola per schermi più piccoli, per mantenere la responsività */
+    @media (max-width: 768px) {
+    /*@media(max-width:900px){*/
       .charts{grid-template-columns:1fr}
     }
 
@@ -883,6 +888,8 @@ document.addEventListener('DOMContentLoaded', () => {
 
 </body>
 </html>
+
+
 
 
 
