@@ -201,17 +201,17 @@
 
     /* Pannello controllo grafici */
     .panel{
-      background:var(--card);
-      border-radius:var(--radius);
-      box-shadow:var(--shadow);
-      padding:16px;
-      font-size:.8rem;
-      width:320px;
-      aspect-ratio:1/1;
-      display:flex;
-      flex-direction:column;
-      gap:8px
-    }
+        background:var(--card);
+        border-radius:var(--radius);
+        box-shadow:var(--shadow);
+        padding:16px;
+        font-size:.8rem;
+        width:280px;
+        flex-shrink:0;
+        display:flex;
+        flex-direction:column;
+        gap:8px;
+        }
 
     @media(max-width:900px){
       .panel{width:100%}
@@ -881,6 +881,8 @@ document.addEventListener('DOMContentLoaded', () => {
 
 </body>
 </html>
+
+
 
 
 
