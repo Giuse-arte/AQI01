@@ -205,7 +205,7 @@
       .layout{grid-template-columns:1fr}
     }
 
-    /* Pannello controllo grafici */
+    /* Pannello Controlla Grafici */
     .panel{
     background: var(--card);
     border: 1px solid #d1d5db;
@@ -213,10 +213,10 @@
     box-shadow: var(--shadow);
     padding: 14px;
     font-size: .8rem;
-
     display: flex;
     flex-direction: column;
     gap: 8px;
+    align-self:flex-start; /* ← BLOCCA L'ALLUNGAMENTO */
     }
 
     @media(max-width:900px){
@@ -894,6 +894,7 @@ document.addEventListener('DOMContentLoaded', () => {
 
 </body>
 </html>
+
 
 
 
