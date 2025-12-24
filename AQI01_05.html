@@ -8,7 +8,7 @@
   <meta name="viewport" content="width=device-width, initial-scale=1" />
 
   <!-- Titolo della pagina (compare nel tab del browser) -->
-  <title>Pagina AQI – Versione Professionale (v6.8.2 STABILE)</title>
+  <title>Pagina AQI – Versione Professionale (v6.8.3 STABILE)</title>
 
   <style>
     /* =========================
@@ -205,20 +205,19 @@
       .layout{grid-template-columns:1fr}
     }
 
-    /* Pannello controllo grafici */
+    /* Pannello Controlla Grafici */
     .panel{
-  background:var(--card);
-  border-radius:var(--radius);
-  box-shadow:var(--shadow);
-  padding:16px;
-  font-size:.8rem;
-  width:280px;
-  flex-shrink:0;
-  display:flex;
-  flex-direction:column;
-  gap:8px;
-  align-self:flex-start; /* ← BLOCCA L'ALLUNGAMENTO */
-}
+    background: var(--card);
+    border: 1px solid #d1d5db;
+    border-radius: 12px;
+    box-shadow: var(--shadow);
+    padding: 14px;
+    font-size: .8rem;
+    display: flex;
+    flex-direction: column;
+    gap: 8px;
+    align-self:flex-start; /* ← BLOCCA L'ALLUNGAMENTO */
+    }
 
     @media(max-width:900px){
       .panel{width:100%}
@@ -236,10 +235,11 @@
 
     /* Contenitore dei grafici */
     .charts-wrapper{
-    background:var(--card);
-    border-radius:var(--radius);
-    box-shadow:var(--shadow);
-    padding:16px;
+     background: var(--card);
+     border: 1px solid #d1d5db;
+     border-radius: 12px;
+     box-shadow: var(--shadow);
+     padding: 14px 14px 18px;
     min-width:920px;
     }
 
@@ -470,7 +470,7 @@
   <!-- ========================= -->
   <!-- FOOTER -->
   <!-- ========================= -->
-  <footer>Versione 6.8.2 — Dashboard AQI stabile</footer>
+  <footer>Versione 6.8.3 — Dashboard AQI stabile</footer>
 
 </main>
 
@@ -894,11 +894,6 @@ document.addEventListener('DOMContentLoaded', () => {
 
 </body>
 </html>
-
-
-
-
-
 
 
 
