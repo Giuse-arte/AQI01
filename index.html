@@ -442,6 +442,7 @@
       <label><input type="checkbox" checked data-id="5"> PM1 – PMS5003</label>
       <label><input type="checkbox" checked data-id="6"> PM2.5 – PMS5003</label>
       <label><input type="checkbox" checked data-id="7"> PM10 – PMS5003</label>
+      <label><input type="checkbox" checked data-id="combo"> PM2.5 + PM10 (24h)</label>
 
       <!-- ========================= -->
       <!-- MEMORIZZAZIONE PREFERENZE -->
@@ -819,6 +820,86 @@ const src =
 
       chartsContainer.appendChild(d);
     });
+
+  // =========================
+// GRAFICO COMBINATO SE SELEZIONATO
+// =========================
+
+const comboSelected = document.querySelector('input[data-id="combo"]')?.checked;
+
+if(comboSelected){
+
+  (async function(){
+
+    try{
+      const r = await fetch(
+        `https://api.thingspeak.com/channels/${CHANNEL}/feeds.json?results=48`
+      );
+
+      if(!r.ok) throw new Error();
+
+      const j = await r.json();
+      const feeds = j.feeds || [];
+
+      if(!feeds.length) return;
+
+      const avgSeries = (field) => {
+        const out = [];
+        for(let i=0;i<feeds.length;i++){
+          const slice = feeds.slice(Math.max(0,i-47), i+1);
+          const avg = slice.reduce((s,x)=>s + Number(x[field]||0),0)/slice.length;
+          out.push(avg);
+        }
+        return out;
+      };
+
+      const labels = feeds.map(f =>
+        new Date(f.created_at).toLocaleTimeString('it-IT',{
+          hour:'2-digit', minute:'2-digit'
+        })
+      );
+
+      const pm25 = avgSeries('field6');
+      const pm10 = avgSeries('field7');
+
+      const d = document.createElement('div');
+      d.className = 'chart';
+
+      d.innerHTML = `
+        <div>
+          <span class="chart-title">PM2.5 (24h) + PM10 (24h)</span>
+          <span class="chart-sensor">PMS5003</span>
+        </div>
+        <canvas id="pmCombined" style="height:260px; max-height:260px;"></canvas>
+      `;
+
+      chartsContainer.appendChild(d);
+
+      const ctx = document.getElementById('pmCombined').getContext('2d');
+
+      if(window.pmChart) window.pmChart.destroy();
+
+      window.pmChart = new Chart(ctx,{
+        type:'line',
+        data:{
+          labels,
+          datasets:[
+            {label:'PM2.5 (24h)',data:pm25,tension:0.3},
+            {label:'PM10 (24h)',data:pm10,tension:0.3}
+          ]
+        },
+        options:{
+          responsive:true,
+          maintainAspectRatio:false
+        }
+      });
+
+    }catch(e){
+      console.error("Errore grafico combinato:", e);
+    }
+
+  })();
+}
 
   // =========================
 // ✅ GRAFICO COMBINATO PM2.5 + PM10 (24h)
