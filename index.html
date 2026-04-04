@@ -484,7 +484,8 @@
 
 /* ID del canale ThingSpeak da cui leggere i dati */
 const CHANNEL = 2789658;
-
+  
+let globalFeeds = []; 
 /*
   fmt1 → formatta un valore numerico con 1 decimale
   - Se il valore è null, undefined o NaN → restituisce '—'
@@ -525,6 +526,7 @@ function demoData(){
 
 // chiave unica per tutte le preferenze della dashboard
 const PREF_KEY = 'aqi_dashboard_preferences';
+let globalFeeds = []; // Variabile globale per i dati
 
 /* =========================
    SALVATAGGIO PREFERENZE
@@ -619,9 +621,9 @@ function applyDemoKPI(){
   feeds → array di misurazioni ThingSpeak
 */
 function applyKPI(feeds){
-  /* Se non ci sono dati → esce */
   if(!feeds.length) return;
-
+  globalFeeds = feeds; // <-- SALVA I DATI QUI
+  
   /* Ultima misurazione disponibile */
   const last = feeds.at(-1);
 
@@ -757,16 +759,13 @@ function selectAll(v){
 /* =========================
    RENDERING GRAFICI
    ========================= */
-
-function renderCharts(){
-  /* Svuota area grafici */
+function renderCharts() {
   const chartsContainer = document.getElementById('charts');
   chartsContainer.innerHTML = '';
 
-  /* Se date non impostate → esce */
-  if(!start.value || !end.value) return;
+  if (!start.value || !end.value) return;
 
-  /* Aggiorna sottotitolo con date in formato italiano */
+  // Aggiorna sottotitolo con date
   const subtitle = document.getElementById('subtitle');
   subtitle.textContent =
     'Inizio rilevamento dati: ' +
@@ -774,107 +773,105 @@ function renderCharts(){
     ' | Fine: ' +
     new Date(end.value).toLocaleDateString('it-IT');
 
-  /* Metadati dei grafici */
   const meta = {
-    1:{t:'UMIDITÀ',s:'BME680',min:0,max:100,u:'%'},
-    2:{t:'TEMPERATURA',s:'BME680',min:-10,max:60,u:'°C'},
-    3:{t:'PRESSIONE',s:'BME680',min:900,max:1100,u:'hPa'},
-    5:{t:'PM1',s:'PMS5003',min:0,max:100,u:'µg/m³'},
-    6:{t:'PM2.5',s:'PMS5003',min:0,max:100,u:'µg/m³'},
-    7:{t:'PM10',s:'PMS5003',min:0,max:100,u:'µg/m³'}
+    1: { t: 'UMIDITÀ', s: 'BME680', min: 0, max: 100, u: '%' },
+    2: { t: 'TEMPERATURA', s: 'BME680', min: -10, max: 60, u: '°C' },
+    3: { t: 'PRESSIONE', s: 'BME680', min: 900, max: 1100, u: 'hPa' },
+    5: { t: 'PM1', s: 'PMS5003', min: 0, max: 100, u: 'µg/m³' },
+    6: { t: 'PM2.5', s: 'PMS5003', min: 0, max: 100, u: 'µg/m³' },
+    7: { t: 'PM10', s: 'PMS5003', min: 0, max: 100, u: 'µg/m³' }
   };
 
-  /* Per ogni checkbox selezionato */
+  // 1. GENERAZIONE GRAFICI INDIVIDUALI (IFRAME)
   document.querySelectorAll('aside input[data-id]:checked').forEach(ch => {
-      const m = meta[ch.dataset.id];
-      if(!m) return;
-    
-/* Costruzione URL ThingSpeak senza titoli e senza header */
-const src =
-  "https://thingspeak.com/channels/" + CHANNEL +
-  "/charts/" + ch.dataset.id +
-  "?bgcolor=%23ffffff" +
-  "&type=line" +
-  "&color=%23dc2626" +
-  "&yaxis=" + encodeURIComponent(m.u) +
-  "&yaxismin=" + m.min +
-  "&yaxismax=" + m.max +
-  "&start=" + start.value + "%2000:00:00" +
-  "&end=" + end.value + "%2023:59:59" +
-  "&title=" +
-  "&noheader=true";
+    const m = meta[ch.dataset.id];
+    if (!m) return;
 
-      /* Costruzione card grafico */
-      const d = document.createElement('div');
-      d.className = 'chart';
-      d.innerHTML =
-        `<div>
-           <span class="chart-title">${m.t}</span>
-           <span class="chart-sensor">${m.s}</span>
-         </div>
-         <iframe src="${src}" style="height:260px; width:100%; border:0; overflow:hidden;" scrolling="no"></iframe>`;
+    const src = "https://thingspeak.com" + CHANNEL +
+      "/charts/" + ch.dataset.id +
+      "?bgcolor=%23ffffff&type=line&color=%23dc2626" +
+      "&yaxis=" + encodeURIComponent(m.u) +
+      "&yaxismin=" + m.min + "&yaxismax=" + m.max +
+      "&start=" + start.value + "%2000:00:00" +
+      "&end=" + end.value + "%2023:59:59" +
+      "&title=&noheader=true";
 
-      chartsContainer.appendChild(d);
-    });
-    /* === NUOVO GRAFICO COMPARATIVO MEDIE 24H (PM2.5 vs PM10) === */
-  // Creiamo il contenitore per il grafico
-  const dComp = document.createElement('div');
-  dComp.className = 'chart';
-  dComp.style.gridColumn = 'span 2'; // Occupa tutta la larghezza
-  dComp.innerHTML = `
-    <div>
-       <span class="chart-title">ANDAMENTO MEDIE MOBILI 24h</span>
-       <span class="chart-sensor">Calcolo basato su dati storici</span>
-    </div>
-    <canvas id="canvasPMCombined" style="max-height:260px; width:100%;"></canvas>
-  `;
-  chartsContainer.appendChild(dComp);
-
-  // Recuperiamo i dati che hai già caricato per le KPI
-  // Nota: Assicurati che 'feeds' sia accessibile o passalo come argomento
-  const labels = feeds.map(f => new Date(f.created_at).toLocaleTimeString('it-IT', {hour: '2d-digit', minute:'2d-digit'}));
-  const dataPM25 = feeds.map(f => Number(f.field6)); // Sostituisci field6 con il tuo campo PM2.5
-  const dataPM10 = feeds.map(f => Number(f.field7)); // Sostituisci field7 con il tuo campo PM10
-
-  new Chart(document.getElementById('canvasPMCombined'), {
-    type: 'line',
-    data: {
-      labels: labels,
-      datasets: [
-        {
-          label: 'PM2.5 (24h)',
-          data: dataPM25,
-          borderColor: '#dc2626',
-          backgroundColor: 'rgba(220, 38, 38, 0.1)',
-          borderWidth: 2,
-          pointRadius: 0, // Rende la linea pulita come quelle di ThingSpeak
-          fill: true,
-          tension: 0.3
-        },
-        {
-          label: 'PM10 (24h)',
-          data: dataPM10,
-          borderColor: '#2563eb',
-          backgroundColor: 'rgba(37, 99, 235, 0.1)',
-          borderWidth: 2,
-          pointRadius: 0,
-          fill: true,
-          tension: 0.3
-        }
-      ]
-    },
-    options: {
-      responsive: true,
-      maintainAspectRatio: false,
-      scales: {
-        y: { beginAtZero: true, title: { display: true, text: 'µg/m³', font: { size: 10 } } },
-        x: { ticks: { maxTicksLimit: 10, font: { size: 10 } } }
-      },
-      plugins: { legend: { display: true, position: 'top', labels: { boxWidth: 12, font: { size: 11 } } } }
-    }
+    const d = document.createElement('div');
+    d.className = 'chart';
+    d.innerHTML = `
+      <div>
+         <span class="chart-title">${m.t}</span>
+         <span class="chart-sensor">${m.s}</span>
+      </div>
+      <iframe src="${src}" style="height:260px; width:100%; border:0; overflow:hidden;" scrolling="no"></iframe>`;
+    chartsContainer.appendChild(d);
   });
 
+  // 2. GENERAZIONE GRAFICO COMPARATIVO (CHART.JS)
+  // Controlla se abbiamo dati caricati nella variabile globale
+  if (typeof globalFeeds !== 'undefined' && globalFeeds.length > 0) {
+    
+    const dComp = document.createElement('div');
+    dComp.className = 'chart';
+    dComp.style.gridColumn = 'span 2'; // Occupa tutta la larghezza
+    dComp.innerHTML = `
+      <div>
+         <span class="chart-title">ANDAMENTO MEDIE MOBILI 24h</span>
+         <span class="chart-sensor">Comparazione PM2.5 vs PM10</span>
+      </div>
+      <div style="height:280px; width:100%; padding-top:10px;">
+        <canvas id="canvasPMCombined"></canvas>
+      </div>
+    `;
+    chartsContainer.appendChild(dComp);
+
+    // Prepariamo i dati per Chart.js
+    const labels = globalFeeds.map(f => new Date(f.created_at).toLocaleTimeString('it-IT', { hour: '2d-digit', minute: '2d-digit' }));
+    const dataPM25 = globalFeeds.map(f => Number(f.field6)); // Media mobile PM2.5
+    const dataPM10 = globalFeeds.map(f => Number(f.field7)); // Media mobile PM10
+
+    new Chart(document.getElementById('canvasPMCombined'), {
+      type: 'line',
+      data: {
+        labels: labels,
+        datasets: [
+          {
+            label: 'PM2.5 (24h)',
+            data: dataPM25,
+            borderColor: '#dc2626',
+            backgroundColor: 'rgba(220, 38, 38, 0.1)',
+            borderWidth: 2,
+            pointRadius: 0,
+            fill: true,
+            tension: 0.3
+          },
+          {
+            label: 'PM10 (24h)',
+            data: dataPM10,
+            borderColor: '#2563eb',
+            backgroundColor: 'rgba(37, 99, 235, 0.1)',
+            borderWidth: 2,
+            pointRadius: 0,
+            fill: true,
+            tension: 0.3
+          }
+        ]
+      },
+      options: {
+        responsive: true,
+        maintainAspectRatio: false,
+        scales: {
+          y: { beginAtZero: true, title: { display: true, text: 'µg/m³', font: { size: 11 } } },
+          x: { ticks: { maxTicksLimit: 12, font: { size: 10 } } }
+        },
+        plugins: {
+          legend: { display: true, position: 'top', labels: { boxWidth: 12, font: { size: 12 } } }
+        }
+      }
+    });
+  }
 }
+
 
 
 
