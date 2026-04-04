@@ -508,68 +508,94 @@ function applyDemoKPI(){
    ========================= */
 function applyKPI(feeds){
   if(!feeds.length) return;
+
+  /* Ultima misurazione disponibile */
   const last = feeds.at(-1);
 
-  // Calcolo media mobile 24h sui 48 campioni (field6=PM2.5, field7=PM10)
+  /* Calcolo medie mobili 24h (su 48 campioni da 30 min) */
+  /* field6 = PM2.5 | field7 = PM10 */
   const sum25 = feeds.reduce((acc, f) => acc + Number(f.field6 || 0), 0);
   const sum10 = feeds.reduce((acc, f) => acc + Number(f.field7 || 0), 0);
+  
   const avg25 = sum25 / feeds.length;
   const avg10 = sum10 / feeds.length;
 
+  /* Aggiornamento valori nel DOM */
   hum.textContent   = fmt1(last.field1) + ' %';
   temp.textContent  = fmt1(last.field2) + ' °C';
   press.textContent = fmt1(last.field3) + ' hPa';
-  pm1.textContent   = fmt0(last.field5) + ' µg/m³';
-  pm25.textContent  = fmt0(avg25) + ' µg/m³';
-  pm10.textContent  = fmt0(avg10) + ' µg/m³';
 
+  pm1.textContent  = fmt0(last.field5) + ' µg/m³';
+  pm25.textContent = fmt0(avg25) + ' µg/m³';
+  pm10.textContent = fmt0(avg10) + ' µg/m³';
+
+  /* Calcolo AQI basato sulle medie 24h */
   computeAQI(avg25, avg10);
 }
 
 /* =========================
    CALCOLO AQI (EEA / EPA)
    ========================= */
-function computeAQI(p25, p10) {
-  const m = mode.value;
-  let level = "Sconosciuto";
-  let color = "#9ca3af";
+function computeAQI(p25, p10){
+  const m = mode.value; 
+  let level = "";
+  let color = "";
   let aqiValText = "—";
 
-  if (m === "EEA") {
+  if(m === 'EEA'){
     aqiTitle.textContent = "AQI (EEA 24h)";
-    const v = Math.max(p25, p10);
-    if (v <= 20) { level = "Ottima"; color = "#10b981"; }
-    else if (v <= 40) { level = "Buona"; color = "#84cc16"; }
-    else if (v <= 60) { level = "Moderata"; color = "#f59e0b"; }
-    else if (v <= 100) { level = "Povera"; color = "#ef4444"; }
-    else { level = "Molto Povera"; color = "#7f1d1d"; }
     aqiVal.style.display = "none";
-  } else {
+
+    const v = Math.max(p25, p10);
+
+    if(v <= 20)      { level="Ottima"; color="#10b981" }
+    else if(v <= 40) { level="Buona";  color="#84cc16" }
+    else if(v <= 60) { level="Moderata"; color="#f59e0b" }
+    else if(v <= 100){ level="Povera"; color="#ef4444" }
+    else             { level="Molto Povera"; color="#7f1d1d" }
+  } 
+  else {
     aqiTitle.textContent = "AQI (EPA 24h)";
     aqiVal.style.display = "block";
-    // Calcolo semplificato indice EPA
-    const aqiIndex = Math.round(p25 * 2.1); 
-    aqiValText = aqiIndex;
-    if (aqiIndex <= 50) { level = "Good"; color = "#10b981"; }
-    else if (aqiIndex <= 100) { level = "Moderate"; color = "#f59e0b"; }
-    else if (aqiIndex <= 150) { level = "Unhealthy (SG)"; color = "#f97316"; }
-    else { level = "Unhealthy"; color = "#ef4444"; }
+
+    const aqi25 = calcEPA(p25, 'pm25');
+    const aqi10 = calcEPA(p10, 'pm10');
+    const v = Math.max(aqi25, aqi10);
+    aqiValText = v;
+
+    if(v <= 50)       { level="Good"; color="#10b981" }
+    else if(v <= 100) { level="Moderate"; color="#f59e0b" }
+    else if(v <= 150) { level="Unhealthy (SG)"; color="#f97316" }
+    else if(v <= 200) { level="Unhealthy"; color="#ef4444" }
+    else if(v <= 300) { level="Very Unhealthy"; color="#7f1d1d" }
+    else              { level="Hazardous"; color="#4c0519" }
   }
 
   aqiVal.textContent = aqiValText;
   aqiBadge.textContent = level;
-  aqiBadge.style.backgroundColor = color;
+  aqiBadge.style.background = color;
+}
+
+/* Funzione di supporto per calcolo EPA (breakpoint standard) */
+function calcEPA(v, type){
+  if(v < 0) return 0;
+  const sets = {
+    pm25: [
+      [0, 12, 0, 50], [12.1, 35.4, 51, 100], [35.5, 55.4, 101, 150],
+      [55.5, 150.4, 151, 200], [150.5, 250.4, 201, 300], [250.5, 500, 301, 500]
+    ],
+    pm10: [
+      [0, 54, 0, 50], [55, 154, 51, 100], [155, 254, 101, 150],
+      [255, 354, 151, 200], [355, 424, 201, 300], [425, 600, 301, 500]
+    ]
+  };
+  const b = sets[type].find(s => v <= s[1]) || sets[type].at(-1);
+  return Math.round(((b[3]-b[2])/(b[1]-b[0]))*(v-b[0])+b[2]);
 }
 
 /* =========================
-   SELEZIONE E RENDERING GRAFICI
+   RENDERING GRAFICI
    ========================= */
-function selectAll(v){
-  document.querySelectorAll('aside input[data-id]').forEach(c => c.checked = v);
-  renderCharts();
-  savePreferences();
-}
-
 function renderCharts(){
   const chartsContainer = document.getElementById('charts');
   chartsContainer.innerHTML = '';
@@ -583,48 +609,48 @@ function renderCharts(){
     ' | Fine: ' +
     new Date(end.value).toLocaleDateString('it-IT');
 
-  /* Metadati dei grafici inclusa la nuova entry "comparison" */
+  /* DEFINIZIONE COMPLETA DEI METADATI (TUTTI I GRAFICI) */
   const meta = {
-    1:{t:'UMIDITÀ',s:'BME680',min:0,max:100,u:'%'},
-    2:{t:'TEMPERATURA',s:'BME680',min:-10,max:60,u:'°C'},
-    3:{t:'PRESSIONE',s:'BME680',min:900,max:1100,u:'hPa'},
-    5:{t:'PM1',s:'PMS5003',min:0,max:100,u:'µg/m³'},
-    6:{t:'PM2.5',s:'PMS5003',min:0,max:100,u:'µg/m³'},
-    7:{t:'PM10',s:'PMS5003',min:0,max:100,u:'µg/m³'},
-    'comparison':{t:'CONFRONTO PM2.5 / PM10',s:'PMS5003',min:0,max:100,u:'µg/m³'}
+    1: { t:'UMIDITÀ', s:'BME680', min:0, max:100, u:'%', c:'%233b82f6' },
+    2: { t:'TEMPERATURA', s:'BME680', min:-10, max:50, u:'°C', c:'%23ef4444' },
+    3: { t:'PRESSIONE', s:'BME680', min:950, max:1050, u:'hPa', c:'%238b5cf6' },
+    5: { t:'PM1', s:'PMS5003', min:0, max:100, u:'µg/m³', c:'%2310b981' },
+    6: { t:'PM2.5', s:'PMS5003', min:0, max:100, u:'µg/m³', c:'%23f59e0b' },
+    7: { t:'PM10', s:'PMS5003', min:0, max:100, u:'µg/m³', c:'%23dc2626' },
+    'comparison': { t:'CONFRONTO PM2.5 / PM10', s:'PMS5003', min:0, max:100, u:'µg/m³' }
   };
 
   document.querySelectorAll('aside input[data-id]:checked').forEach(ch => {
-      const id = ch.dataset.id;
-      const m = meta[id];
-      if(!m) return;
+    const id = ch.dataset.id;
+    const m = meta[id];
+    if(!m) return;
+
+    let src = "";
+    if(id === 'comparison'){
+      /* GRAFICO DOPPIO PM2.5 + PM10 */
+      src = `https://thingspeak.com{CHANNEL}/charts/6?bgcolor=%23ffffff&type=line&dynamic=true&field2=7&color=%23f59e0b&color2=%23dc2626&yaxis=${encodeURIComponent(m.u)}&yaxismin=${m.min}&yaxismax=${m.max}&start=${start.value}%2000:00:00&end=${end.value}%2023:59:59&title=&noheader=true`;
+    } else {
+      /* GRAFICI SINGOLI */
+      src = `https://thingspeak.com{CHANNEL}/charts/${id}?bgcolor=%23ffffff&type=line&color=${m.c}&yaxis=${encodeURIComponent(m.u)}&yaxismin=${m.min}&yaxismax=${m.max}&start=${start.value}%2000:00:00&end=${end.value}%2023:59:59&title=&noheader=true`;
+    }
+
+    const d = document.createElement('div');
+    d.className = 'chart';
+    d.innerHTML = `
+      <div>
+        <span class="chart-title">${m.t}</span>
+        <span class="chart-sensor">${m.s}</span>
+      </div>
+      <iframe src="${src}" scrolling="no"></iframe>`;
     
-      let src = "";
-      if(id === 'comparison'){
-        /* Costruzione URL per grafico MULTI-FIELD (Field 6 e Field 7) */
-        src = `https://thingspeak.com{CHANNEL}/charts/6?bgcolor=%23ffffff&type=line&dynamic=true&field2=7&color=%23dc2626&color2=%230b3c5d&yaxis=${encodeURIComponent(m.u)}&yaxismin=${m.min}&yaxismax=${m.max}&start=${start.value}%2000:00:00&end=${end.value}%2023:59:59&title=&noheader=true`;
-      } else {
-        /* Costruzione URL grafico SINGOLO */
-        src = `https://thingspeak.com{CHANNEL}/charts/${id}?bgcolor=%23ffffff&type=line&color=%23dc2626&yaxis=${encodeURIComponent(m.u)}&yaxismin=${m.min}&yaxismax=${m.max}&start=${start.value}%2000:00:00&end=${end.value}%2023:59:59&title=&noheader=true`;
-      }
-
-      const d = document.createElement('div');
-      d.className = 'chart';
-      d.innerHTML =
-        `<div>
-           <span class="chart-title">${m.t}</span>
-           <span class="chart-sensor">${m.s}</span>
-         </div>
-         <iframe src="${src}" scrolling="no"></iframe>`;
-
-      chartsContainer.appendChild(d);
-    });
+    chartsContainer.appendChild(d);
+  });
 }
 
 /* =========================
-   EVENT LISTENER
+   EVENTI E INIZIALIZZAZIONE
    ========================= */
-document.querySelectorAll('aside input[data-id]').forEach(cb=>{
+document.querySelectorAll('aside input[data-id]').forEach(cb => {
   cb.addEventListener('change', () => { renderCharts(); savePreferences(); });
 });
 start.addEventListener('change', () => { renderCharts(); savePreferences(); });
@@ -633,12 +659,8 @@ mode.addEventListener('change', () => { loadKPIs(); savePreferences(); });
 remember.addEventListener('change', savePreferences);
 update.addEventListener('click', () => { renderCharts(); loadKPIs(); });
 
-/* =========================
-   INIZIALIZZAZIONE
-   ========================= */
 document.addEventListener('DOMContentLoaded', () => {
   const saved = localStorage.getItem(PREF_KEY);
-
   if (saved) {
     const prefs = JSON.parse(saved);
     remember.checked = true;
@@ -655,7 +677,6 @@ document.addEventListener('DOMContentLoaded', () => {
     start.value = oggi;
     end.value = oggi;
   }
-
   loadKPIs();
   renderCharts();
 });
