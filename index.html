@@ -265,12 +265,14 @@
 
     /* Singolo grafico */
     .chart{
-      background:var(--card);
-      border-radius:var(--radius);
-      box-shadow:var(--shadow);
-      padding:10px
-    }
-
+  background:var(--card);
+  border-radius:var(--radius);
+  box-shadow:var(--shadow);
+  padding:10px;
+  height: 320px; /* ✅ AGGIUNTA */
+  display: flex;
+  flex-direction: column;
+}
     .chart-title{
       font-weight:700;
       font-size:.85rem
