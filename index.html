@@ -884,9 +884,41 @@ if(comboSelected){
         data:{
           labels,
           datasets:[
-            {label:'PM2.5 (24h)',data:pm25,tension:0.3},
-            {label:'PM10 (24h)',data:pm10,tension:0.3}
-          ]
+  {
+    label:'PM2.5 (24h)',
+    data:pm25,
+    tension:0.3,
+    borderWidth:2
+  },
+  {
+    label:'PM10 (24h)',
+    data:pm10,
+    tension:0.3,
+    borderWidth:2
+  },
+
+  // =========================
+  // ✅ SOGLIA UE PM2.5 (25)
+  // =========================
+  {
+    label:'Soglia UE PM2.5 (25)',
+    data: labels.map(()=>25),
+    borderDash:[5,5],
+    borderWidth:1,
+    pointRadius:0
+  },
+
+  // =========================
+  // ✅ SOGLIA UE PM10 (50)
+  // =========================
+  {
+    label:'Soglia UE PM10 (50)',
+    data: labels.map(()=>50),
+    borderDash:[5,5],
+    borderWidth:1,
+    pointRadius:0
+  }
+]
         },
         options:{
           responsive:true,
