@@ -299,6 +299,8 @@
       color:var(--muted)
     }
   </style>
+  <script src="https://jsdelivr.net"></script>
+
 </head>
 
 <!-- =========================
@@ -814,34 +816,63 @@ const src =
 
       chartsContainer.appendChild(d);
     });
-  
-    /* === AGGIUNTA GRAFICO COMPARATIVO PM2.5 + PM10 === */
-  // Recuperiamo gli ID dei grafici attualmente selezionati
-  const activeIds = [...document.querySelectorAll('aside input[data-id]:checked')].map(ch => ch.dataset.id);
+    /* === NUOVO GRAFICO COMPARATIVO MEDIE 24H (PM2.5 vs PM10) === */
+  // Creiamo il contenitore per il grafico
+  const dComp = document.createElement('div');
+  dComp.className = 'chart';
+  dComp.style.gridColumn = 'span 2'; // Occupa tutta la larghezza
+  dComp.innerHTML = `
+    <div>
+       <span class="chart-title">ANDAMENTO MEDIE MOBILI 24h</span>
+       <span class="chart-sensor">Calcolo basato su dati storici</span>
+    </div>
+    <canvas id="canvasPMCombined" style="max-height:260px; width:100%;"></canvas>
+  `;
+  chartsContainer.appendChild(dComp);
 
-  // Se sia il field 6 (PM2.5) che il field 7 (PM10) sono attivi, crea il grafico unico
-  if(activeIds.includes('6') && activeIds.includes('7')){
-      // URL speciale che carica il field 6 come principale e aggiunge il field 7 (field2=7)
-      const srcCombined = "https://thingspeak.com" + CHANNEL +
-        "/charts/6?bgcolor=%23ffffff&type=line&color=%23dc2626&field2=7" + 
-        "&dynamic=true&results=60&title=CONFRONTO%20PM2.5%20vs%20PM10" +
-        "&yaxis=µg/m³&start=" + start.value + "%2000:00:00" +
-        "&end=" + end.value + "%2023:59:59&noheader=true";
+  // Recuperiamo i dati che hai già caricato per le KPI
+  // Nota: Assicurati che 'feeds' sia accessibile o passalo come argomento
+  const labels = feeds.map(f => new Date(f.created_at).toLocaleTimeString('it-IT', {hour: '2d-digit', minute:'2d-digit'}));
+  const dataPM25 = feeds.map(f => Number(f.field6)); // Sostituisci field6 con il tuo campo PM2.5
+  const dataPM10 = feeds.map(f => Number(f.field7)); // Sostituisci field7 con il tuo campo PM10
 
-      const dComp = document.createElement('div');
-      dComp.className = 'chart';
-      // Applichiamo lo stile per farlo occupare due colonne nella tua griglia
-      dComp.style.gridColumn = 'span 2'; 
-      
-      dComp.innerHTML = `
-        <div>
-           <span class="chart-title">COMPARAZIONE PM2.5 vs PM10</span>
-           <span class="chart-sensor">PMS5003 (Dati combinati)</span>
-         </div>
-         <iframe src="${srcCombined}" style="height:260px; width:100%; border:0; overflow:hidden;" scrolling="no"></iframe>`;
-
-      chartsContainer.appendChild(dComp);
-  }
+  new Chart(document.getElementById('canvasPMCombined'), {
+    type: 'line',
+    data: {
+      labels: labels,
+      datasets: [
+        {
+          label: 'PM2.5 (24h)',
+          data: dataPM25,
+          borderColor: '#dc2626',
+          backgroundColor: 'rgba(220, 38, 38, 0.1)',
+          borderWidth: 2,
+          pointRadius: 0, // Rende la linea pulita come quelle di ThingSpeak
+          fill: true,
+          tension: 0.3
+        },
+        {
+          label: 'PM10 (24h)',
+          data: dataPM10,
+          borderColor: '#2563eb',
+          backgroundColor: 'rgba(37, 99, 235, 0.1)',
+          borderWidth: 2,
+          pointRadius: 0,
+          fill: true,
+          tension: 0.3
+        }
+      ]
+    },
+    options: {
+      responsive: true,
+      maintainAspectRatio: false,
+      scales: {
+        y: { beginAtZero: true, title: { display: true, text: 'µg/m³', font: { size: 10 } } },
+        x: { ticks: { maxTicksLimit: 10, font: { size: 10 } } }
+      },
+      plugins: { legend: { display: true, position: 'top', labels: { boxWidth: 12, font: { size: 11 } } } }
+    }
+  });
 
 }
 
