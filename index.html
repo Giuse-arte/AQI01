@@ -576,7 +576,7 @@ function savePreferences(){
 async function loadKPIs(){
   try{
     const r = await fetch(
-      `https://api.thingspeak.com/channels/${CHANNEL}/feeds.json?results=48`
+      `https://api.thingspeak.com/channels/${CHANNEL}/feeds.json?start=${start.value}%2000:00:00&end=${end.value}%2023:59:59`
     );
 
     /* Se risposta HTTP non OK → errore */
