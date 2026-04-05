@@ -804,7 +804,7 @@ if(ch.dataset.id === "6"){
 
     try{
       const r = await fetch(
-        `https://api.thingspeak.com/channels/${CHANNEL}/feeds.json?start=${start.value}%2000:00:00&end=${end.value}%2023:59:59&results=8000`
+        `https://api.thingspeak.com/channels/${CHANNEL}/feeds.json?results=48`
       );
 
       if(!r.ok) throw new Error();
@@ -817,6 +817,10 @@ if(ch.dataset.id === "6"){
       const labels = feeds.map(f => new Date(f.created_at));
       const data = feeds.map(f => Number(f.field6));
 
+      // 📅 data iniziale e finale
+      const startDate = labels[0];
+      const endDate = labels[labels.length - 1];
+
       const d = document.createElement('div');
       d.className = 'chart';
 
@@ -824,6 +828,9 @@ if(ch.dataset.id === "6"){
         <div>
           <span class="chart-title">PM2.5 (µg/m³)</span>
           <span class="chart-sensor">PMS5003</span>
+          <div style="font-size:0.7rem;color:#6b7280;">
+            ${startDate.toLocaleDateString('it-IT')} – ${endDate.toLocaleDateString('it-IT')}
+          </div>
         </div>
         <canvas id="chart_pm25" style="height:260px;"></canvas>
       `;
@@ -848,9 +855,7 @@ if(ch.dataset.id === "6"){
           maintainAspectRatio:false,
 
           plugins:{
-            legend:{
-              display:false // ❌ rimuove rettangolino + PM2.5
-            }
+            legend:{ display:false }
           },
 
           scales:{
@@ -858,20 +863,20 @@ if(ch.dataset.id === "6"){
               type:'time',
               time:{
                 unit:'hour',
-                stepSize:6, // ⏱ ogni 6 ore
+                stepSize:1, // 🔲 griglia ogni ora
                 displayFormats:{
                   hour:'HH:mm'
                 }
               },
               ticks:{
-                autoSkip:true,
+                stepSize:3, // 🕒 etichette ogni 3 ore
                 maxRotation:0,
                 callback: function(value){
                   const date = new Date(value);
-                  if(date.getHours() === 0){
-                    return date.toLocaleDateString('it-IT'); // 📅 mezzanotte → data
-                  }
-                  return date.toLocaleTimeString('it-IT',{hour:'2-digit',minute:'2-digit'});
+                  return date.toLocaleTimeString('it-IT',{
+                    hour:'2-digit',
+                    minute:'2-digit'
+                  });
                 }
               },
               grid:{
@@ -882,9 +887,6 @@ if(ch.dataset.id === "6"){
             y:{
               grid:{
                 display:true
-              },
-              ticks:{
-                callback: value => value // ❌ niente unità
               }
             }
           }
