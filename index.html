@@ -788,150 +788,130 @@ function renderCharts(){
     7:{t:'PM10',s:'PMS5003',min:0,max:100,u:'µg/m³'}
   };
 
-  /* Per ogni checkbox selezionato */
-  document.querySelectorAll('aside input[data-id]:checked').forEach(ch => {
-      const m = meta[ch.dataset.id];
-      if(!m) return;
-    
-/* Costruzione URL ThingSpeak senza titoli e senza header */
-const src =
-  "https://thingspeak.com/channels/" + CHANNEL +
-  "/charts/" + ch.dataset.id +
-  "?bgcolor=%23ffffff" +
-  "&type=line" +
-  "&color=%23dc2626" +
-  "&yaxis=" + encodeURIComponent(m.u) +
-  "&yaxismin=" + m.min +
-  "&yaxismax=" + m.max +
-  "&start=" + start.value + "%2000:00:00" +
-  "&end=" + end.value + "%2023:59:59" +
-  "&title=" +
-  "&noheader=true";
+document.querySelectorAll('aside input[data-id]:checked').forEach(ch => {
 
-      /* Costruzione card grafico */
-      const d = document.createElement('div');
-      d.className = 'chart';
-      d.innerHTML =
-        `<div>
-           <span class="chart-title">${m.t}</span>
-           <span class="chart-sensor">${m.s}</span>
-         </div>
-         <iframe src="${src}" style="height:260px; width:100%; border:0; overflow:hidden;" scrolling="no"></iframe>`;
+  // =========================
+  // 🔥 GRAFICO COMBINATO
+  // =========================
+  if(ch.dataset.id === "combo"){
 
-      chartsContainer.appendChild(d);
-    });
+    (async function(){
+
+      try{
+        const r = await fetch(
+          `https://api.thingspeak.com/channels/${CHANNEL}/feeds.json?results=48`
+        );
+
+        if(!r.ok) throw new Error();
+
+        const j = await r.json();
+        const feeds = j.feeds || [];
+
+        if(!feeds.length) return;
+
+        const avgSeries = (field) => {
+          const out = [];
+          for(let i=0;i<feeds.length;i++){
+            const slice = feeds.slice(Math.max(0,i-47), i+1);
+            const avg = slice.reduce((s,x)=>s + Number(x[field]||0),0)/slice.length;
+            out.push(avg);
+          }
+          return out;
+        };
+
+        const labels = feeds.map(f =>
+          new Date(f.created_at).toLocaleTimeString('it-IT',{
+            hour:'2-digit', minute:'2-digit'
+          })
+        );
+
+        const pm25 = avgSeries('field6');
+        const pm10 = avgSeries('field7');
+
+        const d = document.createElement('div');
+        d.className = 'chart';
+
+        d.innerHTML = `
+          <div>
+            <span class="chart-title">PM2.5 (24h) + PM10 (24h)</span>
+            <span class="chart-sensor">PMS5003</span>
+          </div>
+          <canvas id="pmCombined" style="height:260px; max-height:260px;"></canvas>
+        `;
+
+        chartsContainer.appendChild(d);
+
+        const ctx = document.getElementById('pmCombined').getContext('2d');
+
+        if(window.pmChart) window.pmChart.destroy();
+
+        window.pmChart = new Chart(ctx,{
+          type:'line',
+          data:{
+            labels,
+            datasets:[
+              {label:'PM2.5 (24h)',data:pm25,tension:0.3},
+              {label:'PM10 (24h)',data:pm10,tension:0.3},
+              {label:'Soglia UE PM2.5',data:labels.map(()=>25),borderDash:[5,5],pointRadius:0},
+              {label:'Soglia UE PM10',data:labels.map(()=>50),borderDash:[5,5],pointRadius:0}
+            ]
+          },
+          options:{
+            responsive:true,
+            maintainAspectRatio:false
+          }
+        });
+
+      }catch(e){
+        console.error("Errore grafico combinato:", e);
+      }
+
+    })();
+
+    return; // 🔥 IMPORTANTISSIMO: evita che passi al codice iframe
+  }
+
+  // =========================
+  // GRAFICI NORMALI (IFRAME)
+  // =========================
+
+  const m = meta[ch.dataset.id];
+  if(!m) return;
+
+  const src =
+    "https://thingspeak.com/channels/" + CHANNEL +
+    "/charts/" + ch.dataset.id +
+    "?bgcolor=%23ffffff" +
+    "&type=line" +
+    "&color=%23dc2626" +
+    "&yaxis=" + encodeURIComponent(m.u) +
+    "&yaxismin=" + m.min +
+    "&yaxismax=" + m.max +
+    "&start=" + start.value + "%2000:00:00" +
+    "&end=" + end.value + "%2023:59:59" +
+    "&title=" +
+    "&noheader=true";
+
+  const d = document.createElement('div');
+  d.className = 'chart';
+
+  d.innerHTML =
+    `<div>
+       <span class="chart-title">${m.t}</span>
+       <span class="chart-sensor">${m.s}</span>
+     </div>
+     <iframe src="${src}" style="height:260px;"></iframe>`;
+
+  chartsContainer.appendChild(d);
+}););
 
   // =========================
 // GRAFICO COMBINATO SE SELEZIONATO
 // =========================
 
-const comboSelected = document.querySelector('input[data-id="combo"]')?.checked;
+const comboCheckbox = document.querySelector('aside input[data-id="combo"]');
 
-if(comboSelected){
 
-  (async function(){
-
-    try{
-      const r = await fetch(
-        `https://api.thingspeak.com/channels/${CHANNEL}/feeds.json?results=48`
-      );
-
-      if(!r.ok) throw new Error();
-
-      const j = await r.json();
-      const feeds = j.feeds || [];
-
-      if(!feeds.length) return;
-
-      const avgSeries = (field) => {
-        const out = [];
-        for(let i=0;i<feeds.length;i++){
-          const slice = feeds.slice(Math.max(0,i-47), i+1);
-          const avg = slice.reduce((s,x)=>s + Number(x[field]||0),0)/slice.length;
-          out.push(avg);
-        }
-        return out;
-      };
-
-      const labels = feeds.map(f =>
-        new Date(f.created_at).toLocaleTimeString('it-IT',{
-          hour:'2-digit', minute:'2-digit'
-        })
-      );
-
-      const pm25 = avgSeries('field6');
-      const pm10 = avgSeries('field7');
-
-      const d = document.createElement('div');
-      d.className = 'chart';
-
-      d.innerHTML = `
-        <div>
-          <span class="chart-title">PM2.5 (24h) + PM10 (24h)</span>
-          <span class="chart-sensor">PMS5003</span>
-        </div>
-        <canvas id="pmCombined" style="height:260px; max-height:260px;"></canvas>
-      `;
-
-      chartsContainer.appendChild(d);
-
-      const ctx = document.getElementById('pmCombined').getContext('2d');
-
-      if(window.pmChart) window.pmChart.destroy();
-
-      window.pmChart = new Chart(ctx,{
-        type:'line',
-        data:{
-          labels,
-          datasets:[
-  {
-    label:'PM2.5 (24h)',
-    data:pm25,
-    tension:0.3,
-    borderWidth:2
-  },
-  {
-    label:'PM10 (24h)',
-    data:pm10,
-    tension:0.3,
-    borderWidth:2
-  },
-
-  // =========================
-  // ✅ SOGLIA UE PM2.5 (25)
-  // =========================
-  {
-    label:'Soglia UE PM2.5 (25)',
-    data: labels.map(()=>25),
-    borderDash:[5,5],
-    borderWidth:1,
-    pointRadius:0
-  },
-
-  // =========================
-  // ✅ SOGLIA UE PM10 (50)
-  // =========================
-  {
-    label:'Soglia UE PM10 (50)',
-    data: labels.map(()=>50),
-    borderDash:[5,5],
-    borderWidth:1,
-    pointRadius:0
-  }
-]
-        },
-        options:{
-          responsive:true,
-          maintainAspectRatio:false
-        }
-      });
-
-    }catch(e){
-      console.error("Errore grafico combinato:", e);
-    }
-
-  })();
-}
 
   // =========================
 // ✅ GRAFICO COMBINATO PM2.5 + PM10 (24h)
