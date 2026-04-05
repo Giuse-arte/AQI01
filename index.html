@@ -798,18 +798,19 @@ function renderCharts(){
     if(!m) return;
 
     const src =
-      "https://thingspeak.com/channels/" + CHANNEL +
-      "/charts/" + ch.dataset.id +
-      "?bgcolor=%23ffffff" +
-      "&type=line" +
-      "&color=%23dc2626" +
-      "&yaxis=" + encodeURIComponent(m.u) +
-      "&yaxismin=" + m.min +
-      "&yaxismax=" + m.max +
-      "&start=" + start.value + "%2000:00:00" +
-      "&end=" + end.value + "%2023:59:59" +
-      "&title=" +
-      "&noheader=true";
+  "https://thingspeak.com/channels/" + CHANNEL +
+  "/charts/" + ch.dataset.id +
+  "?bgcolor=%23ffffff" +
+  "&type=line" +
+  "&color=%23dc2626" +
+  "&yaxis=" + encodeURIComponent(m.u) +
+  "&yaxismin=" + m.min +
+  "&yaxismax=" + m.max +
+  "&start=" + start.value + "%2000:00:00" +
+  "&end=" + end.value + "%2023:59:59" +
+  "&days=0" +  // 🔥 FONDAMENTALE
+  "&title=" +
+  "&noheader=true";
 
     const d = document.createElement('div');
     d.className = 'chart';
