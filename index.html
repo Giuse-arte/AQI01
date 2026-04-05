@@ -868,11 +868,11 @@ document.querySelectorAll('aside input[data-id]:checked').forEach(ch => {
 
     })();
 
-    return; // 🔥 IMPORTANTISSIMO: evita che passi al codice iframe
+    return; // 👉 fondamentale
   }
 
   // =========================
-  // GRAFICI NORMALI (IFRAME)
+  // GRAFICI NORMALI
   // =========================
 
   const m = meta[ch.dataset.id];
@@ -903,7 +903,8 @@ document.querySelectorAll('aside input[data-id]:checked').forEach(ch => {
      <iframe src="${src}" style="height:260px;"></iframe>`;
 
   chartsContainer.appendChild(d);
-}););
+
+});
 
   // =========================
 // GRAFICO COMBINATO SE SELEZIONATO
