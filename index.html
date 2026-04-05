@@ -827,9 +827,6 @@ if(ch.dataset.id === "6"){
         <div>
           <span class="chart-title">PM2.5 (µg/m³)</span>
           <span class="chart-sensor">PMS5003</span>
-          <div style="font-size:0.7rem;color:#6b7280;">
-            ${startDate.toLocaleDateString('it-IT')} – ${endDate.toLocaleDateString('it-IT')}
-          </div>
         </div>
         <canvas id="chart_pm25" style="height:260px;"></canvas>
       `;
@@ -859,29 +856,44 @@ if(ch.dataset.id === "6"){
 
           scales:{
             x:{
-              type:'time',
-              time:{
-                unit:'hour'
-              },
-              ticks:{
-                stepSize:1,
-                callback: function(value){
-                  const date = new Date(value);
+  type:'time',
 
-                  if(date.getHours() % 3 === 0){
-                    return date.toLocaleTimeString('it-IT',{
-                      hour:'2-digit',
-                      minute:'2-digit'
-                    });
-                  }
-                  return '';
-                },
-                maxRotation:0
-              },
-              grid:{
-                display:true
-              }
-            },
+  time:{
+    unit:'hour'
+  },
+
+  ticks:{
+    stepSize:1,
+    callback: function(value){
+      const date = new Date(value);
+
+      // 📅 a mezzanotte → mostra DATA
+      if(date.getHours() === 0){
+        return date.toLocaleDateString('it-IT');
+      }
+
+      // 🕒 ogni 3 ore → mostra ora
+      if(date.getHours() % 3 === 0){
+        return date.toLocaleTimeString('it-IT',{
+          hour:'2-digit',
+          minute:'2-digit'
+        });
+      }
+
+      return '';
+    },
+    maxRotation:0
+  },
+
+  title:{
+    display:true,
+    text:'Time' // ✅ etichetta asse
+  },
+
+  grid:{
+    display:true
+  }
+},
 
             y:{
               beginAtZero:true,
