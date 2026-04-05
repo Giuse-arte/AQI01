@@ -859,14 +859,33 @@ if(ch.dataset.id === "6"){
           },
 
           scales:{
-            x:{
-              type:'time',
-              time:{
-                unit:'hour',
-                stepSize:1, // 🔲 griglia ogni ora
-                displayFormats:{
-                  hour:'HH:mm'
-                }
+           x:{
+  type:'time',
+
+  time:{
+    unit:'hour'
+  },
+
+  ticks:{
+    stepSize:1,
+    callback: function(value){
+      const date = new Date(value);
+
+      if(date.getHours() % 3 === 0){
+        return date.toLocaleTimeString('it-IT',{
+          hour:'2-digit',
+          minute:'2-digit'
+        });
+      }
+      return '';
+    },
+    maxRotation:0
+  },
+
+  grid:{
+    display:true
+  }
+}
               },
               ticks:{
                 stepSize:3, // 🕒 etichette ogni 3 ore
