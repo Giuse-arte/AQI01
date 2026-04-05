@@ -813,10 +813,7 @@ if(ch.dataset.id === "6"){
 
       if(!feeds.length) return;
 
-      const labels = feeds.map(f =>
-        new Date(f.created_at).toLocaleString('it-IT')
-      );
-
+      const labels = feeds.map(f => new Date(f.created_at));
       const data = feeds.map(f => Number(f.field6));
 
       const d = document.createElement('div');
@@ -824,10 +821,10 @@ if(ch.dataset.id === "6"){
 
       d.innerHTML = `
         <div>
-          <span class="chart-title">PM2.5</span>
+          <span class="chart-title">PM2.5 (µg/m³)</span>
           <span class="chart-sensor">PMS5003</span>
         </div>
-        <canvas id="chart_pm25"></canvas>
+        <canvas id="chart_pm25" style="height:260px;"></canvas>
       `;
 
       chartsContainer.appendChild(d);
@@ -839,28 +836,54 @@ if(ch.dataset.id === "6"){
         data:{
           labels,
           datasets:[{
-            label:'PM2.5',
-            data:data,
-            tension:0.3,
-            borderWidth:2
+            data: data,
+            tension: 0.3,
+            borderWidth: 2,
+            pointRadius: 2
           }]
         },
         options:{
           responsive:true,
           maintainAspectRatio:false,
+
+          plugins:{
+            legend:{
+              display:false // ❌ rimuove rettangolino + PM2.5
+            }
+          },
+
           scales:{
             x:{
+              type:'time',
+              time:{
+                unit:'hour',
+                stepSize:6, // ⏱ ogni 6 ore
+                displayFormats:{
+                  hour:'HH:mm'
+                }
+              },
+              ticks:{
+                autoSkip:true,
+                maxRotation:0,
+                callback: function(value){
+                  const date = new Date(value);
+                  if(date.getHours() === 0){
+                    return date.toLocaleDateString('it-IT'); // 📅 mezzanotte → data
+                  }
+                  return date.toLocaleTimeString('it-IT',{hour:'2-digit',minute:'2-digit'});
+                }
+              },
               grid:{
                 display:true
               }
             },
+
             y:{
               grid:{
                 display:true
               },
-              title:{
-                display:true,
-                text:'µg/m³'
+              ticks:{
+                callback: value => value // ❌ niente unità
               }
             }
           }
@@ -873,7 +896,7 @@ if(ch.dataset.id === "6"){
 
   })();
 
-  return; // 👉 evita iframe
+  return;
 }
     const m = meta[ch.dataset.id];
     if(!m) return;
