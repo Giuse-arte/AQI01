@@ -796,7 +796,7 @@ function renderCharts(){
   document.querySelectorAll('aside input[data-id]:checked').forEach(ch => {
 
 // =========================
-// PM2.5 con Chart.js (nuovo)
+// PM2.5 con Chart.js (FIX)
 // =========================
 if(ch.dataset.id === "6"){
 
@@ -817,7 +817,6 @@ if(ch.dataset.id === "6"){
       const labels = feeds.map(f => new Date(f.created_at));
       const data = feeds.map(f => Number(f.field6));
 
-      // 📅 data iniziale e finale
       const startDate = labels[0];
       const endDate = labels[labels.length - 1];
 
@@ -859,44 +858,25 @@ if(ch.dataset.id === "6"){
           },
 
           scales:{
-           x:{
-  type:'time',
-
-  time:{
-    unit:'hour'
-  },
-
-  ticks:{
-    stepSize:1,
-    callback: function(value){
-      const date = new Date(value);
-
-      if(date.getHours() % 3 === 0){
-        return date.toLocaleTimeString('it-IT',{
-          hour:'2-digit',
-          minute:'2-digit'
-        });
-      }
-      return '';
-    },
-    maxRotation:0
-  },
-
-  grid:{
-    display:true
-  }
-}
+            x:{
+              type:'time',
+              time:{
+                unit:'hour'
               },
               ticks:{
-                stepSize:3, // 🕒 etichette ogni 3 ore
-                maxRotation:0,
+                stepSize:1,
                 callback: function(value){
                   const date = new Date(value);
-                  return date.toLocaleTimeString('it-IT',{
-                    hour:'2-digit',
-                    minute:'2-digit'
-                  });
-                }
+
+                  if(date.getHours() % 3 === 0){
+                    return date.toLocaleTimeString('it-IT',{
+                      hour:'2-digit',
+                      minute:'2-digit'
+                    });
+                  }
+                  return '';
+                },
+                maxRotation:0
               },
               grid:{
                 display:true
@@ -904,6 +884,7 @@ if(ch.dataset.id === "6"){
             },
 
             y:{
+              beginAtZero:true,
               grid:{
                 display:true
               }
