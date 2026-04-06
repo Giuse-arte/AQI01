@@ -322,7 +322,10 @@
 
   <!-- Filtri temporali e standard AQI -->
   <div class="filters">
-
+    
+  <label>Giorno</label>
+  <input type="date" id="day">
+    
   <label>Modalità</label>
   <select id="viewMode">
     <option value="live">Ultime 24 ore</option>
@@ -565,8 +568,7 @@ function savePreferences(){
   // oggetto preferenze completo
   const prefs = {
     charts: selectedCharts,
-    start: start.value,
-    end: end.value,
+    day.value
     mode: mode.value
   };
 
