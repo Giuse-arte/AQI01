@@ -799,6 +799,9 @@ function selectAll(v){
    RENDERING GRAFICI
    ========================= */
 
+/* =========================
+   RENDERING GRAFICI (CORRETTO)
+   ========================= */
 async function renderCharts() {
   const chartsContainer = document.getElementById('charts');
   chartsContainer.innerHTML = '';
@@ -807,7 +810,6 @@ async function renderCharts() {
   const sStr = start.toISOString().slice(0, 19).replace('T', ' ');
   const eStr = end.toISOString().slice(0, 19).replace('T', ' ');
 
-  // Metadati per configurare ogni sensore
   const meta = {
     1: { t: 'UMIDITÀ', s: 'BME680', u: '%', color: '#3b82f6' },
     2: { t: 'TEMPERATURA', s: 'BME680', u: '°C', color: '#ef4444' },
@@ -822,16 +824,14 @@ async function renderCharts() {
   for (const ch of selected) {
     const id = ch.dataset.id;
     
-    // Gestione Grafico Combinato (caso speciale)
     if (id === "combo") {
-      renderComboChart(chartsContainer); // La funzione che abbiamo già
+      if (typeof renderComboChart === "function") renderComboChart(chartsContainer);
       continue;
     }
 
     const config = meta[id];
     if (!config) continue;
 
-    // 1. Crea l'elemento nel DOM
     const d = document.createElement('div');
     d.className = 'chart';
     d.innerHTML = `
@@ -843,9 +843,9 @@ async function renderCharts() {
     `;
     chartsContainer.appendChild(d);
 
-    // 2. Scarica i dati e crea il grafico
     try {
-      const r = await fetch(`https://thingspeak.com{CHANNEL}/fields/${id}.json?start=${sStr}&end=${eStr}&results=8000`);
+      // URL CORRETTO: ://thingspeak.com...
+      const r = await fetch(`https://://thingspeak.com${CHANNEL}/fields/${id}.json?start=${sStr}&end=${eStr}&results=8000`);
       const j = await r.json();
       const feeds = j.feeds || [];
 
@@ -870,17 +870,11 @@ async function renderCharts() {
           scales: {
             x: {
               type: 'time',
-              time: { 
-                unit: 'hour',
-                displayFormats: { hour: 'HH:mm' }
-              },
+              time: { unit: 'hour', displayFormats: { hour: 'HH:mm' } },
               grid: { color: '#e5e7eb' },
               ticks: { maxRotation: 0, autoSkip: true, maxTicksLimit: 12 }
             },
-            y: { 
-              beginAtZero: false,
-              grid: { color: '#e5e7eb' }
-            }
+            y: { beginAtZero: false, grid: { color: '#e5e7eb' } }
           }
         }
       });
@@ -888,93 +882,65 @@ async function renderCharts() {
       console.error(`Errore caricamento Field ${id}:`, e);
     }
   }
+  console.log("Fine caricamento grafici.");
 }
 
-
-
-
 /* =========================
-   EVENTI → SALVA PREFERENZE
+   EVENTI E INIZIALIZZAZIONE
    ========================= */
 
-// checkbox singoli grafici
-document.querySelectorAll('aside input[data-id]').forEach(cb=>{
+// Gestione checkbox e salvataggi
+document.querySelectorAll('aside input[data-id]').forEach(cb => {
   cb.addEventListener('change', savePreferences);
 });
 
-// date inizio / fine
-start.addEventListener('change', savePreferences);
-end.addEventListener('change', savePreferences);
-
-// standard AQI
-mode.addEventListener('change', savePreferences);
-
-// checkbox "Ricorda preferenze"
-remember.addEventListener('change', savePreferences);
-
-/* =========================
-   EVENT LISTENER
-   ========================= */
-
-/* Aggiorna grafici + KPI */
-update.addEventListener('click', ()=>{
-  renderCharts();
-  loadKPIs();
+[start, end, mode, remember].forEach(el => {
+  el.addEventListener('change', savePreferences);
 });
 
-/* Cambio standard AQI */
+// Listener pulsante Aggiorna (reso ASYNC)
+update.addEventListener('click', async () => {
+  const originalText = update.textContent;
+  update.textContent = "Caricamento...";
+  update.disabled = true;
+
+  await renderCharts();
+  await loadKPIs();
+
+  update.textContent = originalText;
+  update.disabled = false;
+});
+
 mode.addEventListener('change', loadKPIs);
 
 document.getElementById('viewMode').addEventListener('change', () => {
-
-  const mode = document.getElementById('viewMode').value;
-
-  if(mode === "live"){
-    start.disabled = true;
-    end.disabled = true;
-  } else {
-    start.disabled = false;
-    end.disabled = false;
-  }
-
+  const vMode = document.getElementById('viewMode').value;
+  start.disabled = (vMode === "live");
+  end.disabled = (vMode === "live");
 });
-  
-/* =========================
-   INIZIALIZZAZIONE
-   ========================= */
 
-  /* =========================
-   RIPRISTINO PREFERENZE
-   ========================= */
 document.addEventListener('DOMContentLoaded', () => {
-  // 1. Cerchiamo se ci sono preferenze salvate
   const saved = localStorage.getItem('aqi_dashboard_preferences');
-
   if (saved) {
     const prefs = JSON.parse(saved);
-    
-    // Ripristiniamo la spunta su "Ricorda preferenze"
     remember.checked = true;
-
-    // Ripristiniamo Date e Standard
     if (prefs.start) start.value = prefs.start;
     if (prefs.end) end.value = prefs.end;
     if (prefs.mode) mode.value = prefs.mode;
-
-    // Ripristiniamo i grafici selezionati
     if (Array.isArray(prefs.charts)) {
       document.querySelectorAll('aside input[data-id]').forEach(cb => {
         cb.checked = prefs.charts.includes(cb.dataset.id);
       });
     }
   } else {
-    // 2. SOLO SE NON CI SONO SALVATAGGI, mettiamo la data di oggi (2025)
     const oggi = new Date().toISOString().slice(0, 10);
     start.value = oggi;
     end.value = oggi;
   }
-
   document.getElementById('viewMode').dispatchEvent(new Event('change'));
+  loadKPIs();
+  renderCharts();
+});
 
   // 3. Ora che i campi sono pronti, carichiamo i dati
   loadKPIs();
