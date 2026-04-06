@@ -814,8 +814,34 @@ if(ch.dataset.id === "6"){
 
       if(!feeds.length) return;
 
-      const labels = feeds.map(f => new Date(f.created_at));
-      const data = feeds.map(f => Number(f.field6));
+// =========================
+// Timeline continua (24h)
+// =========================
+
+const now = new Date();
+const startTime = new Date(now.getTime() - 24 * 60 * 60 * 1000);
+
+const labels = [];
+const data = [];
+
+// crea mappa dati reali
+const dataMap = {};
+feeds.forEach(f => {
+  const d = new Date(f.created_at);
+  const key = d.getHours(); // semplificazione (per ora)
+  dataMap[key] = Number(f.field6);
+});
+
+// genera asse orario continuo
+for(let i = 0; i <= 24; i++){
+  const t = new Date(startTime.getTime() + i * 60 * 60 * 1000);
+
+  labels.push(t);
+
+  const hour = t.getHours();
+
+  data.push(dataMap[hour] ?? null); // null se manca dato
+}
 
       const startDate = labels[0];
       const endDate = labels[labels.length - 1];
