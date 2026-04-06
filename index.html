@@ -136,18 +136,25 @@ function getTimeRange(){
   return { start, end };
 }
 
-async function loadKPIs(){
+async function loadKPIs() {
   try {
     const { start, end } = getTimeRange();
-    // Formattazione data per ThingSpeak API
+    // ThingSpeak vuole le date in questo formato preciso: YYYY-MM-DD%20HH:NN:SS
     const sStr = start.toISOString().replace('T', '%20').slice(0, 19);
     const eStr = end.toISOString().replace('T', '%20').slice(0, 19);
     
-    const r = await fetch(`https://thingspeak.com{CHANNEL}/feeds.json?start=${sStr}&end=${eStr}`);
+    const url = `https://thingspeak.com{CHANNEL}/feeds.json?start=${sStr}&end=${eStr}`;
+    const r = await fetch(url);
+    if (!r.ok) throw new Error("Risposta non valida");
     const j = await r.json();
-    applyKPI(j.feeds || []);
+    
+    if (j && j.feeds) {
+      applyKPI(j.feeds);
+    } else {
+      applyDemoKPI(); // Fallback se non ci sono feed
+    }
   } catch(e) { 
-    console.error("Errore KPI:", e);
+    console.error("Errore nel caricamento KPI:", e);
     applyDemoKPI(); 
   }
 }
@@ -169,42 +176,44 @@ function applyKPI(feeds){
 
 async function renderCharts() {
   const container = document.getElementById('charts');
-  container.innerHTML = '';
-  const { start, end } = getTimeRange();
+  if (!container) return;
+  container.innerHTML = '<p style="padding:20px;">Caricamento grafici in corso...</p>';
   
+  const { start, end } = getTimeRange();
   const sStr = start.toISOString().replace('T', '%20').slice(0, 19);
   const eStr = end.toISOString().replace('T', '%20').slice(0, 19);
-  
-  const subtitle = document.getElementById('subtitle');
-  subtitle.textContent = `Periodo: ${start.toLocaleString()} - ${end.toLocaleString()}`;
 
+  // Mappa dei sensori con i colori desiderati
   const meta = { 
-    1:{t:'UMIDITÀ',c:'#3b82f6'}, 
-    2:{t:'TEMPERATURA',c:'#ef4444'}, 
-    3:{t:'PRESSIONE',c:'#8b5cf6'}, 
-    5:{t:'PM1',c:'#10b981'}, 
-    6:{t:'PM2.5',c:'#f59e0b'}, 
-    7:{t:'PM10',c:'#06b6d4'} 
+    1:{t:'UMIDITÀ',c:'#3b82f6'}, 2:{t:'TEMP.',c:'#ef4444'}, 
+    3:{t:'PRESS.',c:'#8b5cf6'}, 5:{t:'PM1',c:'#10b981'}, 
+    6:{t:'PM2.5',c:'#f59e0b'}, 7:{t:'PM10',c:'#06b6d4'} 
   };
 
   const selected = document.querySelectorAll('aside input[data-id]:checked');
+  if (selected.length === 0) {
+    container.innerHTML = '<p style="padding:20px;">Nessun grafico selezionato.</p>';
+    return;
+  }
+  
+  container.innerHTML = ''; // Pulisce il messaggio di caricamento
 
   for (const ch of selected) {
     const id = ch.dataset.id;
-    if(id === "combo") { renderComboChart(container); continue; }
+    if (id === "combo") { /* renderComboChart(container); */ continue; }
     
     const config = meta[id];
-    if(!config) continue;
+    if (!config) continue;
 
-    const d = document.createElement('div');
-    d.className = 'chart';
-    d.innerHTML = `<div><span class="chart-title">${config.t}</span></div><canvas id="chart_${id}"></canvas>`;
-    container.appendChild(d);
+    const div = document.createElement('div');
+    div.className = 'chart';
+    div.innerHTML = `<div><span class="chart-title">${config.t}</span></div><canvas id="chart_${id}"></canvas>`;
+    container.appendChild(div);
 
     try {
-      const r = await fetch(`https://thingspeak.com{CHANNEL}/fields/${id}.json?start=${sStr}&end=${eStr}&results=8000`);
-      const j = await r.json();
-      const feeds = j.feeds || [];
+      const res = await fetch(`https://thingspeak.com{CHANNEL}/fields/${id}.json?start=${sStr}&end=${eStr}`);
+      const dataJson = await res.json();
+      const feeds = dataJson.feeds || [];
 
       new Chart(document.getElementById(`chart_${id}`), {
         type: 'line',
@@ -225,19 +234,17 @@ async function renderCharts() {
           scales: {
             x: {
               type: 'time',
-              time: { 
-                unit: 'hour',
-                displayFormats: { hour: 'HH:mm' }
-              },
-              grid: { display: true },
-              ticks: { maxTicksLimit: 12 }
+              time: { unit: 'hour', displayFormats: { hour: 'HH:mm' } },
+              grid: { display: true }
             },
             y: { beginAtZero: false }
           },
           plugins: { legend: { display: false } }
         }
       });
-    } catch(e) { console.error(`Errore field ${id}:`, e); }
+    } catch(e) { 
+      console.error(`Errore caricamento grafico ${id}:`, e);
+    }
   }
 }
 
