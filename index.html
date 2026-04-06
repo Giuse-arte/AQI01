@@ -606,24 +606,29 @@ function savePreferences(){
   - Se qualcosa va storto → fallback su dati demo
 */
 async function loadKPIs(){
-  try{
+  try {
+    // Recuperiamo i riferimenti agli elementi in modo sicuro
+    const startEl = document.getElementById('start');
+    const endEl = document.getElementById('end');
+    
+    // Se i campi non sono pronti, usiamo un intervallo di default (oggi)
+    const startDate = startEl && startEl.value ? startEl.value : new Date().toISOString().slice(0, 10);
+    const endDate = endEl && endEl.value ? endEl.value : new Date().toISOString().slice(0, 10);
+
     const r = await fetch(
-      `https://api.thingspeak.com/channels/${CHANNEL}/feeds.json?start=${start.value}%2000:00:00&end=${end.value}%2023:59:59`
+      `https://thingspeak.com{CHANNEL}/feeds.json?start=${startDate}%2000:00:00&end=${endDate}%2023:59:59`
     );
 
-    /* Se risposta HTTP non OK → errore */
-    if(!r.ok) throw new Error();
+    if(!r.ok) throw new Error("Errore API");
 
-    /* Parsing JSON *
     const j = await r.json();
-
-    /* Applica i KPI reali */
     applyKPI(j.feeds || []);
-  }catch{
-    /* Fallback se fetch fallisce */
+  } catch(e) {
+    console.warn("Caricamento dati demo causa:", e.message);
     applyDemoKPI();
   }
 }
+
 
 /* =========================
    APPLICAZIONE KPI (DEMO)
