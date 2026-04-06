@@ -114,9 +114,9 @@
 <script>
 const CHANNEL = 2789658;
 
-// Formattazione sicura
-const fmt1 = v => (v === null || v === undefined || isNaN(v)) ? '—' : Number(v).toFixed(1);
-const fmt0 = v => (v === null || v === undefined || isNaN(v)) ? '—' : Math.round(Number(v));
+// Funzioni di formattazione sicure
+const fmt1 = v => (v == null || isNaN(v)) ? '—' : Number(v).toFixed(1);
+const fmt0 = v => (v == null || isNaN(v)) ? '—' : Math.round(Number(v));
 
 function getTimeRange() {
   const vMode = document.getElementById('viewMode').value;
@@ -127,10 +127,11 @@ function getTimeRange() {
     end = now;
     start = new Date(now.getTime() - 24 * 60 * 60 * 1000);
   } else {
-    const sVal = document.getElementById('start').value || new Date().toISOString().slice(0, 10);
-    const eVal = document.getElementById('end').value || new Date().toISOString().slice(0, 10);
-    start = new Date(sVal + 'T00:00:00');
-    end = new Date(eVal + 'T23:59:59');
+    // Recupero sicuro delle date o fallback a "oggi"
+    const sInput = document.getElementById('start').value || new Date().toISOString().slice(0,10);
+    const eInput = document.getElementById('end').value || new Date().toISOString().slice(0,10);
+    start = new Date(sInput + 'T00:00:00');
+    end = new Date(eInput + 'T23:59:59');
   }
   return { start, end };
 }
@@ -146,6 +147,7 @@ async function loadKPIs() {
     
     if (j.feeds && j.feeds.length > 0) {
       const last = j.feeds[j.feeds.length - 1];
+      // Aggiornamento testuale delle card usando document.getElementById
       document.getElementById('hum').textContent = fmt1(last.field1) + ' %';
       document.getElementById('temp').textContent = fmt1(last.field2) + ' °C';
       document.getElementById('press').textContent = fmt1(last.field3) + ' hPa';
@@ -160,6 +162,7 @@ async function loadKPIs() {
 
 async function renderCharts() {
   const container = document.getElementById('charts');
+  if(!container) return;
   container.innerHTML = '';
   
   const { start, end } = getTimeRange();
@@ -191,7 +194,8 @@ async function renderCharts() {
       const r = await fetch(`https://thingspeak.com{CHANNEL}/fields/${id}.json?start=${sStr}&end=${eStr}`);
       const j = await r.json();
       
-      new Chart(document.getElementById(`chart_${id}`), {
+      const ctx = document.getElementById(`chart_${id}`).getContext('2d');
+      new Chart(ctx, {
         type: 'line',
         data: {
           labels: j.feeds.map(f => new Date(f.created_at)),
@@ -200,14 +204,19 @@ async function renderCharts() {
             borderColor: config.c,
             borderWidth: 2,
             pointRadius: 0,
-            fill: false
+            fill: false,
+            tension: 0.2
           }]
         },
         options: {
           responsive: true,
           maintainAspectRatio: false,
           scales: {
-            x: { type: 'time', time: { unit: 'hour', displayFormats: { hour: 'HH:mm' } } }
+            x: { 
+              type: 'time', 
+              time: { unit: 'hour', displayFormats: { hour: 'HH:mm' } },
+              grid: { display: true }
+            }
           },
           plugins: { legend: { display: false } }
         }
@@ -216,20 +225,23 @@ async function renderCharts() {
   }
 }
 
-// Eventi
-document.getElementById('update').addEventListener('click', () => {
+// Collegamento eventi ai pulsanti esistenti
+document.getElementById('update').onclick = () => {
   loadKPIs();
   renderCharts();
-});
+};
 
 document.addEventListener('DOMContentLoaded', () => {
   const oggi = new Date().toISOString().slice(0, 10);
-  if(document.getElementById('start')) document.getElementById('start').value = oggi;
-  if(document.getElementById('end')) document.getElementById('end').value = oggi;
+  // Inizializzazione date se vuote
+  if(!document.getElementById('start').value) document.getElementById('start').value = oggi;
+  if(!document.getElementById('end').value) document.getElementById('end').value = oggi;
+  
   loadKPIs();
   renderCharts();
 });
 </script>
+
 
 </body>
 </html>
