@@ -863,12 +863,14 @@ if(ch.dataset.id === "6"){
   },
 
   ticks:{
-    stepSize:1, // 🔲 griglia ogni ora
+    autoSkip:false, // 🔥 fondamentale
+    maxRotation:45,
+    minRotation:45,
 
     callback: function(value){
       const date = new Date(value);
 
-      // 📅 mezzanotte → data formato "05 Apr."
+      // 📅 mezzanotte → data
       if(date.getHours() === 0){
         return date.toLocaleDateString('it-IT',{
           day:'2-digit',
@@ -876,7 +878,7 @@ if(ch.dataset.id === "6"){
         });
       }
 
-      // 🕒 ogni 3 ore → ora
+      // 🕒 ogni 3 ore
       if(date.getHours() % 3 === 0){
         return date.toLocaleTimeString('it-IT',{
           hour:'2-digit',
@@ -885,10 +887,7 @@ if(ch.dataset.id === "6"){
       }
 
       return '';
-    },
-
-    minRotation:45,
-    maxRotation:45 // 🔥 inclinazione 45°
+    }
   },
 
   title:{
@@ -897,7 +896,7 @@ if(ch.dataset.id === "6"){
   },
 
   grid:{
-    display:true // ✔ griglia visibile
+    display:true
   }
 },
 
