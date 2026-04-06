@@ -3,122 +3,73 @@
 <head>
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1" />
-  <title>Pagina AQI – Versione Professionale (v6.8.4)</title>
+  <title>Dashboard AQI - Fix Totale</title>
+
+  <!-- LIBRERIE: Ordine fondamentale per far funzionare l'asse orario -->
+  <script src="https://jsdelivr.net"></script>
+  <script src="https://jsdelivr.net"></script>
 
   <style>
     :root{ --bg:#eef6ee; --card:#ffffff; --primary:#0b3c5d; --muted:#6b7280; --shadow:0 6px 18px rgba(0,0,0,.08); --radius:12px }
     *{box-sizing:border-box}
-    body{ margin:0; font-family:"Segoe UI",Roboto,Arial,sans-serif; background:var(--bg); color:#111827 }
-    header{ padding:20px 28px 10px; display:flex; justify-content:space-between; flex-wrap:wrap; gap:16px; align-items:center; }
-    header h1{ margin:0; font-size:1.7rem; color:var(--primary) }
-    header p{ margin:6px 0 0; font-size:.9rem; color:var(--muted) }
-    .filters{ display:flex; align-items:flex-end; gap:10px; background:var(--card); padding:12px 14px; border-radius:var(--radius); box-shadow:var(--shadow) }
-    .filters label{ font-size:.7rem; color:var(--muted) }
-    .filters input, .filters select{ padding:7px 10px; border-radius:8px; border:1px solid #d1d5db; font-size:.8rem }
-    .filters button{ padding:8px 14px; border-radius:10px; background:#dc2626; color:#fff; border:none; font-weight:600; cursor:pointer }
-    main{ padding:0 28px 40px; max-width:1280px; margin:0 auto }
-    .kpi-section{ border:2px solid #d1d5db; border-radius:12px; padding:12px; margin-bottom:26px }
-    .kpi-title{ margin:0 0 10px; font-size:1.1rem; color:var(--primary) }
-    .kpi-row{ display:grid; grid-template-columns:repeat(7,minmax(159px, 1fr)); gap:14px }
-    .kpi{ background:var(--card); border-radius:var(--radius); box-shadow:var(--shadow); padding:14px 10px; text-align:center; aspect-ratio:1/1; display:flex; flex-direction:column; justify-content:center }
-    .kpi .title{ font-size:.95rem; font-weight:700; color:#374151 }
-    .kpi .sensor{ font-size:.72rem; color:var(--muted) }
-    .kpi .value{ margin-top:8px; font-size:1.15rem; font-weight:700 }
-    .aqi-badge{ margin-top:6px; display:inline-block; padding:4px 10px; border-radius:999px; font-size:.7rem; color:#fff; font-weight:700 }
-    .layout{ display:grid; grid-template-columns:280px 1fr; gap:20px }
-    @media(max-width:900px){ .layout{grid-template-columns:1fr} }
-    .panel{ background: var(--card); border: 2px solid #d1d5db; border-radius: 12px; box-shadow: var(--shadow); padding: 14px; font-size: .8rem; display: flex; flex-direction: column; gap: 8px; align-self:flex-start; }
-    .charts-wrapper{ background: var(--card); border: 2px solid #d1d5db; border-radius: 12px; box-shadow: var(--shadow); padding: 14px 14px 18px; min-width:920px; }
-    .charts { display: grid; grid-template-columns: 1fr 1fr; gap: 20px; }
-    @media (max-width: 768px) { .charts{grid-template-columns:1fr} }
-    .chart{ background:var(--card); border-radius:var(--radius); box-shadow:var(--shadow); padding:10px; height: 320px; display: flex; flex-direction: column; }
-    .chart-title{ font-weight:700; font-size:.85rem }
-    .chart-sensor{ font-size:.7rem; color:var(--muted); margin-left:6px }
-    footer{ text-align:center; margin-top:30px; font-size:.75rem; color:var(--muted) }
+    body{ margin:0; font-family:sans-serif; background:var(--bg); color:#111827; padding:20px }
+    header{ display:flex; justify-content:space-between; align-items:center; margin-bottom:20px; flex-wrap:wrap; gap:10px }
+    .filters{ display:flex; gap:10px; background:var(--card); padding:10px; border-radius:var(--radius); box-shadow:var(--shadow); align-items:center }
+    .kpi-row{ display:grid; grid-template-columns:repeat(auto-fit, minmax(140px, 1fr)); gap:15px; margin-bottom:20px }
+    .kpi{ background:var(--card); padding:15px; border-radius:var(--radius); text-align:center; box-shadow:var(--shadow) }
+    .kpi .title{ font-weight:bold; font-size:0.9rem; color:var(--muted) }
+    .kpi .value{ font-size:1.4rem; font-weight:bold; margin:10px 0; color:var(--primary) }
+    .layout{ display:grid; grid-template-columns:250px 1fr; gap:20px }
+    .panel{ background:var(--card); padding:15px; border-radius:var(--radius); box-shadow:var(--shadow); height:fit-content }
+    .charts{ display:grid; grid-template-columns:1fr 1fr; gap:20px }
+    .chart{ background:var(--card); padding:10px; border-radius:var(--radius); box-shadow:var(--shadow); height:300px }
+    @media(max-width:900px){ .layout, .charts{grid-template-columns:1fr} }
+    button{ background:#dc2626; color:white; border:none; padding:10px 15px; border-radius:8px; cursor:pointer; font-weight:bold }
   </style>
-
-  <script src="https://jsdelivr.net"></script>
-  <script src="https://cdn.jsdelivr.net/npm/chartjs-adapter-date-fns/dist/chartjs-adapter-date-fns.bundle.min.js"></script>
-
-
 </head>
-
 <body>
+
 <header>
-  <div>
-    <h1>Air Quality Index Device — AQI_01</h1>
-    <p id="subtitle">Inizio rilevamento dati: — | Fine: —</p>
-  </div>
+  <h1>AQI Monitor — AQI_01</h1>
   <div class="filters">
-    <label>Giorno</label> <input type="date" id="day">
-    <label>Modalità</label>
     <select id="viewMode">
       <option value="live">Ultime 24 ore</option>
-      <option value="range">Intervallo date</option>
+      <option value="range">Range Date</option>
     </select>
-    <input type="date" id="start" style="display:none">
-    <input type="date" id="end" style="display:none">
-    <label>Standard</label>
-    <select id="mode">
-      <option value="EEA" selected>EEA (UE)</option>
-      <option value="EPA">EPA (USA)</option>
-    </select>
-    <button id="update">Aggiorna</button>
+    <input type="date" id="start">
+    <input type="date" id="end">
+    <button id="update">AGGIORNA</button>
   </div>
 </header>
 
-<main>
-  <section class="kpi-section">
-    <h2 class="kpi-title">Key Performance Indicator Cards</h2>
-    <section class="kpi-row">
-      <div class="kpi"><div class="title">Umidità</div><div class="sensor">BME680</div><div class="value" id="hum">— %</div></div>
-      <div class="kpi"><div class="title">Temperatura</div><div class="sensor">BME680</div><div class="value" id="temp">— °C</div></div>
-      <div class="kpi"><div class="title">Pressione</div><div class="sensor">BME680</div><div class="value" id="press">— hPa</div></div>
-      <div class="kpi"><div class="title">PM1</div><div class="sensor">PMS5003</div><div class="value" id="pm1">— µg/m³</div></div>
-      <div class="kpi"><div class="title">PM2.5 (24h)</div><div class="sensor">PMS5003</div><div class="value" id="pm25">— µg/m³</div></div>
-      <div class="kpi"><div class="title">PM10 (24h)</div><div class="sensor">PMS5003</div><div class="value" id="pm10">— µg/m³</div></div>
-      <div class="kpi">
-        <div class="title" id="aqiTitle">AQI (EEA 24h)</div>
-        <div class="sensor">PM2.5 / PM10</div>
-        <div class="value" id="aqiVal">—</div>
-        <span id="aqiBadge" class="aqi-badge">—</span>
-      </div>
-    </section>
-  </section>
+<div class="kpi-row">
+  <div class="kpi"><div class="title">Umidità</div><div class="value" id="hum">-- %</div></div>
+  <div class="kpi"><div class="title">Temperatura</div><div class="value" id="temp">-- °C</div></div>
+  <div class="kpi"><div class="title">Pressione</div><div class="value" id="press">-- hPa</div></div>
+  <div class="kpi"><div class="title">PM2.5 (24h)</div><div class="value" id="pm25">-- µg/m³</div></div>
+  <div class="kpi"><div class="title">PM10 (24h)</div><div class="value" id="pm10">-- µg/m³</div></div>
+</div>
 
-  <section class="layout">
-    <aside class="panel">
-      <h3>Controlla grafici</h3>
-      <button onclick="selectAll(true)">Seleziona tutti</button>
-      <button onclick="selectAll(false)">Deseleziona tutti</button>
-      <hr>
-      <label><input type="checkbox" checked data-id="1"> Umidità – BME680</label>
-      <label><input type="checkbox" checked data-id="2"> Temperatura – BME680</label>
-      <label><input type="checkbox" checked data-id="3"> Pressione – BME680</label>
-      <label><input type="checkbox" checked data-id="5"> PM1 – PMS5003</label>
-      <label><input type="checkbox" checked data-id="6"> PM2.5 – PMS5003</label>
-      <label><input type="checkbox" checked data-id="7"> PM10 – PMS5003</label>
-      <label><input type="checkbox" checked data-id="combo"> PM2.5 + PM10 (24h)</label>
-      <label style="display:flex;align-items:center;gap:6px;margin-top:6px">
-        <input type="checkbox" id="remember"> Ricorda preferenze
-      </label>
-    </aside>
-    <div class="charts-wrapper">
-      <h3>Grafici</h3>
-      <section class="charts" id="charts"></section>
-    </div>
-  </section>
-  <footer>Versione 6.8.4 — Dashboard AQI </footer>
-</main>
+<div class="layout">
+  <aside class="panel">
+    <h3>Grafici</h3>
+    <label style="display:block"><input type="checkbox" checked data-id="1"> Umidità</label>
+    <label style="display:block"><input type="checkbox" checked data-id="2"> Temperatura</label>
+    <label style="display:block"><input type="checkbox" checked data-id="6"> PM2.5</label>
+    <label style="display:block"><input type="checkbox" checked data-id="7"> PM10</label>
+  </aside>
+  <div class="charts" id="charts"></div>
+</div>
 
 <script>
 const CHANNEL = 2789658;
 
-// Funzioni di formattazione sicure
-const fmt1 = v => (v == null || isNaN(v)) ? '—' : Number(v).toFixed(1);
-const fmt0 = v => (v == null || isNaN(v)) ? '—' : Math.round(Number(v));
+// Inizializzazione date all'avvio
+const oggi = new Date().toISOString().split('T')[0];
+document.getElementById('start').value = oggi;
+document.getElementById('end').value = oggi;
 
-function getTimeRange() {
+async function fetchData() {
   const vMode = document.getElementById('viewMode').value;
   const now = new Date();
   let start, end;
@@ -127,121 +78,70 @@ function getTimeRange() {
     end = now;
     start = new Date(now.getTime() - 24 * 60 * 60 * 1000);
   } else {
-    // Recupero sicuro delle date o fallback a "oggi"
-    const sInput = document.getElementById('start').value || new Date().toISOString().slice(0,10);
-    const eInput = document.getElementById('end').value || new Date().toISOString().slice(0,10);
-    start = new Date(sInput + 'T00:00:00');
-    end = new Date(eInput + 'T23:59:59');
+    start = new Date(document.getElementById('start').value + 'T00:00:00');
+    end = new Date(document.getElementById('end').value + 'T23:59:59');
   }
-  return { start, end };
-}
 
-async function loadKPIs() {
-  try {
-    const { start, end } = getTimeRange();
-    const sStr = start.toISOString().replace('T', '%20').slice(0, 19);
-    const eStr = end.toISOString().replace('T', '%20').slice(0, 19);
-
-    const r = await fetch(`https://thingspeak.com{CHANNEL}/feeds.json?start=${sStr}&end=${eStr}`);
-    const j = await r.json();
-    
-    if (j.feeds && j.feeds.length > 0) {
-      const last = j.feeds[j.feeds.length - 1];
-      // Aggiornamento testuale delle card usando document.getElementById
-      document.getElementById('hum').textContent = fmt1(last.field1) + ' %';
-      document.getElementById('temp').textContent = fmt1(last.field2) + ' °C';
-      document.getElementById('press').textContent = fmt1(last.field3) + ' hPa';
-      document.getElementById('pm1').textContent = fmt0(last.field5) + ' µg/m³';
-      
-      const avg = f => j.feeds.reduce((s, x) => s + Number(x[f] || 0), 0) / j.feeds.length;
-      document.getElementById('pm25').textContent = fmt0(avg('field6')) + ' µg/m³';
-      document.getElementById('pm10').textContent = fmt0(avg('field7')) + ' µg/m³';
-    }
-  } catch (e) { console.error("Errore KPI:", e); }
-}
-
-async function renderCharts() {
-  const container = document.getElementById('charts');
-  if(!container) return;
-  container.innerHTML = '';
-  
-  const { start, end } = getTimeRange();
   const sStr = start.toISOString().replace('T', '%20').slice(0, 19);
   const eStr = end.toISOString().replace('T', '%20').slice(0, 19);
 
-  const meta = {
-    1: { t: 'UMIDITÀ', c: '#3b82f6' },
-    2: { t: 'TEMPERATURA', c: '#ef4444' },
-    3: { t: 'PRESSIONE', c: '#8b5cf6' },
-    5: { t: 'PM1', c: '#10b981' },
-    6: { t: 'PM2.5', c: '#f59e0b' },
-    7: { t: 'PM10', c: '#06b6d4' }
-  };
-
-  const selected = document.querySelectorAll('aside input[data-id]:checked');
-  
-  for (const ch of selected) {
-    const id = ch.dataset.id;
-    if (id === "combo") continue;
-    const config = meta[id];
-
-    const d = document.createElement('div');
-    d.className = 'chart';
-    d.innerHTML = `<div><span class="chart-title">${config.t}</span></div><canvas id="chart_${id}"></canvas>`;
-    container.appendChild(d);
-
-    try {
-      const r = await fetch(`https://thingspeak.com{CHANNEL}/fields/${id}.json?start=${sStr}&end=${eStr}`);
-      const j = await r.json();
+  try {
+    // 1. Carica KPI
+    const resp = await fetch(`https://thingspeak.com{CHANNEL}/feeds.json?start=${sStr}&end=${eStr}`);
+    const data = await resp.json();
+    
+    if (data.feeds && data.feeds.length > 0) {
+      const last = data.feeds[data.feeds.length - 1];
+      document.getElementById('hum').innerText = Number(last.field1).toFixed(1) + ' %';
+      document.getElementById('temp').innerText = Number(last.field2).toFixed(1) + ' °C';
+      document.getElementById('press').innerText = Number(last.field3).toFixed(1) + ' hPa';
       
-      const ctx = document.getElementById(`chart_${id}`).getContext('2d');
-      new Chart(ctx, {
+      const avg = f => (data.feeds.reduce((s, x) => s + Number(x[f] || 0), 0) / data.feeds.length).toFixed(1);
+      document.getElementById('pm25').innerText = avg('field6') + ' µg/m³';
+      document.getElementById('pm10').innerText = avg('field7') + ' µg/m³';
+    }
+
+    // 2. Carica Grafici
+    const container = document.getElementById('charts');
+    container.innerHTML = '';
+    const selected = document.querySelectorAll('aside input[data-id]:checked');
+
+    for (const ch of selected) {
+      const id = ch.dataset.id;
+      const label = ch.parentElement.innerText;
+      
+      const chartDiv = document.createElement('div');
+      chartDiv.className = 'chart';
+      chartDiv.innerHTML = `<canvas id="c_${id}"></canvas>`;
+      container.appendChild(chartDiv);
+
+      const resField = await fetch(`https://thingspeak.com{CHANNEL}/fields/${id}.json?start=${sStr}&end=${eStr}`);
+      const fieldData = await resField.json();
+
+      new Chart(document.getElementById(`c_${id}`), {
         type: 'line',
         data: {
-          labels: j.feeds.map(f => new Date(f.created_at)),
-          datasets: [{
-            data: j.feeds.map(f => f[`field${id}`]),
-            borderColor: config.c,
-            borderWidth: 2,
-            pointRadius: 0,
-            fill: false,
-            tension: 0.2
-          }]
+          labels: fieldData.feeds.map(f => new Date(f.created_at)),
+          datasets: [{ label: label, data: fieldData.feeds.map(f => f[`field${id}`]), borderColor: '#dc2626', pointRadius: 0, fill: false }]
         },
-        options: {
-          responsive: true,
+        options: { 
+          responsive: true, 
           maintainAspectRatio: false,
-          scales: {
-            x: { 
-              type: 'time', 
-              time: { unit: 'hour', displayFormats: { hour: 'HH:mm' } },
-              grid: { display: true }
-            }
-          },
-          plugins: { legend: { display: false } }
+          scales: { x: { type: 'time', time: { unit: 'hour' } } }
         }
       });
-    } catch (e) { console.error(`Errore grafico ${id}:`, e); }
+    }
+  } catch (e) {
+    console.error("Errore caricamento dati:", e);
+    alert("Errore nel caricamento dati da ThingSpeak. Controlla la connessione.");
   }
 }
 
-// Collegamento eventi ai pulsanti esistenti
-document.getElementById('update').onclick = () => {
-  loadKPIs();
-  renderCharts();
-};
+document.getElementById('update').onclick = fetchData;
 
-document.addEventListener('DOMContentLoaded', () => {
-  const oggi = new Date().toISOString().slice(0, 10);
-  // Inizializzazione date se vuote
-  if(!document.getElementById('start').value) document.getElementById('start').value = oggi;
-  if(!document.getElementById('end').value) document.getElementById('end').value = oggi;
-  
-  loadKPIs();
-  renderCharts();
-});
+// Avvio automatico
+window.onload = fetchData;
 </script>
-
 
 </body>
 </html>
