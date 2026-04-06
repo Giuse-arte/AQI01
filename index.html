@@ -863,16 +863,20 @@ if(ch.dataset.id === "6"){
   },
 
   ticks:{
-    stepSize:1,
+    stepSize:1, // 🔲 griglia ogni ora
+
     callback: function(value){
       const date = new Date(value);
 
-      // 📅 a mezzanotte → mostra DATA
+      // 📅 mezzanotte → data formato "05 Apr."
       if(date.getHours() === 0){
-        return date.toLocaleDateString('it-IT');
+        return date.toLocaleDateString('it-IT',{
+          day:'2-digit',
+          month:'short'
+        });
       }
 
-      // 🕒 ogni 3 ore → mostra ora
+      // 🕒 ogni 3 ore → ora
       if(date.getHours() % 3 === 0){
         return date.toLocaleTimeString('it-IT',{
           hour:'2-digit',
@@ -882,16 +886,18 @@ if(ch.dataset.id === "6"){
 
       return '';
     },
-    maxRotation:0
+
+    minRotation:45,
+    maxRotation:45 // 🔥 inclinazione 45°
   },
 
   title:{
     display:true,
-    text:'Time' // ✅ etichetta asse
+    text:'Time'
   },
 
   grid:{
-    display:true
+    display:true // ✔ griglia visibile
   }
 },
 
