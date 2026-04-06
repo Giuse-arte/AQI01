@@ -510,6 +510,25 @@ const CHANNEL = 2789658;
 */
 const fmt1 = v => v == null || isNaN(v) ? '—' : Number(v).toFixed(1);
 
+  function getTimeRange(){
+
+  const mode = document.getElementById('viewMode').value;
+
+  // 🔴 LIVE → ultime 24 ore
+  if(mode === "live"){
+    const end = new Date();
+    const start = new Date(end.getTime() - 24*60*60*1000);
+
+    return { start, end };
+  }
+
+  // 🔵 RANGE → usa start/end esistenti
+  return {
+    start: new Date(start.value),
+    end: new Date(end.value)
+  };
+}
+  
 /*
   fmt0 → formatta un valore numerico come intero
   - Arrotonda con Math.round
@@ -595,7 +614,7 @@ async function loadKPIs(){
     /* Se risposta HTTP non OK → errore */
     if(!r.ok) throw new Error();
 
-    /* Parsing JSON */
+    /* Parsing JSON *
     const j = await r.json();
 
     /* Applica i KPI reali */
@@ -816,7 +835,14 @@ if(ch.dataset.id === "6"){
 
     try{
       const r = await fetch(
-        `https://api.thingspeak.com/channels/${CHANNEL}/feeds.json?results=48`
+        `https://api.thingspeak.com/channels/${CHANNEL}/feeds.json?const { start: tStart, end: tEnd } = getTimeRange();
+
+const startStr = tStart.toISOString().slice(0,19).replace('T',' ');
+const endStr = tEnd.toISOString().slice(0,19).replace('T',' ');
+
+const r = await fetch(
+  `https://api.thingspeak.com/channels/${CHANNEL}/feeds.json?start=${startStr}&end=${endStr}&results=8000`
+);`
       );
 
       if(!r.ok) throw new Error();
@@ -969,9 +995,12 @@ for(let i = 0; i <= 24; i++){
   "&yaxis=" + encodeURIComponent(m.u) +
   "&yaxismin=" + m.min +
   "&yaxismax=" + m.max +
-  "&start=" + start.value + "%2000:00:00" +
-  "&end=" + end.value + "%2023:59:59" +
-  "&days=0" +
+  const { start: tStart, end: tEnd } = getTimeRange();
+  const startStr = tStart.toISOString().slice(0,19).replace('T',' ');
+  const endStr = tEnd.toISOString().slice(0,19).replace('T',' ');
+  const r = await fetch(
+  `https://api.thingspeak.com/channels/${CHANNEL}/feeds.json?start=${startStr}&end=${endStr}&results=8000`
+);
 
   // 🔥 QUESTO È IL FIX VERO
   "&_ts=" + new Date().getTime() +
@@ -1112,6 +1141,20 @@ update.addEventListener('click', ()=>{
 /* Cambio standard AQI */
 mode.addEventListener('change', loadKPIs);
 
+document.getElementById('viewMode').addEventListener('change', () => {
+
+  const mode = document.getElementById('viewMode').value;
+
+  if(mode === "live"){
+    start.disabled = true;
+    end.disabled = true;
+  } else {
+    start.disabled = false;
+    end.disabled = false;
+  }
+
+});
+  
 /* =========================
    INIZIALIZZAZIONE
    ========================= */
@@ -1146,6 +1189,8 @@ document.addEventListener('DOMContentLoaded', () => {
     start.value = oggi;
     end.value = oggi;
   }
+
+  document.getElementById('viewMode').dispatchEvent(new Event('change'));
 
   // 3. Ora che i campi sono pronti, carichiamo i dati
   loadKPIs();
