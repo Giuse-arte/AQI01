@@ -325,6 +325,8 @@
     <label>Inizio</label><input type="date" id="start">
     <label>Fine</label><input type="date" id="end">
 
+    <label id="dayLabel">Giorno</label>
+    <input type="date" id="day">
      <label>Modalità</label>
     <select id="viewMode">
       <option value="live" selected>Ultime 24 ore</option>
@@ -1135,14 +1137,19 @@ document.getElementById('viewMode').addEventListener('change', () => {
   const mode = document.getElementById('viewMode').value;
 
   if(mode === "live"){
-    start.disabled = true;
-    end.disabled = true;
+    start.style.display = 'none';
+    end.style.display = 'none';
+    day.style.display = 'none';
+    dayLabel.style.display = 'none';
   } else {
-    start.disabled = false;
-    end.disabled = false;
+    start.style.display = 'none';
+    end.style.display = 'none';
+    day.style.display = 'inline-block';
+    dayLabel.style.display = 'inline-block';
   }
 
-});
+}););
+  
 /* =========================
    INIZIALIZZAZIONE
    ========================= */
