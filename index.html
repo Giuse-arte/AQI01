@@ -320,16 +320,17 @@
     <p id="subtitle">Inizio rilevamento dati: — | Fine: —</p>
   </div>
 
-  <label>Modalità</label>
+   <!-- Filtri temporali e standard AQI -->
+  <div class="filters">
+    <label>Inizio</label><input type="date" id="start">
+    <label>Fine</label><input type="date" id="end">
+
+     <label>Modalità</label>
     <select id="viewMode">
       <option value="live" selected>Ultime 24 ore</option>
       <option value="day">Giorno selezionato</option>
     </select>
-
-  <!-- Filtri temporali e standard AQI -->
-  <div class="filters">
-    <label>Inizio</label><input type="date" id="start">
-    <label>Fine</label><input type="date" id="end">
+    
     <label>Standard</label>
 
     <!-- Scelta standard AQI -->
