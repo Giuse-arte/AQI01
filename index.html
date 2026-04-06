@@ -322,22 +322,29 @@
 
   <!-- Filtri temporali e standard AQI -->
   <div class="filters">
-    <label>Modalità</label>
-<select id="viewMode">
-  <option value="live">Ultime 24 ore</option>
-  <option value="range">Intervallo date</option>
-</select>
-    <label>Standard</label>
 
-    <!-- Scelta standard AQI -->
-    <select id="mode">
-      <option value="EEA" selected>EEA (UE)</option>
-      <option value="EPA">EPA (USA)</option>
-    </select>
+  <label>Modalità</label>
+  <select id="viewMode">
+    <option value="live">Ultime 24 ore</option>
+    <option value="range">Intervallo date</option>
+  </select>
 
-    <!-- Pulsante aggiornamento -->
-    <button id="update">Aggiorna</button>
-  </div>
+  <!-- 🔥 RIPRISTINATI MA NASCOSTI -->
+  <label style="display:none">Inizio</label>
+  <input type="date" id="start" style="display:none">
+
+  <label style="display:none">Fine</label>
+  <input type="date" id="end" style="display:none">
+
+  <label>Standard</label>
+  <select id="mode">
+    <option value="EEA" selected>EEA (UE)</option>
+    <option value="EPA">EPA (USA)</option>
+  </select>
+
+  <button id="update">Aggiorna</button>
+
+</div>
 </header>
 
 <!-- ========================= -->
