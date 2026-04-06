@@ -796,10 +796,6 @@ function selectAll(v){
 }
 
 /* =========================
-   RENDERING GRAFICI
-   ========================= */
-
-/* =========================
    RENDERING GRAFICI (CORRETTO)
    ========================= */
 async function renderCharts() {
@@ -825,6 +821,7 @@ async function renderCharts() {
     const id = ch.dataset.id;
     
     if (id === "combo") {
+      // Nota: assicurati che la funzione renderComboChart sia definita altrove
       if (typeof renderComboChart === "function") renderComboChart(chartsContainer);
       continue;
     }
@@ -844,8 +841,8 @@ async function renderCharts() {
     chartsContainer.appendChild(d);
 
     try {
-      // URL CORRETTO: ://thingspeak.com...
-      const r = await fetch(`https://://thingspeak.com${CHANNEL}/fields/${id}.json?start=${sStr}&end=${eStr}&results=8000`);
+      // FIX URL:
+      const r = await fetch(`https://thingspeak.com{CHANNEL}/fields/${id}.json?start=${sStr}&end=${eStr}&results=8000`);
       const j = await r.json();
       const feeds = j.feeds || [];
 
@@ -872,7 +869,7 @@ async function renderCharts() {
               type: 'time',
               time: { unit: 'hour', displayFormats: { hour: 'HH:mm' } },
               grid: { color: '#e5e7eb' },
-              ticks: { maxRotation: 0, autoSkip: true, maxTicksLimit: 12 }
+              ticks: { maxRotation: 0, autoSkip: true, maxTicksLimit: 12, color: '#6b7280' }
             },
             y: { beginAtZero: false, grid: { color: '#e5e7eb' } }
           }
@@ -882,51 +879,61 @@ async function renderCharts() {
       console.error(`Errore caricamento Field ${id}:`, e);
     }
   }
-  console.log("Fine caricamento grafici.");
+  console.log("✅ Fine caricamento grafici.");
 }
 
 /* =========================
    EVENTI E INIZIALIZZAZIONE
    ========================= */
 
-// Gestione checkbox e salvataggi
 document.querySelectorAll('aside input[data-id]').forEach(cb => {
   cb.addEventListener('change', savePreferences);
 });
 
-[start, end, mode, remember].forEach(el => {
-  el.addEventListener('change', savePreferences);
+// Aggiungiamo i listener in modo sicuro
+['start', 'end', 'mode', 'remember'].forEach(id => {
+  const el = document.getElementById(id);
+  if(el) el.addEventListener('change', savePreferences);
 });
 
-// Listener pulsante Aggiorna (reso ASYNC)
-update.addEventListener('click', async () => {
-  const originalText = update.textContent;
-  update.textContent = "Caricamento...";
-  update.disabled = true;
+const btnUpdate = document.getElementById('update');
+if(btnUpdate) {
+  btnUpdate.addEventListener('click', async () => {
+    const originalText = btnUpdate.textContent;
+    btnUpdate.textContent = "Caricamento...";
+    btnUpdate.disabled = true;
+    await renderCharts();
+    await loadKPIs();
+    btnUpdate.textContent = originalText;
+    btnUpdate.disabled = false;
+  });
+}
 
-  await renderCharts();
-  await loadKPIs();
+const selMode = document.getElementById('mode');
+if(selMode) selMode.addEventListener('change', loadKPIs);
 
-  update.textContent = originalText;
-  update.disabled = false;
-});
-
-mode.addEventListener('change', loadKPIs);
-
-document.getElementById('viewMode').addEventListener('change', () => {
-  const vMode = document.getElementById('viewMode').value;
-  start.disabled = (vMode === "live");
-  end.disabled = (vMode === "live");
-});
+const selViewMode = document.getElementById('viewMode');
+if(selViewMode) {
+  selViewMode.addEventListener('change', () => {
+    const vMode = selViewMode.value;
+    document.getElementById('start').disabled = (vMode === "live");
+    document.getElementById('end').disabled = (vMode === "live");
+  });
+}
 
 document.addEventListener('DOMContentLoaded', () => {
   const saved = localStorage.getItem('aqi_dashboard_preferences');
+  const startInp = document.getElementById('start');
+  const endInp = document.getElementById('end');
+  const modeSel = document.getElementById('mode');
+  const remChk = document.getElementById('remember');
+
   if (saved) {
     const prefs = JSON.parse(saved);
-    remember.checked = true;
-    if (prefs.start) start.value = prefs.start;
-    if (prefs.end) end.value = prefs.end;
-    if (prefs.mode) mode.value = prefs.mode;
+    if(remChk) remChk.checked = true;
+    if (prefs.start && startInp) startInp.value = prefs.start;
+    if (prefs.end && endInp) endInp.value = prefs.end;
+    if (prefs.mode && modeSel) modeSel.value = prefs.mode;
     if (Array.isArray(prefs.charts)) {
       document.querySelectorAll('aside input[data-id]').forEach(cb => {
         cb.checked = prefs.charts.includes(cb.dataset.id);
@@ -934,15 +941,12 @@ document.addEventListener('DOMContentLoaded', () => {
     }
   } else {
     const oggi = new Date().toISOString().slice(0, 10);
-    start.value = oggi;
-    end.value = oggi;
+    if(startInp) startInp.value = oggi;
+    if(endInp) endInp.value = oggi;
   }
-  document.getElementById('viewMode').dispatchEvent(new Event('change'));
-  loadKPIs();
-  renderCharts();
-});
-
-  // 3. Ora che i campi sono pronti, carichiamo i dati
+  
+  if(selViewMode) selViewMode.dispatchEvent(new Event('change'));
+  
   loadKPIs();
   renderCharts();
 });
