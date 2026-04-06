@@ -64,10 +64,9 @@
 <script>
 const CHANNEL = 2789658;
 
-// Inizializzazione date all'avvio
-const oggi = new Date().toISOString().split('T')[0];
-document.getElementById('start').value = oggi;
-document.getElementById('end').value = oggi;
+/* =========================
+   VERSIONE DEFINITIVA FIX DATA & URL
+   ========================= */
 
 async function fetchData() {
   const vMode = document.getElementById('viewMode').value;
@@ -78,69 +77,90 @@ async function fetchData() {
     end = now;
     start = new Date(now.getTime() - 24 * 60 * 60 * 1000);
   } else {
-    start = new Date(document.getElementById('start').value + 'T00:00:00');
-    end = new Date(document.getElementById('end').value + 'T23:59:59');
+    // Gestione sicura delle date dai campi input
+    const sVal = document.getElementById('start').value || new Date().toISOString().slice(0,10);
+    const eVal = document.getElementById('end').value || new Date().toISOString().slice(0,10);
+    start = new Date(sVal + 'T00:00:00');
+    end = new Date(eVal + 'T23:59:59');
   }
 
-  const sStr = start.toISOString().replace('T', '%20').slice(0, 19);
-  const eStr = end.toISOString().replace('T', '%20').slice(0, 19);
+  // 🔥 FIX CRITICO: Formattazione data precisa per ThingSpeak (YYYY-MM-DD%20HH:NN:SS)
+  const toTS = (d) => d.toISOString().replace('T', '%20').slice(0, 19);
+  const sStr = toTS(start);
+  const eStr = toTS(end);
 
   try {
-    // 1. Carica KPI
-    const resp = await fetch(`https://thingspeak.com{CHANNEL}/feeds.json?start=${sStr}&end=${eStr}`);
-    const data = await resp.json();
+    // 1. CARICAMENTO KPI
+    const rKPI = await fetch(`https://thingspeak.com{CHANNEL}/feeds.json?start=${sStr}&end=${eStr}`);
+    const jKPI = await rKPI.json();
     
-    if (data.feeds && data.feeds.length > 0) {
-      const last = data.feeds[data.feeds.length - 1];
-      document.getElementById('hum').innerText = Number(last.field1).toFixed(1) + ' %';
-      document.getElementById('temp').innerText = Number(last.field2).toFixed(1) + ' °C';
-      document.getElementById('press').innerText = Number(last.field3).toFixed(1) + ' hPa';
+    if (jKPI.feeds && jKPI.feeds.length > 0) {
+      const last = jKPI.feeds[jKPI.feeds.length - 1];
+      document.getElementById('hum').innerText = (last.field1 ? Number(last.field1).toFixed(1) : '--') + ' %';
+      document.getElementById('temp').innerText = (last.field2 ? Number(last.field2).toFixed(1) : '--') + ' °C';
+      document.getElementById('press').innerText = (last.field3 ? Number(last.field3).toFixed(1) : '--') + ' hPa';
       
-      const avg = f => (data.feeds.reduce((s, x) => s + Number(x[f] || 0), 0) / data.feeds.length).toFixed(1);
+      const avg = f => (jKPI.feeds.reduce((s, x) => s + Number(x[f] || 0), 0) / jKPI.feeds.length).toFixed(1);
       document.getElementById('pm25').innerText = avg('field6') + ' µg/m³';
       document.getElementById('pm10').innerText = avg('field7') + ' µg/m³';
     }
 
-    // 2. Carica Grafici
+    // 2. CARICAMENTO GRAFICI
     const container = document.getElementById('charts');
     container.innerHTML = '';
     const selected = document.querySelectorAll('aside input[data-id]:checked');
 
     for (const ch of selected) {
       const id = ch.dataset.id;
-      const label = ch.parentElement.innerText;
-      
+      if (id === "combo") continue; // Gestiremo il combinato dopo
+
       const chartDiv = document.createElement('div');
       chartDiv.className = 'chart';
       chartDiv.innerHTML = `<canvas id="c_${id}"></canvas>`;
       container.appendChild(chartDiv);
 
-      const resField = await fetch(`https://thingspeak.com{CHANNEL}/fields/${id}.json?start=${sStr}&end=${eStr}`);
-      const fieldData = await resField.json();
+      // Fetch specifica per il campo con URL CORRETTO
+      const rField = await fetch(`https://thingspeak.com{CHANNEL}/fields/${id}.json?start=${sStr}&end=${eStr}`);
+      const jField = await rField.json();
 
       new Chart(document.getElementById(`c_${id}`), {
         type: 'line',
         data: {
-          labels: fieldData.feeds.map(f => new Date(f.created_at)),
-          datasets: [{ label: label, data: fieldData.feeds.map(f => f[`field${id}`]), borderColor: '#dc2626', pointRadius: 0, fill: false }]
+          labels: jField.feeds.map(f => new Date(f.created_at)),
+          datasets: [{
+            label: ch.parentElement.innerText.trim(),
+            data: jField.feeds.map(f => f[`field${id}`]),
+            borderColor: '#dc2626',
+            borderWidth: 2,
+            pointRadius: 0,
+            fill: false,
+            tension: 0.3
+          }]
         },
         options: { 
           responsive: true, 
           maintainAspectRatio: false,
-          scales: { x: { type: 'time', time: { unit: 'hour' } } }
+          scales: { 
+            x: { 
+              type: 'time', 
+              time: { unit: 'hour', displayFormats: { hour: 'HH:mm' } },
+              grid: { display: true }
+            },
+            y: { beginAtZero: false }
+          },
+          plugins: { legend: { display: false } }
         }
       });
     }
   } catch (e) {
-    console.error("Errore caricamento dati:", e);
-    alert("Errore nel caricamento dati da ThingSpeak. Controlla la connessione.");
+    console.error("Errore caricamento:", e);
   }
 }
 
+// Aggiorna l'evento click e l'avvio
 document.getElementById('update').onclick = fetchData;
-
-// Avvio automatico
 window.onload = fetchData;
+
 </script>
 
 </body>
