@@ -570,6 +570,29 @@ function savePreferences(){
   localStorage.setItem(PREF_KEY, JSON.stringify(prefs));
 }
 
+  function getTimeRange(){
+
+  const mode = document.getElementById('viewMode').value;
+
+  // 🔴 MODALITÀ LIVE (ultime 24h)
+  if(mode === "live"){
+    const end = new Date();
+    const start = new Date(end.getTime() - 24*60*60*1000);
+
+    return { start, end };
+  }
+
+  // 🔵 MODALITÀ GIORNO
+  const selectedDate = new Date(document.getElementById('start').value);
+
+  const start = new Date(selectedDate);
+  start.setHours(0,0,0,0);
+
+  const end = new Date(selectedDate);
+  end.setHours(23,59,59,999);
+
+  return { start, end };
+}
 
 /* =========================
    CARICAMENTO KPI DA API
@@ -1103,9 +1126,22 @@ update.addEventListener('click', ()=>{
   loadKPIs();
 });
 
-/* Cambio standard AQI */
 mode.addEventListener('change', loadKPIs);
 
+// 🔥 QUI
+document.getElementById('viewMode').addEventListener('change', () => {
+
+  const mode = document.getElementById('viewMode').value;
+
+  if(mode === "live"){
+    start.disabled = true;
+    end.disabled = true;
+  } else {
+    start.disabled = false;
+    end.disabled = false;
+  }
+
+});
 /* =========================
    INIZIALIZZAZIONE
    ========================= */
@@ -1140,7 +1176,7 @@ document.addEventListener('DOMContentLoaded', () => {
     start.value = oggi;
     end.value = oggi;
   }
-
+  document.getElementById('viewMode').dispatchEvent(new Event('change'));  //AGGIUNTO 06-04-26
   // 3. Ora che i campi sono pronti, carichiamo i dati
   loadKPIs();
   renderCharts();
