@@ -799,318 +799,97 @@ function selectAll(v){
    RENDERING GRAFICI
    ========================= */
 
-function renderCharts(){
-
-  /* Svuota area grafici */
+async function renderCharts() {
   const chartsContainer = document.getElementById('charts');
   chartsContainer.innerHTML = '';
 
-  /* Se date non impostate → esce */
-  if(!start.value || !end.value) return;
+  const { start, end } = getTimeRange();
+  const sStr = start.toISOString().slice(0, 19).replace('T', ' ');
+  const eStr = end.toISOString().slice(0, 19).replace('T', ' ');
 
-  /* Aggiorna sottotitolo */
-  const subtitle = document.getElementById('subtitle');
-  subtitle.textContent =
-    'Inizio rilevamento dati: ' +
-    new Date(start.value).toLocaleDateString('it-IT') +
-    ' | Fine: ' +
-    new Date(end.value).toLocaleDateString('it-IT');
-
-  /* Metadati grafici */
+  // Metadati per configurare ogni sensore
   const meta = {
-    1:{t:'UMIDITÀ',s:'BME680',min:0,max:100,u:'%'},
-    2:{t:'TEMPERATURA',s:'BME680',min:-10,max:60,u:'°C'},
-    3:{t:'PRESSIONE',s:'BME680',min:900,max:1100,u:'hPa'},
-    5:{t:'PM1',s:'PMS5003',min:0,max:100,u:'µg/m³'},
-    6:{t:'PM2.5',s:'PMS5003',min:0,max:100,u:'µg/m³'},
-    7:{t:'PM10',s:'PMS5003',min:0,max:100,u:'µg/m³'}
+    1: { t: 'UMIDITÀ', s: 'BME680', u: '%', color: '#3b82f6' },
+    2: { t: 'TEMPERATURA', s: 'BME680', u: '°C', color: '#ef4444' },
+    3: { t: 'PRESSIONE', s: 'BME680', u: 'hPa', color: '#8b5cf6' },
+    5: { t: 'PM1', s: 'PMS5003', u: 'µg/m³', color: '#10b981' },
+    6: { t: 'PM2.5', s: 'PMS5003', u: 'µg/m³', color: '#f59e0b' },
+    7: { t: 'PM10', s: 'PMS5003', u: 'µg/m³', color: '#06b6d4' }
   };
 
-  // =========================
-  // GRAFICI NORMALI (iframe)
-  // =========================
-  document.querySelectorAll('aside input[data-id]:checked').forEach(ch => {
+  const selected = document.querySelectorAll('aside input[data-id]:checked');
 
-// =========================
-// PM2.5 con Chart.js (FIX)
-// =========================
-if(ch.dataset.id === "6"){
+  for (const ch of selected) {
+    const id = ch.dataset.id;
+    
+    // Gestione Grafico Combinato (caso speciale)
+    if (id === "combo") {
+      renderComboChart(chartsContainer); // La funzione che abbiamo già
+      continue;
+    }
 
-  (async function(){
+    const config = meta[id];
+    if (!config) continue;
 
-    try{
-      const r = await fetch(
-        `https://api.thingspeak.com/channels/${CHANNEL}/feeds.json?const { start: tStart, end: tEnd } = getTimeRange();
+    // 1. Crea l'elemento nel DOM
+    const d = document.createElement('div');
+    d.className = 'chart';
+    d.innerHTML = `
+      <div>
+        <span class="chart-title">${config.t} (${config.u})</span>
+        <span class="chart-sensor">${config.s}</span>
+      </div>
+      <canvas id="chart_${id}" style="height:260px;"></canvas>
+    `;
+    chartsContainer.appendChild(d);
 
-const startStr = tStart.toISOString().slice(0,19).replace('T',' ');
-const endStr = tEnd.toISOString().slice(0,19).replace('T',' ');
-
-const r = await fetch(
-  `https://api.thingspeak.com/channels/${CHANNEL}/feeds.json?start=${startStr}&end=${endStr}&results=8000`
-);`
-      );
-
-      if(!r.ok) throw new Error();
-
+    // 2. Scarica i dati e crea il grafico
+    try {
+      const r = await fetch(`https://thingspeak.com{CHANNEL}/fields/${id}.json?start=${sStr}&end=${eStr}&results=8000`);
       const j = await r.json();
       const feeds = j.feeds || [];
 
-      if(!feeds.length) return;
-
-// =========================
-// Timeline continua (24h)
-// =========================
-
-const now = new Date();
-const startTime = new Date(now.getTime() - 24 * 60 * 60 * 1000);
-
-const labels = [];
-const data = [];
-
-// crea mappa dati reali
-const dataMap = {};
-feeds.forEach(f => {
-  const d = new Date(f.created_at);
-  const key = d.getHours(); // semplificazione (per ora)
-  dataMap[key] = Number(f.field6);
-});
-
-// genera asse orario continuo
-for(let i = 0; i <= 24; i++){
-  const t = new Date(startTime.getTime() + i * 60 * 60 * 1000);
-
-  labels.push(t);
-
-  const hour = t.getHours();
-
-  data.push(dataMap[hour] ?? null); // null se manca dato
-}
-
-      const startDate = labels[0];
-      const endDate = labels[labels.length - 1];
-
-      const d = document.createElement('div');
-      d.className = 'chart';
-
-      d.innerHTML = `
-        <div>
-          <span class="chart-title">PM2.5 (µg/m³)</span>
-          <span class="chart-sensor">PMS5003</span>
-        </div>
-        <canvas id="chart_pm25" style="height:260px;"></canvas>
-      `;
-
-      chartsContainer.appendChild(d);
-
-      const ctx = document.getElementById('chart_pm25').getContext('2d');
-
-      new Chart(ctx,{
-        type:'line',
-        data:{
-          labels,
-          datasets:[{
-            data: data,
-            tension: 0.3,
+      const ctx = document.getElementById(`chart_${id}`).getContext('2d');
+      new Chart(ctx, {
+        type: 'line',
+        data: {
+          labels: feeds.map(f => new Date(f.created_at)),
+          datasets: [{
+            data: feeds.map(f => f[`field${id}`]),
+            borderColor: config.color,
             borderWidth: 2,
-            pointRadius: 2
+            pointRadius: 1,
+            tension: 0.3,
+            fill: false
           }]
         },
-        options:{
-          responsive:true,
-          maintainAspectRatio:false,
-
-          plugins:{
-            legend:{ display:false }
-          },
-
-          scales:{
-            x:{
-  type:'time',
-
-  time:{
-    unit:'hour'
-  },
-
-  ticks:{
-    source:'data', // 🔥 usa tutti i punti → fondamentale
-    autoSkip:false,
-    maxRotation:45,
-    minRotation:45,
-
-    callback: function(value){
-      const date = new Date(value);
-
-      // 📅 mezzanotte → data
-      if(date.getHours() === 0){
-        return date.toLocaleDateString('it-IT',{
-          day:'2-digit',
-          month:'short'
-        });
-      }
-
-      // 🕒 ogni 3 ore
-      if(date.getHours() % 3 === 0){
-        return date.toLocaleTimeString('it-IT',{
-          hour:'2-digit',
-          minute:'2-digit'
-        });
-      }
-
-      return '';
-    }
-  },
-
-  title:{
-    display:true,
-    text:'Time'
-  },
-
-  grid:{
-    display:true
-  }
-},
-
-            y:{
-              beginAtZero:true,
-              grid:{
-                display:true
-              }
+        options: {
+          responsive: true,
+          maintainAspectRatio: false,
+          plugins: { legend: { display: false } },
+          scales: {
+            x: {
+              type: 'time',
+              time: { 
+                unit: 'hour',
+                displayFormats: { hour: 'HH:mm' }
+              },
+              grid: { color: '#e5e7eb' },
+              ticks: { maxRotation: 0, autoSkip: true, maxTicksLimit: 12 }
+            },
+            y: { 
+              beginAtZero: false,
+              grid: { color: '#e5e7eb' }
             }
           }
         }
       });
-
-    }catch(e){
-      console.error("Errore PM2.5 Chart.js:", e);
+    } catch (e) {
+      console.error(`Errore caricamento Field ${id}:`, e);
     }
-
-  })();
-
-  return;
-}
-    const m = meta[ch.dataset.id];
-    if(!m) return;
-
-  const src =
-  "https://thingspeak.com/channels/" + CHANNEL +
-  "/charts/" + ch.dataset.id +
-  "?bgcolor=%23ffffff" +
-  "&type=line" +
-  "&color=%23dc2626" +
-  "&yaxis=" + encodeURIComponent(m.u) +
-  "&yaxismin=" + m.min +
-  "&yaxismax=" + m.max +
-  const { start: tStart, end: tEnd } = getTimeRange();
-  const startStr = tStart.toISOString().slice(0,19).replace('T',' ');
-  const endStr = tEnd.toISOString().slice(0,19).replace('T',' ');
-  const r = await fetch(
-  `https://api.thingspeak.com/channels/${CHANNEL}/feeds.json?start=${startStr}&end=${endStr}&results=8000`
-);
-
-  // 🔥 QUESTO È IL FIX VERO
-  "&_ts=" + new Date().getTime() +
-
-  "&title=" +
-  "&noheader=true";
-
-    const d = document.createElement('div');
-    d.className = 'chart';
-
-    d.innerHTML =
-      `<div>
-         <span class="chart-title">${m.t}</span>
-         <span class="chart-sensor">${m.s}</span>
-       </div>
-       <iframe src="${src}" style="height:260px;"></iframe>`;
-
-    chartsContainer.appendChild(d);
-  });
-
-  // =========================
-  // GRAFICO COMBINATO (FIX DEFINITIVO)
-  // =========================
-
-  const comboCheckbox = document.querySelector('aside input[data-id="combo"]');
-
-  // 👉 se NON selezionato → NON creare nulla
-  if(!comboCheckbox || !comboCheckbox.checked){
-    return;
   }
-
-  (async function(){
-
-    try{
-      const r = await fetch(
-        `https://api.thingspeak.com/channels/${CHANNEL}/feeds.json?results=48`
-      );
-
-      if(!r.ok) throw new Error();
-
-      const j = await r.json();
-      const feeds = j.feeds || [];
-
-      if(!feeds.length) return;
-
-      // media mobile 24h
-      const avgSeries = (field) => {
-        const out = [];
-        for(let i=0;i<feeds.length;i++){
-          const slice = feeds.slice(Math.max(0,i-47), i+1);
-          const avg = slice.reduce((s,x)=>s + Number(x[field]||0),0)/slice.length;
-          out.push(avg);
-        }
-        return out;
-      };
-
-      const labels = feeds.map(f =>
-        new Date(f.created_at).toLocaleTimeString('it-IT',{
-          hour:'2-digit', minute:'2-digit'
-        })
-      );
-
-      const pm25 = avgSeries('field6');
-      const pm10 = avgSeries('field7');
-
-      const d = document.createElement('div');
-      d.className = 'chart';
-
-      d.innerHTML = `
-        <div>
-          <span class="chart-title">PM10, PM2.5 (μg/m³) Media mobile ultime 24h</span>
-          <span class="chart-sensor">PMS5003</span>
-        </div>
-        <canvas id="pmCombined" style="height:260px; max-height:260px;"></canvas>
-      `;
-
-      chartsContainer.appendChild(d);
-
-      const ctx = document.getElementById('pmCombined').getContext('2d');
-
-      if(window.pmChart) window.pmChart.destroy();
-
-      window.pmChart = new Chart(ctx,{
-        type:'line',
-        data:{
-          labels,
-          datasets:[
-            {label:'PM2.5 (24h)',data:pm25,tension:0.3},
-            {label:'PM10 (24h)',data:pm10,tension:0.3},
-            {label:'Soglia UE PM2.5',data:labels.map(()=>25),borderDash:[5,5],pointRadius:0},
-            {label:'Soglia UE PM10',data:labels.map(()=>50),borderDash:[5,5],pointRadius:0}
-          ]
-        },
-        options:{
-          responsive:true,
-          maintainAspectRatio:false
-        }
-      });
-
-    }catch(e){
-      console.error("Errore grafico combinato:", e);
-    }
-
-  })();
 }
+
 
 
 
