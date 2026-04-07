@@ -924,52 +924,78 @@ for(let i = 0; i <= 24; i++){
             legend:{ display:false }
           },
 
-          scales:{
-            x:{
-  type:'time',
+scales:{
+  x:{
+    type:'time',
 
-  time:{
-    unit:'hour'
-  },
+    time:{
+      unit:'hour'
+    },
 
-  ticks:{
-    autoSkip:false,
-    maxRotation:45,
-    minRotation:45,
+    ticks:{
+      autoSkip:false,
+      maxRotation:45,
+      minRotation:45,
+      callback: function(value){
+        const date = new Date(value);
 
-    callback: function(value){
-      const date = new Date(value);
+        if(date.getHours() === 0){
+          return date.toLocaleDateString('it-IT',{
+            day:'2-digit',
+            month:'short'
+          });
+        }
 
-      if(date.getHours() === 0){
-        return date.toLocaleDateString('it-IT',{
-          day:'2-digit',
-          month:'short'
-        });
+        if(date.getHours() % 3 === 0){
+          return date.toLocaleTimeString('it-IT',{
+            hour:'2-digit',
+            minute:'2-digit'
+          });
+        }
+
+        return '';
       }
+    },
 
-      if(date.getHours() % 3 === 0){
-        return date.toLocaleTimeString('it-IT',{
-          hour:'2-digit',
-          minute:'2-digit'
-        });
-      }
+    title:{
+      display:true,
+      text: (function(){
 
-      return '';
+        const mode = document.getElementById('viewMode')?.value;
+
+        if(mode === "live"){
+          return "Time";
+        }
+
+        const dayInput = document.getElementById('day');
+
+        if(dayInput && dayInput.value){
+          const d = new Date(dayInput.value);
+
+          return d.toLocaleDateString('it-IT',{
+            day:'2-digit',
+            month:'short',
+            year:'numeric'
+          });
+        }
+
+        return "Time";
+
+      })()
+    },
+
+    grid:{
+      display:true
     }
   },
 
-  grid:{
-    display:true
+  y:{
+    beginAtZero:true,
+    grid:{
+      display:true
+    }
   }
-},
-
-            y:{
-              beginAtZero:true,
-              grid:{
-                display:true
-              }
-            }
-          }
+}
         }
       });
 
