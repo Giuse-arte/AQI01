@@ -941,27 +941,21 @@ x:{
     maxRotation:45,
     minRotation:45,
 
-    callback: function(value){
-      const date = new Date(value);
+callback: function(value){
+  const date = new Date(value);
 
-      // 📅 mezzanotte → data
-      if(date.getHours() === 0){
-        return date.toLocaleDateString('it-IT',{
-          day:'2-digit',
-          month:'short'
-        });
-      }
+  // ❌ NON mostrare più la data a mezzanotte
 
-      // 🕒 ogni 3 ore
-      if(date.getHours() % 3 === 0){
-        return date.toLocaleTimeString('it-IT',{
-          hour:'2-digit',
-          minute:'2-digit'
-        });
-      }
+  // 🕒 ogni 3 ore
+  if(date.getHours() % 3 === 0){
+    return date.toLocaleTimeString('it-IT',{
+      hour:'2-digit',
+      minute:'2-digit'
+    });
+  }
 
-      return '';
-    }
+  return '';
+}
   },
 
   title:{
