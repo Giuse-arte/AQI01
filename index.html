@@ -612,8 +612,19 @@ async function loadKPIs(){
   try{
     const { start: tStart, end: tEnd } = getTimeRange();
 
-const startStr = tStart.toISOString().slice(0,19).replace('T',' ');
-const endStr = tEnd.toISOString().slice(0,19).replace('T',' ');
+  function formatLocalDateTime(d){
+  const pad = n => n.toString().padStart(2,'0');
+
+  return d.getFullYear() + '-' +
+         pad(d.getMonth()+1) + '-' +
+         pad(d.getDate()) + ' ' +
+         pad(d.getHours()) + ':' +
+         pad(d.getMinutes()) + ':' +
+         pad(d.getSeconds());
+  }
+
+const startStr = formatLocalDateTime(tStart);
+const endStr = formatLocalDateTime(tEnd);
 
 const r = await fetch(
   `https://api.thingspeak.com/channels/${CHANNEL}/feeds.json?start=${startStr}&end=${endStr}&results=8000`
@@ -844,8 +855,19 @@ if(ch.dataset.id === "6"){
     try{
       const { start: tStart, end: tEnd } = getTimeRange();
 
-      const startStr = tStart.toISOString().slice(0,19).replace('T',' ');
-      const endStr = tEnd.toISOString().slice(0,19).replace('T',' ');
+    function formatLocalDateTime(d){
+    const pad = n => n.toString().padStart(2,'0');
+
+    return d.getFullYear() + '-' +
+         pad(d.getMonth()+1) + '-' +
+         pad(d.getDate()) + ' ' +
+         pad(d.getHours()) + ':' +
+         pad(d.getMinutes()) + ':' +
+         pad(d.getSeconds());
+  }
+
+const startStr = formatLocalDateTime(tStart);
+const endStr = formatLocalDateTime(tEnd);
 
       const r = await fetch(
         `https://api.thingspeak.com/channels/${CHANNEL}/feeds.json?start=${startStr}&end=${endStr}&results=8000`
@@ -990,8 +1012,19 @@ scales:{
 
   const { start: tStart, end: tEnd } = getTimeRange();
 
-const startStr = tStart.toISOString().slice(0,19).replace('T',' ');
-const endStr = tEnd.toISOString().slice(0,19).replace('T',' ');
+  function formatLocalDateTime(d){
+  const pad = n => n.toString().padStart(2,'0');
+
+    return d.getFullYear() + '-' +
+         pad(d.getMonth()+1) + '-' +
+         pad(d.getDate()) + ' ' +
+         pad(d.getHours()) + ':' +
+         pad(d.getMinutes()) + ':' +
+         pad(d.getSeconds());
+  }
+
+const startStr = formatLocalDateTime(tStart);
+const endStr = formatLocalDateTime(tEnd);
 
 if(ch.dataset.id !== "6"){
 
@@ -1001,8 +1034,19 @@ if(ch.dataset.id !== "6"){
 
       const { start: tStart, end: tEnd } = getTimeRange();
 
-      const startStr = tStart.toISOString().slice(0,19).replace('T',' ');
-      const endStr = tEnd.toISOString().slice(0,19).replace('T',' ');
+    function formatLocalDateTime(d){
+    const pad = n => n.toString().padStart(2,'0');
+
+    return d.getFullYear() + '-' +
+         pad(d.getMonth()+1) + '-' +
+         pad(d.getDate()) + ' ' +
+         pad(d.getHours()) + ':' +
+         pad(d.getMinutes()) + ':' +
+         pad(d.getSeconds());
+    }
+
+const startStr = formatLocalDateTime(tStart);
+const endStr = formatLocalDateTime(tEnd);
 
       const r = await fetch(
         `https://api.thingspeak.com/channels/${CHANNEL}/feeds.json?start=${startStr}&end=${endStr}&results=8000`
