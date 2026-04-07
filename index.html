@@ -997,39 +997,108 @@ for(let i = 0; i <= 24; i++){
 const startStr = tStart.toISOString().slice(0,19).replace('T',' ');
 const endStr = tEnd.toISOString().slice(0,19).replace('T',' ');
 
-const src =
-  "https://thingspeak.com/channels/" + CHANNEL +
-  "/charts/" + ch.dataset.id +
-  "?bgcolor=%23ffffff" +
-  "&type=line" +
-  "&color=%23dc2626" +
-  "&yaxis=" + encodeURIComponent(m.u) +
-  "&yaxismin=" + m.min +
-  "&yaxismax=" + m.max +
-  "&start=" + startStr +
-  "&end=" + endStr +
-  "&days=0" +
-  "&_ts=" + new Date().getTime() +
-  "&title=" +
-  "&noheader=true";
+if(ch.dataset.id !== "6"){
 
-  // 🔥 QUESTO È IL FIX VERO
-  "&_ts=" + new Date().getTime() +
+  (async function(){
 
-  "&title=" +
-  "&noheader=true";
+    try{
 
-    const d = document.createElement('div');
-    d.className = 'chart';
+      const { start: tStart, end: tEnd } = getTimeRange();
 
-    d.innerHTML =
-      `<div>
-         <span class="chart-title">${m.t}</span>
-         <span class="chart-sensor">${m.s}</span>
-       </div>
-       <iframe src="${src}" style="height:260px;"></iframe>`;
+      const startStr = tStart.toISOString().slice(0,19).replace('T',' ');
+      const endStr = tEnd.toISOString().slice(0,19).replace('T',' ');
 
-    chartsContainer.appendChild(d);
+      const r = await fetch(
+        `https://api.thingspeak.com/channels/${CHANNEL}/feeds.json?start=${startStr}&end=${endStr}&results=8000`
+      );
+
+      const j = await r.json();
+      const feeds = j.feeds || [];
+
+      if(!feeds.length) return;
+
+      const field = "field" + ch.dataset.id;
+
+      const labels = feeds.map(f => new Date(f.created_at));
+      const data = feeds.map(f => Number(f[field]));
+
+      const d = document.createElement('div');
+      d.className = 'chart';
+
+      d.innerHTML = `
+        <div>
+          <span class="chart-title">${m.t}</span>
+          <span class="chart-sensor">${m.s}</span>
+        </div>
+        <canvas id="chart_${ch.dataset.id}"></canvas>
+      `;
+
+      chartsContainer.appendChild(d);
+
+      const ctx = document.getElementById(`chart_${ch.dataset.id}`);
+
+      new Chart(ctx,{
+        type:'line',
+        data:{
+          labels,
+          datasets:[{
+            data:data,
+            tension:0.3,
+            borderWidth:2,
+            pointRadius:1
+          }]
+        },
+        options:{
+          responsive:true,
+          maintainAspectRatio:false,
+          plugins:{ legend:{ display:false } },
+
+          scales:{
+            x:{
+              type:'time',
+              time:{ unit:'hour' },
+              ticks:{
+                autoSkip:false,
+                maxRotation:45,
+                minRotation:45,
+                callback: function(value){
+                  const date = new Date(value);
+
+                  if(date.getHours() === 0){
+                    return date.toLocaleDateString('it-IT',{
+                      day:'2-digit',
+                      month:'short'
+                    });
+                  }
+
+                  if(date.getHours() % 3 === 0){
+                    return date.toLocaleTimeString('it-IT',{
+                      hour:'2-digit',
+                      minute:'2-digit'
+                    });
+                  }
+
+                  return '';
+                }
+              },
+              grid:{ display:true }
+            },
+            y:{
+              beginAtZero:true,
+              grid:{ display:true }
+            }
+          }
+        }
+      });
+
+    }catch(e){
+      console.error(e);
+    }
+
+  })();
+
+  return;
+}
   });
 
   // =========================
