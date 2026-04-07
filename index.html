@@ -921,67 +921,42 @@ const data = feeds.map(f => Number(f.field6));
           },
 
 scales:{
-  x:{
-    type:'time',
+x:{
+  type:'time',
 
-    time:{ unit:'hour' },
+  min: tStart,
+  max: tEnd,
 
-    ticks:{
-      autoSkip:false,
-      maxRotation:45,
-      minRotation:45,
-      callback: function(value){
-        const date = new Date(value);
+  time:{
+    unit:'hour',
+    round:'hour',
+    stepSize:1
+  },
 
-        if(date.getHours() === 0){
-          return date.toLocaleDateString('it-IT',{
-            day:'2-digit',
-            month:'short'
-          });
-        }
+  ticks:{
+    source:'auto',
+    autoSkip:false,
+    maxRotation:45,
+    minRotation:45,
 
-        if(date.getHours() % 3 === 0){
-          return date.toLocaleTimeString('it-IT',{
-            hour:'2-digit',
-            minute:'2-digit'
-          });
-        }
+    callback: function(value){
+      const date = new Date(value);
 
-        return '';
+      if(date.getHours() % 3 === 0){
+        return date.toLocaleTimeString('it-IT',{
+          hour:'2-digit',
+          minute:'2-digit'
+        });
       }
-    },
 
-    title:{
-      display:true,
-      text: (function(){
-
-        const mode = document.getElementById('viewMode')?.value;
-
-        if(mode === "live"){
-          return "Time";
-        }
-
-        const dayInput = document.getElementById('day');
-
-        if(dayInput && dayInput.value){
-          const d = new Date(dayInput.value);
-
-          return d.toLocaleDateString('it-IT',{
-            day:'2-digit',
-            month:'short',
-            year:'numeric'
-          });
-        }
-
-        return "Time";
-
-      })()
-    },
-
-    grid:{
-      display:true
+      return '';
     }
   },
+
+  grid:{
+    display:true
+  }
+},
 
   y:{
     beginAtZero:true,
@@ -1094,67 +1069,42 @@ const endStr = formatLocalDateTime(tEnd);
           plugins:{ legend:{ display:false } },
 
 scales:{
-  x:{
-    type:'time',
+x:{
+  type:'time',
 
-    time:{ unit:'hour' },
+  min: tStart,
+  max: tEnd,
 
-    ticks:{
-      autoSkip:false,
-      maxRotation:45,
-      minRotation:45,
-      callback: function(value){
-        const date = new Date(value);
+  time:{
+    unit:'hour',
+    round:'hour',
+    stepSize:1
+  },
 
-        if(date.getHours() === 0){
-          return date.toLocaleDateString('it-IT',{
-            day:'2-digit',
-            month:'short'
-          });
-        }
+  ticks:{
+    source:'auto',
+    autoSkip:false,
+    maxRotation:45,
+    minRotation:45,
 
-        if(date.getHours() % 3 === 0){
-          return date.toLocaleTimeString('it-IT',{
-            hour:'2-digit',
-            minute:'2-digit'
-          });
-        }
+    callback: function(value){
+      const date = new Date(value);
 
-        return '';
+      if(date.getHours() % 3 === 0){
+        return date.toLocaleTimeString('it-IT',{
+          hour:'2-digit',
+          minute:'2-digit'
+        });
       }
-    },
 
-    title:{
-      display:true,
-      text: (function(){
-
-        const mode = document.getElementById('viewMode')?.value;
-
-        if(mode === "live"){
-          return "Time";
-        }
-
-        const dayInput = document.getElementById('day');
-
-        if(dayInput && dayInput.value){
-          const d = new Date(dayInput.value);
-
-          return d.toLocaleDateString('it-IT',{
-            day:'2-digit',
-            month:'short',
-            year:'numeric'
-          });
-        }
-
-        return "Time";
-
-      })()
-    },
-
-    grid:{
-      display:true
+      return '';
     }
   },
+
+  grid:{
+    display:true
+  }
+},
 
   y:{
     beginAtZero:true,
