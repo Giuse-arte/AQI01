@@ -1073,6 +1073,38 @@ if(ch.dataset.id !== "6"){
                   return '';
                 }
               },
+    
+      title:{
+        display:true,
+        text: (function(){
+
+          const mode = document.getElementById('viewMode')?.value;
+
+          if(mode === "live"){
+            return "Time";
+          }
+
+          const dayInput = document.getElementById('day');
+
+          if(dayInput && dayInput.value){
+            const d = new Date(dayInput.value);
+
+            return d.toLocaleDateString('it-IT',{
+              day:'2-digit',
+              month:'short',
+              year:'numeric'
+            });
+          }
+
+      return "Time";
+
+    })()
+  },
+
+  grid:{
+    display:true
+  }
+}          
               grid:{ display:true }
             },
             y:{
