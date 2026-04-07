@@ -936,25 +936,23 @@ x:{
   },
 
   ticks:{
+    source:'data', // 🔥 usa tutti i punti → fondamentale
     autoSkip:false,
     maxRotation:45,
     minRotation:45,
+
     callback: function(value){
       const date = new Date(value);
 
-  // ❌ NON mostrare più la data a mezzanotte
+      // 📅 mezzanotte → data
+      if(date.getHours() === 0){
+        return date.toLocaleDateString('it-IT',{
+          day:'2-digit',
+          month:'short'
+        });
+      }
 
-  // 🕒 ogni 3 ore
-  if(date.getHours() % 3 === 0){
-    return date.toLocaleTimeString('it-IT',{
-      hour:'2-digit',
-      minute:'2-digit'
-    });
-  }
-
-  return '';
-}
-
+      // 🕒 ogni 3 ore
       if(date.getHours() % 3 === 0){
         return date.toLocaleTimeString('it-IT',{
           hour:'2-digit',
