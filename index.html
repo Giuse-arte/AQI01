@@ -942,12 +942,21 @@ x:{
     callback: function(value){
       const date = new Date(value);
 
-      if(date.getHours() === 0){
-        return date.toLocaleDateString('it-IT',{
-          day:'2-digit',
-          month:'short'
-        });
-      }
+callback: function(value){
+  const date = new Date(value);
+
+  // ❌ NON mostrare più la data a mezzanotte
+
+  // 🕒 ogni 3 ore
+  if(date.getHours() % 3 === 0){
+    return date.toLocaleTimeString('it-IT',{
+      hour:'2-digit',
+      minute:'2-digit'
+    });
+  }
+
+  return '';
+}
 
       if(date.getHours() % 3 === 0){
         return date.toLocaleTimeString('it-IT',{
