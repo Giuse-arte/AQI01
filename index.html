@@ -992,7 +992,12 @@ for(let i = 0; i <= 24; i++){
     const m = meta[ch.dataset.id];
     if(!m) return;
 
-  const src =
+  const { start: tStart, end: tEnd } = getTimeRange();
+
+const startStr = tStart.toISOString().slice(0,19).replace('T',' ');
+const endStr = tEnd.toISOString().slice(0,19).replace('T',' ');
+
+const src =
   "https://thingspeak.com/channels/" + CHANNEL +
   "/charts/" + ch.dataset.id +
   "?bgcolor=%23ffffff" +
@@ -1001,14 +1006,12 @@ for(let i = 0; i <= 24; i++){
   "&yaxis=" + encodeURIComponent(m.u) +
   "&yaxismin=" + m.min +
   "&yaxismax=" + m.max +
-  const startStr = tStart.toISOString().slice(0,19).replace('T',' ');
-const endStr = tEnd.toISOString().slice(0,19).replace('T',' ');
-
-"&start=" + startStr +
-"&end=" + endStr +
-"&days=0" +
-"&_ts=" + new Date().getTime() +
+  "&start=" + startStr +
+  "&end=" + endStr +
   "&days=0" +
+  "&_ts=" + new Date().getTime() +
+  "&title=" +
+  "&noheader=true";
 
   // 🔥 QUESTO È IL FIX VERO
   "&_ts=" + new Date().getTime() +
