@@ -869,7 +869,7 @@ const data = feeds.map(f => Number(f.field6));
 
       d.innerHTML = `
         <div>
-          <span class="chart-title">PM2.5 (µg/m³)</span>
+          <span class="chart-title">PM2.5</span>
           <span class="chart-sensor">PMS5003</span>
         </div>
         <canvas id="chart_pm25" style="height:260px;"></canvas>
@@ -963,6 +963,12 @@ scales:{
 
   y:{
     beginAtZero:true,
+
+    title:{
+      display:true,
+      text: m.u  // 🔥 prende unità dal meta
+    },
+    
     grid:{
       display:true
     }
@@ -1108,6 +1114,12 @@ scales:{
 
   y:{
     beginAtZero:true,
+    
+    title:{
+      display:true,
+      text: m.u  // 🔥 prende unità dal meta
+    },
+    
     grid:{
       display:true
     }
