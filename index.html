@@ -834,82 +834,6 @@ function renderCharts(){
   // =========================
   document.querySelectorAll('aside input[data-id]:checked').forEach(ch => {
 
-  if(ch.dataset.id === "combo"){
-
-  (async function(){
-
-    try{
-
-      const { start: tStart, end: tEnd } = getTimeRange();
-
-      const startStr = tStart.toISOString().slice(0,19).replace('T',' ');
-      const endStr = tEnd.toISOString().slice(0,19).replace('T',' ');
-
-      const r = await fetch(
-        `https://api.thingspeak.com/channels/${CHANNEL}/feeds.json?start=${startStr}&end=${endStr}&results=8000`
-      );
-
-      const j = await r.json();
-      const feeds = j.feeds || [];
-
-      if(!feeds.length) return;
-
-      const avgSeries = (field) => {
-        const out = [];
-        for(let i=0;i<feeds.length;i++){
-          const slice = feeds.slice(Math.max(0,i-47), i+1);
-          const avg = slice.reduce((s,x)=>s + Number(x[field]||0),0)/slice.length;
-          out.push(avg);
-        }
-        return out;
-      };
-
-      const labels = feeds.map(f => new Date(f.created_at));
-
-      const pm25 = avgSeries('field6');
-      const pm10 = avgSeries('field7');
-
-      const d = document.createElement('div');
-      d.className = 'chart';
-
-      d.innerHTML = `
-        <div>
-          <span class="chart-title">PM10, PM2.5 (μg/m³)</span>
-          <span class="chart-sensor">PMS5003</span>
-        </div>
-        <canvas id="pmCombined"></canvas>
-      `;
-
-      chartsContainer.appendChild(d);
-
-      const ctx = document.getElementById('pmCombined');
-
-      if(window.pmChart) window.pmChart.destroy();
-
-      window.pmChart = new Chart(ctx,{
-        type:'line',
-        data:{
-          labels,
-          datasets:[
-            {label:'PM2.5',data:pm25,tension:0.3},
-            {label:'PM10',data:pm10,tension:0.3}
-          ]
-        },
-        options:{
-          responsive:true,
-          maintainAspectRatio:false
-        }
-      });
-
-    }catch(e){
-      console.error(e);
-    }
-
-  })();
-
-  return;
-}
-    
 // =========================
 // PM2.5 con Chart.js (FIX)
 // =========================
@@ -1009,7 +933,6 @@ for(let i = 0; i <= 24; i++){
   },
 
   ticks:{
-    source:'data', // 🔥 usa tutti i punti → fondamentale
     autoSkip:false,
     maxRotation:45,
     minRotation:45,
@@ -1017,7 +940,6 @@ for(let i = 0; i <= 24; i++){
     callback: function(value){
       const date = new Date(value);
 
-      // 📅 mezzanotte → data
       if(date.getHours() === 0){
         return date.toLocaleDateString('it-IT',{
           day:'2-digit',
@@ -1025,7 +947,6 @@ for(let i = 0; i <= 24; i++){
         });
       }
 
-      // 🕒 ogni 3 ore
       if(date.getHours() % 3 === 0){
         return date.toLocaleTimeString('it-IT',{
           hour:'2-digit',
@@ -1035,11 +956,6 @@ for(let i = 0; i <= 24; i++){
 
       return '';
     }
-  },
-
-  title:{
-    display:true,
-    text:'Time'
   },
 
   grid:{
@@ -1176,6 +1092,94 @@ if(ch.dataset.id !== "6"){
   return;
 }
   });
+
+  // =========================
+  // GRAFICO COMBINATO (FIX DEFINITIVO)
+  // =========================
+
+  const comboCheckbox = document.querySelector('aside input[data-id="combo"]');
+
+  // 👉 se NON selezionato → NON creare nulla
+  if(!comboCheckbox || !comboCheckbox.checked){
+    return;
+  }
+
+  (async function(){
+
+    try{
+      const r = await fetch(
+        `https://api.thingspeak.com/channels/${CHANNEL}/feeds.json?results=48`
+      );
+
+      if(!r.ok) throw new Error();
+
+      const j = await r.json();
+      const feeds = j.feeds || [];
+
+      if(!feeds.length) return;
+
+      // media mobile 24h
+      const avgSeries = (field) => {
+        const out = [];
+        for(let i=0;i<feeds.length;i++){
+          const slice = feeds.slice(Math.max(0,i-47), i+1);
+          const avg = slice.reduce((s,x)=>s + Number(x[field]||0),0)/slice.length;
+          out.push(avg);
+        }
+        return out;
+      };
+
+      const labels = feeds.map(f =>
+        new Date(f.created_at).toLocaleTimeString('it-IT',{
+          hour:'2-digit', minute:'2-digit'
+        })
+      );
+
+      const pm25 = avgSeries('field6');
+      const pm10 = avgSeries('field7');
+
+      const d = document.createElement('div');
+      d.className = 'chart';
+
+      d.innerHTML = `
+        <div>
+          <span class="chart-title">PM10, PM2.5 (μg/m³) Media mobile ultime 24h</span>
+          <span class="chart-sensor">PMS5003</span>
+        </div>
+        <canvas id="pmCombined" style="height:260px; max-height:260px;"></canvas>
+      `;
+
+      chartsContainer.appendChild(d);
+
+      const ctx = document.getElementById('pmCombined').getContext('2d');
+
+      if(window.pmChart) window.pmChart.destroy();
+
+      window.pmChart = new Chart(ctx,{
+        type:'line',
+        data:{
+          labels,
+          datasets:[
+            {label:'PM2.5 (24h)',data:pm25,tension:0.3},
+            {label:'PM10 (24h)',data:pm10,tension:0.3},
+            {label:'Soglia UE PM2.5',data:labels.map(()=>25),borderDash:[5,5],pointRadius:0},
+            {label:'Soglia UE PM10',data:labels.map(()=>50),borderDash:[5,5],pointRadius:0}
+          ]
+        },
+        options:{
+          responsive:true,
+          maintainAspectRatio:false
+        }
+      });
+
+    }catch(e){
+      console.error("Errore grafico combinato:", e);
+    }
+
+  })();
+}
+
+
 
 /* =========================
    EVENTI → SALVA PREFERENZE
