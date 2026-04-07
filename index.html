@@ -1045,76 +1045,42 @@ if(ch.dataset.id !== "6"){
           maintainAspectRatio:false,
           plugins:{ legend:{ display:false } },
 
-         scales:{
-  x:{
-    type:'time',
+          scales:{
+            x:{
+              type:'time',
+              time:{ unit:'hour' },
+              ticks:{
+                autoSkip:false,
+                maxRotation:45,
+                minRotation:45,
+                callback: function(value){
+                  const date = new Date(value);
 
-    time:{ unit:'hour' },
+                  if(date.getHours() === 0){
+                    return date.toLocaleDateString('it-IT',{
+                      day:'2-digit',
+                      month:'short'
+                    });
+                  }
 
-    ticks:{
-      autoSkip:false,
-      maxRotation:45,
-      minRotation:45,
-      callback: function(value){
-        const date = new Date(value);
+                  if(date.getHours() % 3 === 0){
+                    return date.toLocaleTimeString('it-IT',{
+                      hour:'2-digit',
+                      minute:'2-digit'
+                    });
+                  }
 
-        if(date.getHours() === 0){
-          return date.toLocaleDateString('it-IT',{
-            day:'2-digit',
-            month:'short'
-          });
+                  return '';
+                }
+              },
+              grid:{ display:true }
+            },
+            y:{
+              beginAtZero:true,
+              grid:{ display:true }
+            }
+          }
         }
-
-        if(date.getHours() % 3 === 0){
-          return date.toLocaleTimeString('it-IT',{
-            hour:'2-digit',
-            minute:'2-digit'
-          });
-        }
-
-        return '';
-      }
-    },
-
-    title:{
-      display:true,
-      text: (function(){
-
-        const mode = document.getElementById('viewMode')?.value;
-
-        if(mode === "live"){
-          return "Time";
-        }
-
-        const dayInput = document.getElementById('day');
-
-        if(dayInput && dayInput.value){
-          const d = new Date(dayInput.value);
-
-          return d.toLocaleDateString('it-IT',{
-            day:'2-digit',
-            month:'short',
-            year:'numeric'
-          });
-        }
-
-        return "Time";
-
-      })()
-    },
-
-    grid:{
-      display:true
-    }
-  },
-
-  y:{
-    beginAtZero:true,
-    grid:{
-      display:true
-    }
-  }
-}
       });
 
     }catch(e){
