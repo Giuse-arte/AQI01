@@ -899,70 +899,67 @@ const data = feeds.map(f => Number(f.field6));
           },
 
 scales:{
-x:{
-  type:'time',
+  x:{
+    type:'time',
 
-  min: tStart,   // 🔥 FORZA INIZIO
-  max: tEnd,     // 🔥 FORZA FINE
+    time:{ unit:'hour' },
 
-  time:{
-    unit:'hour'
-  },
+    ticks:{
+      autoSkip:false,
+      maxRotation:45,
+      minRotation:45,
+      callback: function(value){
+        const date = new Date(value);
 
-  ticks:{
-    source:'data', // 🔥 usa tutti i punti → fondamentale
-    autoSkip:false,
-    maxRotation:45,
-    minRotation:45,
+        if(date.getHours() === 0){
+          return date.toLocaleDateString('it-IT',{
+            day:'2-digit',
+            month:'short'
+          });
+        }
 
-callback: function(value){
-  const date = new Date(value);
+        if(date.getHours() % 3 === 0){
+          return date.toLocaleTimeString('it-IT',{
+            hour:'2-digit',
+            minute:'2-digit'
+          });
+        }
 
-  // ❌ NON mostrare più la data a mezzanotte
+        return '';
+      }
+    },
 
-  // 🕒 ogni 3 ore
-  if(date.getHours() % 3 === 0){
-    return date.toLocaleTimeString('it-IT',{
-      hour:'2-digit',
-      minute:'2-digit'
-    });
-  }
+    title:{
+      display:true,
+      text: (function(){
 
-  return '';
-}
-  },
+        const mode = document.getElementById('viewMode')?.value;
 
-  title:{
-    display:true,
-    text: (function(){
+        if(mode === "live"){
+          return "Time";
+        }
 
-      const mode = document.getElementById('viewMode')?.value;
+        const dayInput = document.getElementById('day');
 
-      if(mode === "live"){
+        if(dayInput && dayInput.value){
+          const d = new Date(dayInput.value);
+
+          return d.toLocaleDateString('it-IT',{
+            day:'2-digit',
+            month:'short',
+            year:'numeric'
+          });
+        }
+
         return "Time";
-      }
 
-      const dayInput = document.getElementById('day');
+      })()
+    },
 
-      if(dayInput && dayInput.value){
-        const d = new Date(dayInput.value);
-
-        return d.toLocaleDateString('it-IT',{
-          day:'2-digit',
-          month:'short',
-          year:'numeric'
-        });
-      }
-
-      return "Time";
-
-    })()
+    grid:{
+      display:true
+    }
   },
-
-  grid:{
-    display:true
-  }
-},
 
   y:{
     beginAtZero:true,
