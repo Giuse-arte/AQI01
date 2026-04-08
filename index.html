@@ -924,6 +924,10 @@ scales:{
 x:{
   type:'time',
 
+  // 🔥 FORZA PARTENZA A MEZZANOTTE
+  min: new Date(document.getElementById('day').value + "T00:00:00"),
+  max: new Date(document.getElementById('day').value + "T23:59:59"),
+
   time:{
     unit:'hour'
   },
@@ -936,7 +940,12 @@ x:{
     callback: function(value){
       const date = new Date(value);
 
-      // etichette ogni 4 ore
+      // ❌ niente etichetta a mezzanotte
+      if(date.getHours() === 0){
+        return '';
+      }
+
+      // ✔ etichette ogni 4 ore
       if(date.getHours() % 4 === 0){
         return date.toLocaleTimeString('it-IT',{
           hour:'2-digit',
@@ -946,6 +955,27 @@ x:{
 
       return '';
     }
+  },
+
+  title:{
+    display:true,
+    text: (function(){
+
+      const dayInput = document.getElementById('day');
+
+      if(dayInput && dayInput.value){
+        const d = new Date(dayInput.value);
+
+        return d.toLocaleDateString('it-IT',{
+          day:'2-digit',
+          month:'short',
+          year:'numeric'
+        });
+      }
+
+      return "";
+
+    })()
   },
 
   grid:{
@@ -1067,6 +1097,10 @@ scales:{
 x:{
   type:'time',
 
+  // 🔥 FORZA PARTENZA A MEZZANOTTE
+  min: new Date(document.getElementById('day').value + "T00:00:00"),
+  max: new Date(document.getElementById('day').value + "T23:59:59"),
+
   time:{
     unit:'hour'
   },
@@ -1079,7 +1113,12 @@ x:{
     callback: function(value){
       const date = new Date(value);
 
-      // etichette ogni 4 ore
+      // ❌ niente etichetta a mezzanotte
+      if(date.getHours() === 0){
+        return '';
+      }
+
+      // ✔ etichette ogni 4 ore
       if(date.getHours() % 4 === 0){
         return date.toLocaleTimeString('it-IT',{
           hour:'2-digit',
@@ -1089,6 +1128,27 @@ x:{
 
       return '';
     }
+  },
+
+  title:{
+    display:true,
+    text: (function(){
+
+      const dayInput = document.getElementById('day');
+
+      if(dayInput && dayInput.value){
+        const d = new Date(dayInput.value);
+
+        return d.toLocaleDateString('it-IT',{
+          day:'2-digit',
+          month:'short',
+          year:'numeric'
+        });
+      }
+
+      return "";
+
+    })()
   },
 
   grid:{
