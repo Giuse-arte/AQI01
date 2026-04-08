@@ -924,17 +924,11 @@ scales:{
 x:{
   type:'time',
 
-  min: tStart,
-  max: tEnd,
-
   time:{
-    unit:'hour',
-    round:'hour',
-    stepSize:1
+    unit:'hour'
   },
 
   ticks:{
-    source:'auto',
     autoSkip:false,
     maxRotation:45,
     minRotation:45,
@@ -942,7 +936,8 @@ x:{
     callback: function(value){
       const date = new Date(value);
 
-      if(date.getHours() % 3 === 0){
+      // etichette ogni 4 ore
+      if(date.getHours() % 4 === 0){
         return date.toLocaleTimeString('it-IT',{
           hour:'2-digit',
           minute:'2-digit'
@@ -1072,17 +1067,11 @@ scales:{
 x:{
   type:'time',
 
-  min: tStart,
-  max: tEnd,
-
   time:{
-    unit:'hour',
-    round:'hour',
-    stepSize:1
+    unit:'hour'
   },
 
   ticks:{
-    source:'auto',
     autoSkip:false,
     maxRotation:45,
     minRotation:45,
@@ -1090,7 +1079,8 @@ x:{
     callback: function(value){
       const date = new Date(value);
 
-      if(date.getHours() % 3 === 0){
+      // etichette ogni 4 ore
+      if(date.getHours() % 4 === 0){
         return date.toLocaleTimeString('it-IT',{
           hour:'2-digit',
           minute:'2-digit'
