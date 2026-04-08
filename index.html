@@ -582,10 +582,8 @@ function savePreferences(){
 
   // 🔴 LIVE
   if(mode === "live"){
-    const last = new Date(feeds.at(-1).created_at);
-    const end = last;
+    const end = new Date();
     const start = new Date(end.getTime() - 24*60*60*1000);
-    
     return { start, end };
   }
 
@@ -879,31 +877,10 @@ const endStr = formatLocalDateTime(tEnd);
 
       const j = await r.json();
       const feeds = j.feeds || [];
-      let tStart, tEnd;
-
-const mode = document.getElementById('viewMode')?.value;
-
-if(mode === "live"){
-  // 🔥 ultima acquisizione reale
-  const last = new Date(feeds.at(-1).created_at);
-
-  tEnd = last;
-  tStart = new Date(last.getTime() - 24*60*60*1000);
-
-}else{
-  // 🔵 giorno selezionato
-  const selected = new Date(document.getElementById('day').value);
-
-  tStart = new Date(selected);
-  tStart.setHours(0,0,0,0);
-
-  tEnd = new Date(selected);
-  tEnd.setHours(23,59,59,999);
-}
 
       if(!feeds.length) return;
 
-const labels = feeds.map(f => new Date(f.created_at));     
+const labels = feeds.map(f => new Date(f.created_at));
 const data = feeds.map(f => Number(f.field6));
 
       const startDate = labels[0];
@@ -952,10 +929,12 @@ x:{
 
   time:{
     unit:'hour',
-    stepSize:2
+    round:'hour',
+    stepSize:1
   },
 
   ticks:{
+    source:'auto',
     autoSkip:false,
     maxRotation:45,
     minRotation:45,
@@ -963,13 +942,7 @@ x:{
     callback: function(value){
       const date = new Date(value);
 
-      // ❌ niente label a 00:00 (giorno)
-      if(date.getHours() === 0){
-        return '';
-      }
-
-      // ✔ label ogni 4 ore
-      if(date.getHours() % 4 === 0){
+      if(date.getHours() % 3 === 0){
         return date.toLocaleTimeString('it-IT',{
           hour:'2-digit',
           minute:'2-digit'
@@ -978,25 +951,6 @@ x:{
 
       return '';
     }
-  },
-
-  title:{
-    display:true,
-    text: (function(){
-
-      const mode = document.getElementById('viewMode')?.value;
-
-      if(mode === "live") return "Time";
-
-      const d = new Date(document.getElementById('day').value);
-
-      return d.toLocaleDateString('it-IT',{
-        day:'2-digit',
-        month:'short',
-        year:'numeric'
-      });
-
-    })()
   },
 
   grid:{
@@ -1075,27 +1029,6 @@ const endStr = formatLocalDateTime(tEnd);
 
       const j = await r.json();
       const feeds = j.feeds || [];
-      let tStart, tEnd;
-
-const mode = document.getElementById('viewMode')?.value;
-
-if(mode === "live"){
-  // 🔥 ultima acquisizione reale
-  const last = new Date(feeds.at(-1).created_at);
-
-  tEnd = last;
-  tStart = new Date(last.getTime() - 24*60*60*1000);
-
-}else{
-  // 🔵 giorno selezionato
-  const selected = new Date(document.getElementById('day').value);
-
-  tStart = new Date(selected);
-  tStart.setHours(0,0,0,0);
-
-  tEnd = new Date(selected);
-  tEnd.setHours(23,59,59,999);
-}
 
       if(!feeds.length) return;
 
@@ -1144,10 +1077,12 @@ x:{
 
   time:{
     unit:'hour',
-    stepSize:2
+    round:'hour',
+    stepSize:1
   },
 
   ticks:{
+    source:'auto',
     autoSkip:false,
     maxRotation:45,
     minRotation:45,
@@ -1155,13 +1090,7 @@ x:{
     callback: function(value){
       const date = new Date(value);
 
-      // ❌ niente label a 00:00 (giorno)
-      if(date.getHours() === 0){
-        return '';
-      }
-
-      // ✔ label ogni 4 ore
-      if(date.getHours() % 4 === 0){
+      if(date.getHours() % 3 === 0){
         return date.toLocaleTimeString('it-IT',{
           hour:'2-digit',
           minute:'2-digit'
@@ -1170,25 +1099,6 @@ x:{
 
       return '';
     }
-  },
-
-  title:{
-    display:true,
-    text: (function(){
-
-      const mode = document.getElementById('viewMode')?.value;
-
-      if(mode === "live") return "Time";
-
-      const d = new Date(document.getElementById('day').value);
-
-      return d.toLocaleDateString('it-IT',{
-        day:'2-digit',
-        month:'short',
-        year:'numeric'
-      });
-
-    })()
   },
 
   grid:{
