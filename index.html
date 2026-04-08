@@ -882,15 +882,21 @@ const endStr = formatLocalDateTime(tEnd);
 
 const mode = document.getElementById('viewMode')?.value;
 
+// 🔴 PROTEZIONE
+if(!feeds || feeds.length === 0){
+  return; // evita crash
+}
+
 if(mode === "live"){
-  // 🔥 ultima acquisizione reale
-  const last = new Date(feeds.at(-1).created_at);
+
+  // 🔥 ultima acquisizione (SAFE)
+  const last = new Date(feeds[feeds.length - 1].created_at);
 
   tEnd = last;
   tStart = new Date(last.getTime() - 24*60*60*1000);
 
 }else{
-  // 🔵 giorno selezionato
+
   const selected = new Date(document.getElementById('day').value);
 
   tStart = new Date(selected);
@@ -899,7 +905,6 @@ if(mode === "live"){
   tEnd = new Date(selected);
   tEnd.setHours(23,59,59,999);
 }
-
       if(!feeds.length) return;
 
 const labels = feeds.map(f => new Date(f.created_at));
@@ -1056,15 +1061,21 @@ const endStr = formatLocalDateTime(tEnd);
 
 const mode = document.getElementById('viewMode')?.value;
 
+// 🔴 PROTEZIONE
+if(!feeds || feeds.length === 0){
+  return; // evita crash
+}
+
 if(mode === "live"){
-  // 🔥 ultima acquisizione reale
-  const last = new Date(feeds.at(-1).created_at);
+
+  // 🔥 ultima acquisizione (SAFE)
+  const last = new Date(feeds[feeds.length - 1].created_at);
 
   tEnd = last;
   tStart = new Date(last.getTime() - 24*60*60*1000);
 
 }else{
-  // 🔵 giorno selezionato
+
   const selected = new Date(document.getElementById('day').value);
 
   tStart = new Date(selected);
