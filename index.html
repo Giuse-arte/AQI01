@@ -869,9 +869,14 @@ if(ch.dataset.id === "6"){
 const startStr = formatLocalDateTime(tStart);
 const endStr = formatLocalDateTime(tEnd);
 
-      const r = await fetch(
-        `https://api.thingspeak.com/channels/${CHANNEL}/feeds.json?start=${startStr}&end=${endStr}&results=8000`
-      );
+const bufferStart = new Date(tStart.getTime() - 3 * 60 * 60 * 1000);
+
+const startStr = formatLocalDateTime(bufferStart);
+const endStr = formatLocalDateTime(tEnd);
+
+const r = await fetch(
+  `https://api.thingspeak.com/channels/${CHANNEL}/feeds.json?start=${startStr}&end=${endStr}&results=8000`
+);
 
       if(!r.ok) throw new Error();
 
@@ -880,8 +885,17 @@ const endStr = formatLocalDateTime(tEnd);
 
       if(!feeds.length) return;
 
-const labels = feeds.map(f => new Date(f.created_at));
-const data = feeds.map(f => Number(f.field6));
+const labels = [];
+const data = [];
+
+feeds.forEach(f => {
+  const d = new Date(f.created_at);
+
+  if(d >= tStart && d <= tEnd){
+    labels.push(d);
+    data.push(Number(f.field6));
+  }
+});
 
       const startDate = labels[0];
       const endDate = labels[labels.length - 1];
@@ -1048,9 +1062,14 @@ if(ch.dataset.id !== "6"){
 const startStr = formatLocalDateTime(tStart);
 const endStr = formatLocalDateTime(tEnd);
 
-      const r = await fetch(
-        `https://api.thingspeak.com/channels/${CHANNEL}/feeds.json?start=${startStr}&end=${endStr}&results=8000`
-      );
+      const bufferStart = new Date(tStart.getTime() - 3 * 60 * 60 * 1000);
+
+const startStr = formatLocalDateTime(bufferStart);
+const endStr = formatLocalDateTime(tEnd);
+
+const r = await fetch(
+  `https://api.thingspeak.com/channels/${CHANNEL}/feeds.json?start=${startStr}&end=${endStr}&results=8000`
+);
 
       const j = await r.json();
       const feeds = j.feeds || [];
@@ -1059,8 +1078,17 @@ const endStr = formatLocalDateTime(tEnd);
 
       const field = "field" + ch.dataset.id;
 
-      const labels = feeds.map(f => new Date(f.created_at));
-      const data = feeds.map(f => Number(f[field]));
+      const labels = [];
+const data = [];
+
+feeds.forEach(f => {
+  const d = new Date(f.created_at);
+
+  if(d >= tStart && d <= tEnd){
+    labels.push(d);
+    data.push(Number(f[field]));
+  }
+});
 
       const d = document.createElement('div');
       d.className = 'chart';
