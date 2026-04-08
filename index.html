@@ -820,7 +820,29 @@ function renderCharts(){
   chartsContainer.innerHTML = '';
 
   /* Se date non impostate → esce */
-  const { start: tStart, end: tEnd } = getTimeRange();
+ const mode = document.getElementById('viewMode')?.value;
+
+let tStart, tEnd;
+
+if(mode === "live"){
+
+  if(!feeds || feeds.length === 0) return;
+
+  const last = new Date(feeds[feeds.length - 1].created_at);
+
+  tEnd = last;
+  tStart = new Date(last.getTime() - 24*60*60*1000);
+
+}else{
+
+  const selected = new Date(document.getElementById('day').value);
+
+  tStart = new Date(selected);
+  tStart.setHours(0,0,0,0);
+
+  tEnd = new Date(selected);
+  tEnd.setHours(23,59,59,999);
+}
 
   /* Aggiorna sottotitolo */
   const subtitle = document.getElementById('subtitle');
@@ -853,7 +875,29 @@ if(ch.dataset.id === "6"){
   (async function(){
 
     try{
-      const { start: tStart, end: tEnd } = getTimeRange();
+      const mode = document.getElementById('viewMode')?.value;
+
+let tStart, tEnd;
+
+if(mode === "live"){
+
+  if(!feeds || feeds.length === 0) return;
+
+  const last = new Date(feeds[feeds.length - 1].created_at);
+
+  tEnd = last;
+  tStart = new Date(last.getTime() - 24*60*60*1000);
+
+}else{
+
+  const selected = new Date(document.getElementById('day').value);
+
+  tStart = new Date(selected);
+  tStart.setHours(0,0,0,0);
+
+  tEnd = new Date(selected);
+  tEnd.setHours(23,59,59,999);
+}
 
     function formatLocalDateTime(d){
     const pad = n => n.toString().padStart(2,'0');
@@ -1012,7 +1056,29 @@ x:{
     const m = meta[ch.dataset.id];
     if(!m) return;
 
-  const { start: tStart, end: tEnd } = getTimeRange();
+  const mode = document.getElementById('viewMode')?.value;
+
+let tStart, tEnd;
+
+if(mode === "live"){
+
+  if(!feeds || feeds.length === 0) return;
+
+  const last = new Date(feeds[feeds.length - 1].created_at);
+
+  tEnd = last;
+  tStart = new Date(last.getTime() - 24*60*60*1000);
+
+}else{
+
+  const selected = new Date(document.getElementById('day').value);
+
+  tStart = new Date(selected);
+  tStart.setHours(0,0,0,0);
+
+  tEnd = new Date(selected);
+  tEnd.setHours(23,59,59,999);
+}
 
   function formatLocalDateTime(d){
   const pad = n => n.toString().padStart(2,'0');
@@ -1034,7 +1100,29 @@ if(ch.dataset.id !== "6"){
 
     try{
 
-      const { start: tStart, end: tEnd } = getTimeRange();
+      const mode = document.getElementById('viewMode')?.value;
+
+let tStart, tEnd;
+
+if(mode === "live"){
+
+  if(!feeds || feeds.length === 0) return;
+
+  const last = new Date(feeds[feeds.length - 1].created_at);
+
+  tEnd = last;
+  tStart = new Date(last.getTime() - 24*60*60*1000);
+
+}else{
+
+  const selected = new Date(document.getElementById('day').value);
+
+  tStart = new Date(selected);
+  tStart.setHours(0,0,0,0);
+
+  tEnd = new Date(selected);
+  tEnd.setHours(23,59,59,999);
+}
 
     function formatLocalDateTime(d){
     const pad = n => n.toString().padStart(2,'0');
