@@ -866,9 +866,6 @@ if(ch.dataset.id === "6"){
          pad(d.getSeconds());
   }
 
-const startStr = formatLocalDateTime(tStart);
-const endStr = formatLocalDateTime(tEnd);
-
 const bufferStart = new Date(tStart.getTime() - 3 * 60 * 60 * 1000);
 
 const startStr = formatLocalDateTime(bufferStart);
@@ -1059,10 +1056,7 @@ if(ch.dataset.id !== "6"){
          pad(d.getSeconds());
     }
 
-const startStr = formatLocalDateTime(tStart);
-const endStr = formatLocalDateTime(tEnd);
-
-      const bufferStart = new Date(tStart.getTime() - 3 * 60 * 60 * 1000);
+     const bufferStart = new Date(tStart.getTime() - 3 * 60 * 60 * 1000);
 
 const startStr = formatLocalDateTime(bufferStart);
 const endStr = formatLocalDateTime(tEnd);
