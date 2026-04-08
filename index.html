@@ -820,29 +820,7 @@ function renderCharts(){
   chartsContainer.innerHTML = '';
 
   /* Se date non impostate → esce */
- const mode = document.getElementById('viewMode')?.value;
-
-let tStart, tEnd;
-
-if(mode === "live"){
-
-  if(!feeds || feeds.length === 0) return;
-
-  const last = new Date(feeds[feeds.length - 1].created_at);
-
-  tEnd = last;
-  tStart = new Date(last.getTime() - 24*60*60*1000);
-
-}else{
-
-  const selected = new Date(document.getElementById('day').value);
-
-  tStart = new Date(selected);
-  tStart.setHours(0,0,0,0);
-
-  tEnd = new Date(selected);
-  tEnd.setHours(23,59,59,999);
-}
+  const { start: tStart, end: tEnd } = getTimeRange();
 
   /* Aggiorna sottotitolo */
   const subtitle = document.getElementById('subtitle');
@@ -875,29 +853,7 @@ if(ch.dataset.id === "6"){
   (async function(){
 
     try{
-      const mode = document.getElementById('viewMode')?.value;
-
-let tStart, tEnd;
-
-if(mode === "live"){
-
-  if(!feeds || feeds.length === 0) return;
-
-  const last = new Date(feeds[feeds.length - 1].created_at);
-
-  tEnd = last;
-  tStart = new Date(last.getTime() - 24*60*60*1000);
-
-}else{
-
-  const selected = new Date(document.getElementById('day').value);
-
-  tStart = new Date(selected);
-  tStart.setHours(0,0,0,0);
-
-  tEnd = new Date(selected);
-  tEnd.setHours(23,59,59,999);
-}
+      const { start: tStart, end: tEnd } = getTimeRange();
 
     function formatLocalDateTime(d){
     const pad = n => n.toString().padStart(2,'0');
@@ -922,33 +878,6 @@ const endStr = formatLocalDateTime(tEnd);
       const j = await r.json();
       const feeds = j.feeds || [];
 
-     // let tStart, tEnd;
-
-const mode = document.getElementById('viewMode')?.value;
-
-// 🔴 PROTEZIONE
-if(!feeds || feeds.length === 0){
-  return; // evita crash
-}
-
-if(mode === "live"){
-
-  // 🔥 ultima acquisizione (SAFE)
-  const last = new Date(feeds[feeds.length - 1].created_at);
-
-  tEnd = last;
-  tStart = new Date(last.getTime() - 24*60*60*1000);
-
-}else{
-
-  const selected = new Date(document.getElementById('day').value);
-
-  tStart = new Date(selected);
-  tStart.setHours(0,0,0,0);
-
-  tEnd = new Date(selected);
-  tEnd.setHours(23,59,59,999);
-}
       if(!feeds.length) return;
 
 const labels = feeds.map(f => new Date(f.created_at));
@@ -1056,29 +985,7 @@ x:{
     const m = meta[ch.dataset.id];
     if(!m) return;
 
-  const mode = document.getElementById('viewMode')?.value;
-
-let tStart, tEnd;
-
-if(mode === "live"){
-
-  if(!feeds || feeds.length === 0) return;
-
-  const last = new Date(feeds[feeds.length - 1].created_at);
-
-  tEnd = last;
-  tStart = new Date(last.getTime() - 24*60*60*1000);
-
-}else{
-
-  const selected = new Date(document.getElementById('day').value);
-
-  tStart = new Date(selected);
-  tStart.setHours(0,0,0,0);
-
-  tEnd = new Date(selected);
-  tEnd.setHours(23,59,59,999);
-}
+  const { start: tStart, end: tEnd } = getTimeRange();
 
   function formatLocalDateTime(d){
   const pad = n => n.toString().padStart(2,'0');
@@ -1100,29 +1007,7 @@ if(ch.dataset.id !== "6"){
 
     try{
 
-      const mode = document.getElementById('viewMode')?.value;
-
-let tStart, tEnd;
-
-if(mode === "live"){
-
-  if(!feeds || feeds.length === 0) return;
-
-  const last = new Date(feeds[feeds.length - 1].created_at);
-
-  tEnd = last;
-  tStart = new Date(last.getTime() - 24*60*60*1000);
-
-}else{
-
-  const selected = new Date(document.getElementById('day').value);
-
-  tStart = new Date(selected);
-  tStart.setHours(0,0,0,0);
-
-  tEnd = new Date(selected);
-  tEnd.setHours(23,59,59,999);
-}
+      const { start: tStart, end: tEnd } = getTimeRange();
 
     function formatLocalDateTime(d){
     const pad = n => n.toString().padStart(2,'0');
@@ -1144,34 +1029,6 @@ const endStr = formatLocalDateTime(tEnd);
 
       const j = await r.json();
       const feeds = j.feeds || [];
-
-      let tStart, tEnd;
-
-const mode = document.getElementById('viewMode')?.value;
-
-// 🔴 PROTEZIONE
-if(!feeds || feeds.length === 0){
-  return; // evita crash
-}
-
-if(mode === "live"){
-
-  // 🔥 ultima acquisizione (SAFE)
-  const last = new Date(feeds[feeds.length - 1].created_at);
-
-  tEnd = last;
-  tStart = new Date(last.getTime() - 24*60*60*1000);
-
-}else{
-
-  const selected = new Date(document.getElementById('day').value);
-
-  tStart = new Date(selected);
-  tStart.setHours(0,0,0,0);
-
-  tEnd = new Date(selected);
-  tEnd.setHours(23,59,59,999);
-}
 
       if(!feeds.length) return;
 
