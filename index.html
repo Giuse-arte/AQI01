@@ -880,7 +880,15 @@ const endStr = formatLocalDateTime(tEnd);
 
       if(!feeds.length) return;
 
-const labels = feeds.map(f => new Date(f.created_at));
+const labels = feeds.map(f => {
+  const d = new Date(f.created_at);
+
+  // 🔥 allinea all'ora piena
+  d.setMinutes(0,0,0);
+
+  return d;
+});
+      
 const data = feeds.map(f => Number(f.field6));
 
       const startDate = labels[0];
@@ -921,60 +929,80 @@ const data = feeds.map(f => Number(f.field6));
           },
 
 scales:{
-x: {
-    type: 'time',
+x:{
+  type:'time',
 
-    min: tStart,   // intervallo dinamico
-    max: tEnd,
+  min: tStart,
+  max: tEnd,
 
-    time: {
-        unit: 'hour',   // tick ogni ora (base)
-    },
+  time:{
+    unit:'hour'
+  },
 
-    ticks: {
-        autoSkip: true,     // lascia Chart.js decidere quali tick mostrare
-        maxRotation: 45,
-        minRotation: 45,
-        callback: function(value, index, ticks) {
-            const date = new Date(value);
+  ticks:{
+    autoSkip:false,
+    maxRotation:45,
+    minRotation:45,
 
-            const mode = document.getElementById('viewMode')?.value;
+    callback: function(value){
+      const date = new Date(value);
+      const mode = document.getElementById('viewMode')?.value;
 
-            if(mode === "live") {
-                // Ultime 24h → griglie ogni ora con label ogni 3h
-                if(date.getHours() % 3 === 0) {
-                    return date.toLocaleTimeString('it-IT',{hour:'2-digit', minute:'2-digit'});
-                }
-                return '';
-            }
+      // 🔵 MODALITÀ GIORNO
+      if(mode === "day"){
+        if(date.getHours() === 0) return ''; // niente label a 00:00
 
-            // Modalità giorno → label ogni 2 ore, prima griglia senza label
-            if(date.getHours() === 0) return '';   // incrocio con ordinata
-            if(date.getHours() % 2 === 0) {
-                return date.toLocaleTimeString('it-IT',{hour:'2-digit', minute:'2-digit'});
-            }
-            return '';
+        if(date.getHours() % 2 === 0){
+          return date.toLocaleTimeString('it-IT',{
+            hour:'2-digit',
+            minute:'2-digit'
+          });
         }
-    },
+        return '';
+      }
 
-    title: {
-        display: true,
-        text: function() {
-            const mode = document.getElementById('viewMode')?.value;
-            if(mode === "live") return "Time";
+      // 🔴 MODALITÀ LIVE
+      if(mode === "live"){
+        if(date.getHours() % 4 === 0){
+          return date.toLocaleTimeString('it-IT',{
+            hour:'2-digit',
+            minute:'2-digit'
+          });
+        }
+        return '';
+      }
 
-            const dayInput = document.getElementById('day');
-            if(dayInput && dayInput.value) {
-                const d = new Date(dayInput.value);
-                return d.toLocaleDateString('it-IT',{day:'2-digit', month:'short', year:'numeric'});
-            }
-            return "Time";
-        }()
-    },
-
-    grid: {
-        display: true
+      return '';
     }
+  },
+
+  title:{
+    display:true,
+    text: (function(){
+
+      const mode = document.getElementById('viewMode')?.value;
+
+      if(mode === "live") return "Time";
+
+      const dayInput = document.getElementById('day');
+      if(dayInput && dayInput.value){
+        const d = new Date(dayInput.value);
+
+        return d.toLocaleDateString('it-IT',{
+          day:'2-digit',
+          month:'short',
+          year:'numeric'
+        });
+      }
+
+      return "Time";
+
+    })()
+  },
+
+  grid:{
+    display:true
+  }
 },
 
   y:{
@@ -1053,7 +1081,14 @@ const endStr = formatLocalDateTime(tEnd);
 
       const field = "field" + ch.dataset.id;
 
-      const labels = feeds.map(f => new Date(f.created_at));
+      const labels = feeds.map(f => {
+  const d = new Date(f.created_at);
+
+  // 🔥 allinea all'ora piena
+  d.setMinutes(0,0,0);
+
+  return d;
+});
       const data = feeds.map(f => Number(f[field]));
 
       const d = document.createElement('div');
@@ -1088,60 +1123,80 @@ const endStr = formatLocalDateTime(tEnd);
           plugins:{ legend:{ display:false } },
 
 scales:{
-x: {
-    type: 'time',
+x:{
+  type:'time',
 
-    min: tStart,   // intervallo dinamico
-    max: tEnd,
+  min: tStart,
+  max: tEnd,
 
-    time: {
-        unit: 'hour',   // tick ogni ora (base)
-    },
+  time:{
+    unit:'hour'
+  },
 
-    ticks: {
-        autoSkip: true,     // lascia Chart.js decidere quali tick mostrare
-        maxRotation: 45,
-        minRotation: 45,
-        callback: function(value, index, ticks) {
-            const date = new Date(value);
+  ticks:{
+    autoSkip:false,
+    maxRotation:45,
+    minRotation:45,
 
-            const mode = document.getElementById('viewMode')?.value;
+    callback: function(value){
+      const date = new Date(value);
+      const mode = document.getElementById('viewMode')?.value;
 
-            if(mode === "live") {
-                // Ultime 24h → griglie ogni ora con label ogni 3h
-                if(date.getHours() % 3 === 0) {
-                    return date.toLocaleTimeString('it-IT',{hour:'2-digit', minute:'2-digit'});
-                }
-                return '';
-            }
+      // 🔵 MODALITÀ GIORNO
+      if(mode === "day"){
+        if(date.getHours() === 0) return ''; // niente label a 00:00
 
-            // Modalità giorno → label ogni 2 ore, prima griglia senza label
-            if(date.getHours() === 0) return '';   // incrocio con ordinata
-            if(date.getHours() % 2 === 0) {
-                return date.toLocaleTimeString('it-IT',{hour:'2-digit', minute:'2-digit'});
-            }
-            return '';
+        if(date.getHours() % 2 === 0){
+          return date.toLocaleTimeString('it-IT',{
+            hour:'2-digit',
+            minute:'2-digit'
+          });
         }
-    },
+        return '';
+      }
 
-    title: {
-        display: true,
-        text: function() {
-            const mode = document.getElementById('viewMode')?.value;
-            if(mode === "live") return "Time";
+      // 🔴 MODALITÀ LIVE
+      if(mode === "live"){
+        if(date.getHours() % 4 === 0){
+          return date.toLocaleTimeString('it-IT',{
+            hour:'2-digit',
+            minute:'2-digit'
+          });
+        }
+        return '';
+      }
 
-            const dayInput = document.getElementById('day');
-            if(dayInput && dayInput.value) {
-                const d = new Date(dayInput.value);
-                return d.toLocaleDateString('it-IT',{day:'2-digit', month:'short', year:'numeric'});
-            }
-            return "Time";
-        }()
-    },
-
-    grid: {
-        display: true
+      return '';
     }
+  },
+
+  title:{
+    display:true,
+    text: (function(){
+
+      const mode = document.getElementById('viewMode')?.value;
+
+      if(mode === "live") return "Time";
+
+      const dayInput = document.getElementById('day');
+      if(dayInput && dayInput.value){
+        const d = new Date(dayInput.value);
+
+        return d.toLocaleDateString('it-IT',{
+          day:'2-digit',
+          month:'short',
+          year:'numeric'
+        });
+      }
+
+      return "Time";
+
+    })()
+  },
+
+  grid:{
+    display:true
+  }
 },
 
   y:{
