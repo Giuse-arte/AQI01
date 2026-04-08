@@ -610,6 +610,7 @@ function savePreferences(){
 */
 async function loadKPIs(){
   try{
+    const { start: tStart, end: tEnd } = getTimeRange();
 
   function formatLocalDateTime(d){
   const pad = n => n.toString().padStart(2,'0');
@@ -818,6 +819,9 @@ function renderCharts(){
   const chartsContainer = document.getElementById('charts');
   chartsContainer.innerHTML = '';
 
+  /* Se date non impostate → esce */
+  const { start: tStart, end: tEnd } = getTimeRange();
+
   /* Aggiorna sottotitolo */
   const subtitle = document.getElementById('subtitle');
   subtitle.textContent =
@@ -849,6 +853,8 @@ if(ch.dataset.id === "6"){
   (async function(){
 
     try{
+      const { start: tStart, end: tEnd } = getTimeRange();
+
     function formatLocalDateTime(d){
     const pad = n => n.toString().padStart(2,'0');
 
@@ -872,30 +878,8 @@ const r = await fetch(
       if(!r.ok) throw new Error();
 
       const j = await r.json();
-      let tStart, tEnd;
+      const feeds = j.feeds || [];
 
-const mode = document.getElementById('viewMode')?.value;
-
-if(!feeds || feeds.length === 0) return;
-
-if(mode === "live"){
-
-  // 🔥 ultima acquisizione reale
-  const last = new Date(feeds[feeds.length - 1].created_at);
-
-  tEnd = last;
-  tStart = new Date(last.getTime() - 24 * 60 * 60 * 1000);
-
-}else{
-  // 🔵 già fatto per giorno
-  const selected = new Date(document.getElementById('day').value);
-
-  tStart = new Date(selected);
-  tStart.setHours(0,0,0,0);
-
-  tEnd = new Date(selected);
-  tEnd.setHours(23,59,59,999);
-}
       if(!feeds.length) return;
 
 const labels = [];
@@ -988,13 +972,6 @@ x:{
     display:true,
     text: (function(){
 
-      const mode = document.getElementById('viewMode')?.value;
-
-    // 🔴 LIVE
-    if(mode === "live"){
-      return "Time";
-    }
-
       const dayInput = document.getElementById('day');
 
       if(dayInput && dayInput.value){
@@ -1044,6 +1021,8 @@ x:{
     const m = meta[ch.dataset.id];
     if(!m) return;
 
+  const { start: tStart, end: tEnd } = getTimeRange();
+
   function formatLocalDateTime(d){
   const pad = n => n.toString().padStart(2,'0');
 
@@ -1064,50 +1043,46 @@ if(ch.dataset.id !== "6"){
 
     try{
 
-      const r = await fetch(
-        `https://api.thingspeak.com/channels/${CHANNEL}/feeds.json?results=8000`
-      );
+      const { start: tStart, end: tEnd } = getTimeRange();
+
+    function formatLocalDateTime(d){
+    const pad = n => n.toString().padStart(2,'0');
+
+    return d.getFullYear() + '-' +
+         pad(d.getMonth()+1) + '-' +
+         pad(d.getDate()) + ' ' +
+         pad(d.getHours()) + ':' +
+         pad(d.getMinutes()) + ':' +
+         pad(d.getSeconds());
+    }
+
+     const bufferStart = new Date(tStart.getTime() - 3 * 60 * 60 * 1000);
+
+const startStr = formatLocalDateTime(bufferStart);
+const endStr = formatLocalDateTime(tEnd);
+
+const r = await fetch(
+  `https://api.thingspeak.com/channels/${CHANNEL}/feeds.json?start=${startStr}&end=${endStr}&results=8000`
+);
 
       const j = await r.json();
       const feeds = j.feeds || [];
 
       if(!feeds.length) return;
 
-      const mode = document.getElementById('viewMode')?.value;
-
-      let tStart, tEnd;
-
-      if(mode === "live"){
-
-        const last = new Date(feeds[feeds.length - 1].created_at);
-
-        tEnd = last;
-        tStart = new Date(last.getTime() - 24*60*60*1000);
-
-      }else{
-
-        const selected = new Date(document.getElementById('day').value);
-
-        tStart = new Date(selected);
-        tStart.setHours(0,0,0,0);
-
-        tEnd = new Date(selected);
-        tEnd.setHours(23,59,59,999);
-      }
-
       const field = "field" + ch.dataset.id;
 
       const labels = [];
-      const data = [];
+const data = [];
 
-      feeds.forEach(f => {
-        const d = new Date(f.created_at);
+feeds.forEach(f => {
+  const d = new Date(f.created_at);
 
-        if(d >= tStart && d <= tEnd){
-          labels.push(d);
-          data.push(Number(f[field]));
-        }
-      });
+  if(d >= tStart && d <= tEnd){
+    labels.push(d);
+    data.push(Number(f[field]));
+  }
+});
 
       const d = document.createElement('div');
       d.className = 'chart';
@@ -1140,66 +1115,88 @@ if(ch.dataset.id !== "6"){
           maintainAspectRatio:false,
           plugins:{ legend:{ display:false } },
 
-          scales:{
-            x:{
-              type:'time',
-              min: tStart,
-              max: tEnd,
-              time:{ unit:'hour', stepSize:2 },
+scales:{
+x:{
+  type:'time',
 
-              ticks:{
-                autoSkip:false,
-                callback: function(value){
-                  const date = new Date(value);
+  // 🔥 FORZA PARTENZA A MEZZANOTTE
+  min: new Date(document.getElementById('day').value + "T00:00:00"),
+  max: new Date(document.getElementById('day').value + "T23:59:59"),
 
-                  if(date.getHours() === 0) return '';
+  time:{
+    unit:'hour'
+  },
 
-                  if(date.getHours() % 4 === 0){
-                    return date.toLocaleTimeString('it-IT',{
-                      hour:'2-digit',
-                      minute:'2-digit'
-                    });
-                  }
+  ticks:{
+    autoSkip:false,
+    maxRotation:45,
+    minRotation:45,
 
-                  return '';
-                }
-              },
+    callback: function(value){
+      const date = new Date(value);
 
-              title:{
-                display:true,
-                text: mode === "live"
-                  ? "Time"
-                  : new Date(document.getElementById('day').value)
-                      .toLocaleDateString('it-IT',{
-                        day:'2-digit',
-                        month:'short',
-                        year:'numeric'
-                      })
-              },
+      // ❌ niente etichetta a mezzanotte
+      if(date.getHours() === 0){
+        return '';
+      }
 
-              grid:{ display:true }
-            },
+      // ✔ etichette ogni 4 ore
+      if(date.getHours() % 4 === 0){
+        return date.toLocaleTimeString('it-IT',{
+          hour:'2-digit',
+          minute:'2-digit'
+        });
+      }
 
-            y:{
-              beginAtZero:true,
-              title:{
-                display:true,
-                text: m.u
-              },
-              grid:{ display:true }
-            }
-          }
+      return '';
+    }
+  },
+
+  title:{
+    display:true,
+    text: (function(){
+
+      const dayInput = document.getElementById('day');
+
+      if(dayInput && dayInput.value){
+        const d = new Date(dayInput.value);
+
+        return d.toLocaleDateString('it-IT',{
+          day:'2-digit',
+          month:'short',
+          year:'numeric'
+        });
+      }
+
+      return "";
+
+    })()
+  },
+
+  grid:{
+    display:true
+  }
+},
+
+  y:{
+    beginAtZero:true,
+    
+    title:{
+      display:true,
+      text: m.u  // 🔥 prende unità dal meta
+    },
+    
+    grid:{
+      display:true
+    }
+  }
+}
         }
       });
 
     }catch(e){
       console.error(e);
     }
-
-  })();
-
-  return;
-}
 
   })();
 
