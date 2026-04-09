@@ -892,10 +892,9 @@ const labels = [];
 const data = [];
 
 feeds.forEach(f => {
-  const d = new Date(f.created_at);
+  const d = new Date(f.created_at + "Z");
 
-  if(d >= tStart && d <= tEnd){
-    labels.push(new Date(d.getTime() + (new Date().getTimezoneOffset() * -60000)));
+  if(d >= new Date(tStart.getTime() - 2 * 60 * 60 * 1000) && d <= tEnd){
     data.push(Number(f.field6));
   }
 });
@@ -942,8 +941,8 @@ x:{
   type:'time',
 
   // 🔥 FORZA PARTENZA A MEZZANOTTE
-  min: new Date(document.getElementById('day').value + "T00:00:00"),
-  max: new Date(document.getElementById('day').value + "T23:59:59"),
+  min: tStart,
+  max: tEnd,
 
   time:{
     unit:'hour'
@@ -1088,10 +1087,9 @@ const r = await fetch(
 const data = [];
 
 feeds.forEach(f => {
-  const d = new Date(f.created_at);
+  const d = new Date(f.created_at + "Z");
 
-  if(d >= tStart && d <= tEnd){
-    labels.push(new Date(d.getTime() + (new Date().getTimezoneOffset() * -60000)));
+  if(d >= new Date(tStart.getTime() - 2 * 60 * 60 * 1000) && d <= tEnd){
     data.push(Number(f[field]));
   }
 });
@@ -1132,8 +1130,8 @@ x:{
   type:'time',
 
   // 🔥 FORZA PARTENZA A MEZZANOTTE
-  min: new Date(document.getElementById('day').value + "T00:00:00"),
-  max: new Date(document.getElementById('day').value + "T23:59:59"),
+ min: tStart,
+max: tEnd,
 
   time:{
     unit:'hour'
