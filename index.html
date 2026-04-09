@@ -958,10 +958,9 @@ callback: function(value, index) {
   const date = new Date(value);
   const mode = document.getElementById('viewMode').value;
 
-  // 🔵 MODALITÀ GIORNO
+  // GIORNO
   if(mode === "day"){
 
-    // mostra la data a mezzanotte
     if(date.getHours() === 0){
       return date.toLocaleDateString('it-IT', {
         day:'2-digit',
@@ -969,7 +968,6 @@ callback: function(value, index) {
       });
     }
 
-    // ore ogni 4 ore
     if(date.getHours() % 4 === 0){
       return date.toLocaleTimeString('it-IT', {
         hour:'2-digit',
@@ -980,9 +978,8 @@ callback: function(value, index) {
     return '';
   }
 
-  // 🔴 MODALITÀ LIVE (ultime 24h)
+  // LIVE (ultime 24h)
 
-  // prima etichetta → mostra data
   if(index === 0){
     return date.toLocaleDateString('it-IT', {
       day:'2-digit',
@@ -990,8 +987,7 @@ callback: function(value, index) {
     });
   }
 
-  // ore ogni 4 ore
-  if(date.getHours() % 4 === 0){
+  if(index % 4 === 0){
     return date.toLocaleTimeString('it-IT', {
       hour:'2-digit',
       minute:'2-digit'
@@ -1150,10 +1146,9 @@ callback: function(value, index) {
   const date = new Date(value);
   const mode = document.getElementById('viewMode').value;
 
-  // 🔵 MODALITÀ GIORNO
+  // GIORNO
   if(mode === "day"){
 
-    // mostra la data a mezzanotte
     if(date.getHours() === 0){
       return date.toLocaleDateString('it-IT', {
         day:'2-digit',
@@ -1161,7 +1156,6 @@ callback: function(value, index) {
       });
     }
 
-    // ore ogni 4 ore
     if(date.getHours() % 4 === 0){
       return date.toLocaleTimeString('it-IT', {
         hour:'2-digit',
@@ -1172,9 +1166,8 @@ callback: function(value, index) {
     return '';
   }
 
-  // 🔴 MODALITÀ LIVE (ultime 24h)
+  // LIVE (ultime 24h)
 
-  // prima etichetta → mostra data
   if(index === 0){
     return date.toLocaleDateString('it-IT', {
       day:'2-digit',
@@ -1182,8 +1175,7 @@ callback: function(value, index) {
     });
   }
 
-  // ore ogni 4 ore
-  if(date.getHours() % 4 === 0){
+  if(index % 4 === 0){
     return date.toLocaleTimeString('it-IT', {
       hour:'2-digit',
       minute:'2-digit'
