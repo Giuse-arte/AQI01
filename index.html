@@ -895,7 +895,7 @@ feeds.forEach(f => {
   const d = new Date(f.created_at);
 
   if(d >= tStart && d <= tEnd){
-    labels.push(d);
+    labels.push(new Date(d.getTime() + (new Date().getTimezoneOffset() * -60000)));
     data.push(Number(f.field6));
   }
 });
@@ -961,7 +961,6 @@ callback: function(value, index) {
   // 🔵 MODALITÀ GIORNO
   if(mode === "day"){
 
-    // mostra la data a mezzanotte
     if(date.getHours() === 0){
       return date.toLocaleDateString('it-IT', {
         day:'2-digit',
@@ -969,7 +968,6 @@ callback: function(value, index) {
       });
     }
 
-    // ore ogni 4 ore
     if(date.getHours() % 4 === 0){
       return date.toLocaleTimeString('it-IT', {
         hour:'2-digit',
@@ -980,9 +978,9 @@ callback: function(value, index) {
     return '';
   }
 
-  // 🔴 MODALITÀ LIVE (ultime 24h)
+  // 🔴 MODALITÀ LIVE
 
-  // prima etichetta → mostra data
+  // prima etichetta → data
   if(index === 0){
     return date.toLocaleDateString('it-IT', {
       day:'2-digit',
@@ -990,8 +988,8 @@ callback: function(value, index) {
     });
   }
 
-  // ore ogni 4 ore
-  if(date.getHours() % 4 === 0){
+  // 🔥 MOSTRA ORA OGNI ~4 TICK (NON basato su minuti reali)
+  if(index % 4 === 0){
     return date.toLocaleTimeString('it-IT', {
       hour:'2-digit',
       minute:'2-digit'
@@ -1093,7 +1091,7 @@ feeds.forEach(f => {
   const d = new Date(f.created_at);
 
   if(d >= tStart && d <= tEnd){
-    labels.push(d);
+    labels.push(new Date(d.getTime() + (new Date().getTimezoneOffset() * -60000)));
     data.push(Number(f[field]));
   }
 });
@@ -1153,7 +1151,6 @@ callback: function(value, index) {
   // 🔵 MODALITÀ GIORNO
   if(mode === "day"){
 
-    // mostra la data a mezzanotte
     if(date.getHours() === 0){
       return date.toLocaleDateString('it-IT', {
         day:'2-digit',
@@ -1161,7 +1158,6 @@ callback: function(value, index) {
       });
     }
 
-    // ore ogni 4 ore
     if(date.getHours() % 4 === 0){
       return date.toLocaleTimeString('it-IT', {
         hour:'2-digit',
@@ -1172,9 +1168,9 @@ callback: function(value, index) {
     return '';
   }
 
-  // 🔴 MODALITÀ LIVE (ultime 24h)
+  // 🔴 MODALITÀ LIVE
 
-  // prima etichetta → mostra data
+  // prima etichetta → data
   if(index === 0){
     return date.toLocaleDateString('it-IT', {
       day:'2-digit',
@@ -1182,8 +1178,8 @@ callback: function(value, index) {
     });
   }
 
-  // ore ogni 4 ore
-  if(date.getHours() % 4 === 0){
+  // 🔥 MOSTRA ORA OGNI ~4 TICK (NON basato su minuti reali)
+  if(index % 4 === 0){
     return date.toLocaleTimeString('it-IT', {
       hour:'2-digit',
       minute:'2-digit'
