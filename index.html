@@ -954,24 +954,21 @@ x:{
     maxRotation:45,
     minRotation:45,
 
-    callback: function(value){
-      const date = new Date(value);
+callback: function(value) {
+  const date = new Date(value);
 
-      // ❌ niente etichetta a mezzanotte
-      if(date.getHours() === 0){
-        return '';
-      }
+  // Inserisce la data nella prima ora (00:00)
+  if(date.getHours() === 0 && date.getMinutes() === 0) {
+    return date.toLocaleDateString('it-IT', { day:'2-digit', month:'short' });
+  }
 
-      // ✔ etichette ogni 4 ore
-      if(date.getHours() % 4 === 0){
-        return date.toLocaleTimeString('it-IT',{
-          hour:'2-digit',
-          minute:'2-digit'
-        });
-      }
+  // etichette ogni 4 ore
+  if(date.getHours() % 4 === 0) {
+    return date.toLocaleTimeString('it-IT', { hour:'2-digit', minute:'2-digit' });
+  }
 
-      return '';
-    }
+  return '';
+}
   },
 
   title:{
@@ -1118,24 +1115,21 @@ x:{
     maxRotation:45,
     minRotation:45,
 
-    callback: function(value){
-      const date = new Date(value);
+ callback: function(value) {
+  const date = new Date(value);
+  
+  // Inserisce la data nella prima ora (00:00)
+  if(date.getHours() === 0 && date.getMinutes() === 0) {
+    return date.toLocaleDateString('it-IT', { day:'2-digit', month:'short' });
+  }
 
-      // ❌ niente etichetta a mezzanotte
-      if(date.getHours() === 0){
-        return '';
-      }
+  // etichette ogni 4 ore come prima
+  if(date.getHours() % 4 === 0) {
+    return date.toLocaleTimeString('it-IT', { hour:'2-digit', minute:'2-digit' });
+  }
 
-      // ✔ etichette ogni 4 ore
-      if(date.getHours() % 4 === 0){
-        return date.toLocaleTimeString('it-IT',{
-          hour:'2-digit',
-          minute:'2-digit'
-        });
-      }
-
-      return '';
-    }
+  return '';
+}
   },
 
   title:{
