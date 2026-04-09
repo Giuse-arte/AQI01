@@ -638,7 +638,7 @@ async function loadKPIs(){
 const startStr = formatLocalDateTime(tStart);
 const endStr = formatLocalDateTime(tEnd);
 
-const feeds = await fetchData();
+feeds = await fetchData();
 
     /* Se risposta HTTP non OK → errore */
     if(!r.ok) throw new Error();
@@ -880,7 +880,7 @@ const bufferStart = new Date(tStart.getTime() - 3 * 60 * 60 * 1000);
 const startStr = formatLocalDateTime(bufferStart);
 const endStr = formatLocalDateTime(tEnd);
 
-const feeds = await fetchData();
+feeds = await fetchData();
 
       if(!r.ok) throw new Error();
 
@@ -1046,7 +1046,7 @@ if(ch.dataset.id !== "6"){
 const startStr = formatLocalDateTime(bufferStart);
 const endStr = formatLocalDateTime(tEnd);
 
-const feeds = await fetchData();
+feeds = await fetchData();
 
       const j = await r.json();
       const feeds = j.feeds || [];
@@ -1202,7 +1202,7 @@ x:{
   (async function(){
 
     try{
-      const feeds = await fetchData();
+      feeds = await fetchData();
 
       if(!r.ok) throw new Error();
 
