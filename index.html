@@ -954,17 +954,48 @@ x:{
     maxRotation:45,
     minRotation:45,
 
-callback: function(value) {
+callback: function(value, index) {
   const date = new Date(value);
+  const mode = document.getElementById('viewMode').value;
 
-  // Inserisce la data nella prima ora (00:00)
-  if(date.getHours() === 0 && date.getMinutes() === 0) {
-    return date.toLocaleDateString('it-IT', { day:'2-digit', month:'short' });
+  // 🔵 MODALITÀ GIORNO
+  if(mode === "day"){
+
+    // mostra la data a mezzanotte
+    if(date.getHours() === 0){
+      return date.toLocaleDateString('it-IT', {
+        day:'2-digit',
+        month:'short'
+      });
+    }
+
+    // ore ogni 4 ore
+    if(date.getHours() % 4 === 0){
+      return date.toLocaleTimeString('it-IT', {
+        hour:'2-digit',
+        minute:'2-digit'
+      });
+    }
+
+    return '';
   }
 
-  // etichette ogni 4 ore
-  if(date.getHours() % 4 === 0) {
-    return date.toLocaleTimeString('it-IT', { hour:'2-digit', minute:'2-digit' });
+  // 🔴 MODALITÀ LIVE (ultime 24h)
+
+  // prima etichetta → mostra data
+  if(index === 0){
+    return date.toLocaleDateString('it-IT', {
+      day:'2-digit',
+      month:'short'
+    });
+  }
+
+  // ore ogni 4 ore
+  if(date.getHours() % 4 === 0){
+    return date.toLocaleTimeString('it-IT', {
+      hour:'2-digit',
+      minute:'2-digit'
+    });
   }
 
   return '';
@@ -972,7 +1003,7 @@ callback: function(value) {
   },
 
   title:{
-    display:true,
+    display:false,
     text: (function(){
 
       const dayInput = document.getElementById('day');
@@ -1115,17 +1146,48 @@ x:{
     maxRotation:45,
     minRotation:45,
 
- callback: function(value) {
+callback: function(value, index) {
   const date = new Date(value);
-  
-  // Inserisce la data nella prima ora (00:00)
-  if(date.getHours() === 0 && date.getMinutes() === 0) {
-    return date.toLocaleDateString('it-IT', { day:'2-digit', month:'short' });
+  const mode = document.getElementById('viewMode').value;
+
+  // 🔵 MODALITÀ GIORNO
+  if(mode === "day"){
+
+    // mostra la data a mezzanotte
+    if(date.getHours() === 0){
+      return date.toLocaleDateString('it-IT', {
+        day:'2-digit',
+        month:'short'
+      });
+    }
+
+    // ore ogni 4 ore
+    if(date.getHours() % 4 === 0){
+      return date.toLocaleTimeString('it-IT', {
+        hour:'2-digit',
+        minute:'2-digit'
+      });
+    }
+
+    return '';
   }
 
-  // etichette ogni 4 ore come prima
-  if(date.getHours() % 4 === 0) {
-    return date.toLocaleTimeString('it-IT', { hour:'2-digit', minute:'2-digit' });
+  // 🔴 MODALITÀ LIVE (ultime 24h)
+
+  // prima etichetta → mostra data
+  if(index === 0){
+    return date.toLocaleDateString('it-IT', {
+      day:'2-digit',
+      month:'short'
+    });
+  }
+
+  // ore ogni 4 ore
+  if(date.getHours() % 4 === 0){
+    return date.toLocaleTimeString('it-IT', {
+      hour:'2-digit',
+      minute:'2-digit'
+    });
   }
 
   return '';
@@ -1133,7 +1195,7 @@ x:{
   },
 
   title:{
-    display:true,
+    display:false,
     text: (function(){
 
       const dayInput = document.getElementById('day');
