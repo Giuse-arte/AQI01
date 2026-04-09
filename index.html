@@ -498,7 +498,13 @@
 /* =========================
    COSTANTI E FUNZIONI DI FORMATTAZIONE
    ========================= */
-
+const remember = document.getElementById('remember');
+const start = document.getElementById('start');
+const end = document.getElementById('end');
+const mode = document.getElementById('mode');
+const update = document.getElementById('update');
+const day = document.getElementById('day');
+const dayLabel = document.getElementById('dayLabel');
 /* ID del canale ThingSpeak da cui leggere i dati */
 const CHANNEL = 2789658;
 
@@ -890,7 +896,7 @@ feeds.forEach(f => {
 
   if(d >= tStart && d <= tEnd){
     labels.push(d);
-    data.push(Number(f.field6));
+    data.push(Number(f.field6) || 0);
   }
 });
 
@@ -936,8 +942,10 @@ x:{
   type:'time',
 
   // 🔥 FORZA PARTENZA A MEZZANOTTE
-  min: new Date(document.getElementById('day').value + "T00:00:00"),
-  max: new Date(document.getElementById('day').value + "T23:59:59"),
+  const dayVal = document.getElementById('day').value;
+
+  min: dayVal ? new Date(dayVal + "T00:00:00") : undefined,
+  max: dayVal ? new Date(dayVal + "T23:59:59") : undefined,
 
   time:{
     unit:'hour'
