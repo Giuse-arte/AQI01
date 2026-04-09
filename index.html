@@ -331,11 +331,7 @@
 
 <label id="dayLabel">Giorno</label>
 <input type="date" id="day">
-
-<!-- 🔥 manteniamo ma nascosti -->
-<input type="hidden" id="start">
-<input type="hidden" id="end">
-    
+ 
     <label>Standard</label>
 
     <!-- Scelta standard AQI -->
@@ -833,7 +829,7 @@ function renderCharts(){
 
   /* Svuota area grafici */
   const chartsContainer = document.getElementById('charts');
-  chartsContainer.innerHTML = '';
+  chartsContainer.innerHTML = 'Caricamento grafici...';
 
   /* Se date non impostate → esce */
   const { start: tStart, end: tEnd } = getTimeRange();
@@ -1200,9 +1196,7 @@ x:{
   (async function(){
 
     try{
-      const r = await fetch(
-        `https://api.thingspeak.com/channels/${CHANNEL}/feeds.json?results=48`
-      );
+      const feeds = await fetchData();
 
       if(!r.ok) throw new Error();
 
