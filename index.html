@@ -892,10 +892,10 @@ const labels = [];
 const data = [];
 
 feeds.forEach(f => {
-  const d = new Date(f.created_at);
+ const d = f.created_at;
 
   if(d >= tStart && d <= tEnd){
-    labels.push(d);
+    labels.push(new Date(d));
     data.push(Number(f.field6));
   }
 });
@@ -1104,10 +1104,10 @@ const r = await fetch(
 const data = [];
 
 feeds.forEach(f => {
-  const d = new Date(f.created_at);
+  const d = f.created_at;
 
   if(d >= tStart && d <= tEnd){
-    labels.push(d);
+    labels.push(new Date(d));
     data.push(Number(f[field]));
   }
 });
