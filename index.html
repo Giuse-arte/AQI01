@@ -942,8 +942,26 @@ x:{
   type:'time',
 
   // 🔥 FORZA PARTENZA A MEZZANOTTE
-  min: new Date(document.getElementById('day').value + "T00:00:00"),
-  max: new Date(document.getElementById('day').value + "T23:59:59"),
+min: (function(){
+  const mode = document.getElementById('viewMode').value;
+
+  if(mode === "live"){
+    const now = new Date();
+    return new Date(now.getTime() - 24 * 60 * 60 * 1000);
+  }
+
+  return new Date(document.getElementById('day').value + "T00:00:00");
+})(),
+
+max: (function(){
+  const mode = document.getElementById('viewMode').value;
+
+  if(mode === "live"){
+    return new Date();
+  }
+
+  return new Date(document.getElementById('day').value + "T23:59:59");
+})(),
 
   time:{
     unit:'hour'
@@ -1130,8 +1148,26 @@ x:{
   type:'time',
 
   // 🔥 FORZA PARTENZA A MEZZANOTTE
-  min: new Date(document.getElementById('day').value + "T00:00:00"),
-  max: new Date(document.getElementById('day').value + "T23:59:59"),
+ min: (function(){
+  const mode = document.getElementById('viewMode').value;
+
+  if(mode === "live"){
+    const now = new Date();
+    return new Date(now.getTime() - 24 * 60 * 60 * 1000);
+  }
+
+  return new Date(document.getElementById('day').value + "T00:00:00");
+})(),
+
+max: (function(){
+  const mode = document.getElementById('viewMode').value;
+
+  if(mode === "live"){
+    return new Date();
+  }
+
+  return new Date(document.getElementById('day').value + "T23:59:59");
+})(),
 
   time:{
     unit:'hour'
