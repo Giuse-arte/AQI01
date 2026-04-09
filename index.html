@@ -895,7 +895,7 @@ feeds.forEach(f => {
 
   if(d >= tStart && d <= tEnd){
     labels.push(d);
-    data.push(Number(f.field6));
+    data.push(Number(f.field6) || 0);
   }
 });
 
@@ -1062,7 +1062,7 @@ feeds.forEach(f => {
 
   if(d >= tStart && d <= tEnd){
     labels.push(d);
-    data.push(Number(f[field]));
+    data.push(Number(f[field]) || 0);
   }
 });
 
@@ -1209,7 +1209,10 @@ x:{
       const j = await r.json();
       const feeds = j.feeds || [];
 
-      if(!feeds.length) return;
+      if(!feeds.length){
+        applyDemoKPI();
+        return;
+      }
 
       // media mobile 24h
       const avgSeries = (field) => {
