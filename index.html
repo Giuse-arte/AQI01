@@ -1,7 +1,7 @@
 <!DOCTYPE html>
 
 <html lang="it">
-  <head>
+<head>
   <!-- Imposta la codifica UTF-8 per supportare caratteri speciali (accenti, simboli, ecc.) -->
   <meta charset="UTF-8" />
 
@@ -498,6 +498,19 @@
 /* =========================
    COSTANTI E FUNZIONI DI FORMATTAZIONE
    ========================= */
+
+/* ID del canale ThingSpeak da cui leggere i dati */
+const CHANNEL = 2789658;
+const hum = document.getElementById('hum');
+const temp = document.getElementById('temp');
+const press = document.getElementById('press');
+const pm1 = document.getElementById('pm1');
+const pm25 = document.getElementById('pm25');
+const pm10 = document.getElementById('pm10');
+const aqiVal = document.getElementById('aqiVal');
+const aqiBadge = document.getElementById('aqiBadge');
+const aqiTitle = document.getElementById('aqiTitle');
+
 const remember = document.getElementById('remember');
 const start = document.getElementById('start');
 const end = document.getElementById('end');
@@ -505,8 +518,6 @@ const mode = document.getElementById('mode');
 const update = document.getElementById('update');
 const day = document.getElementById('day');
 const dayLabel = document.getElementById('dayLabel');
-/* ID del canale ThingSpeak da cui leggere i dati */
-const CHANNEL = 2789658;
 
 /*
   fmt1 → formatta un valore numerico con 1 decimale
@@ -521,6 +532,16 @@ const fmt1 = v => v == null || isNaN(v) ? '—' : Number(v).toFixed(1);
   - Usato per PM e valori medi
 */
 const fmt0 = v => v == null || isNaN(v) ? '—' : Math.round(Number(v));
+
+function formatLocalDateTime(d){
+  const pad = n => n.toString().padStart(2,'0');
+  return d.getFullYear() + '-' +
+         pad(d.getMonth()+1) + '-' +
+         pad(d.getDate()) + ' ' +
+         pad(d.getHours()) + ':' +
+         pad(d.getMinutes()) + ':' +
+         pad(d.getSeconds());
+}
 
 /* =========================
    DATI DI DEMO (FALLBACK)
@@ -617,17 +638,6 @@ function savePreferences(){
 async function loadKPIs(){
   try{
     const { start: tStart, end: tEnd } = getTimeRange();
-
-  function formatLocalDateTime(d){
-  const pad = n => n.toString().padStart(2,'0');
-
-  return d.getFullYear() + '-' +
-         pad(d.getMonth()+1) + '-' +
-         pad(d.getDate()) + ' ' +
-         pad(d.getHours()) + ':' +
-         pad(d.getMinutes()) + ':' +
-         pad(d.getSeconds());
-  }
 
 const startStr = formatLocalDateTime(tStart);
 const endStr = formatLocalDateTime(tEnd);
@@ -861,17 +871,6 @@ if(ch.dataset.id === "6"){
     try{
       const { start: tStart, end: tEnd } = getTimeRange();
 
-    function formatLocalDateTime(d){
-    const pad = n => n.toString().padStart(2,'0');
-
-    return d.getFullYear() + '-' +
-         pad(d.getMonth()+1) + '-' +
-         pad(d.getDate()) + ' ' +
-         pad(d.getHours()) + ':' +
-         pad(d.getMinutes()) + ':' +
-         pad(d.getSeconds());
-  }
-
 const bufferStart = new Date(tStart.getTime() - 3 * 60 * 60 * 1000);
 
 const startStr = formatLocalDateTime(bufferStart);
@@ -896,7 +895,7 @@ feeds.forEach(f => {
 
   if(d >= tStart && d <= tEnd){
     labels.push(d);
-    data.push(Number(f.field6) || 0);
+    data.push(Number(f.field6));
   }
 });
 
@@ -942,10 +941,8 @@ x:{
   type:'time',
 
   // 🔥 FORZA PARTENZA A MEZZANOTTE
-  const dayVal = document.getElementById('day').value;
-
-  min: dayVal ? new Date(dayVal + "T00:00:00") : undefined,
-  max: dayVal ? new Date(dayVal + "T23:59:59") : undefined,
+  min: new Date(document.getElementById('day').value + "T00:00:00"),
+  max: new Date(document.getElementById('day').value + "T23:59:59"),
 
   time:{
     unit:'hour'
@@ -1031,18 +1028,7 @@ x:{
 
   const { start: tStart, end: tEnd } = getTimeRange();
 
-  function formatLocalDateTime(d){
-  const pad = n => n.toString().padStart(2,'0');
-
-    return d.getFullYear() + '-' +
-         pad(d.getMonth()+1) + '-' +
-         pad(d.getDate()) + ' ' +
-         pad(d.getHours()) + ':' +
-         pad(d.getMinutes()) + ':' +
-         pad(d.getSeconds());
-  }
-
-const startStr = formatLocalDateTime(tStart);
+ const startStr = formatLocalDateTime(tStart);
 const endStr = formatLocalDateTime(tEnd);
 
 if(ch.dataset.id !== "6"){
@@ -1052,17 +1038,6 @@ if(ch.dataset.id !== "6"){
     try{
 
       const { start: tStart, end: tEnd } = getTimeRange();
-
-    function formatLocalDateTime(d){
-    const pad = n => n.toString().padStart(2,'0');
-
-    return d.getFullYear() + '-' +
-         pad(d.getMonth()+1) + '-' +
-         pad(d.getDate()) + ' ' +
-         pad(d.getHours()) + ':' +
-         pad(d.getMinutes()) + ':' +
-         pad(d.getSeconds());
-    }
 
      const bufferStart = new Date(tStart.getTime() - 3 * 60 * 60 * 1000);
 
