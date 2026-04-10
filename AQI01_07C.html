@@ -826,6 +826,39 @@ function selectAll(v){
   renderCharts();
 }
 
+function resampleHourly(feeds, field, tStart, tEnd){
+
+  const buckets = {};
+
+  feeds.forEach(f => {
+    const d = new Date(f.created_at);
+
+    if(d < tStart || d > tEnd) return;
+
+    const hour = new Date(d);
+    hour.setMinutes(0,0,0);
+
+    const key = hour.getTime();
+
+    if(!buckets[key]){
+      buckets[key] = [];
+    }
+
+    const val = Number(f[field]);
+    if(!isNaN(val)){
+      buckets[key].push(val);
+    }
+  });
+
+ const result = resampleHourly(feeds, 'field6', tStart, tEnd);
+
+const labels = result.labels;
+const data = result.data;
+
+  return { labels, data };
+}
+
+  
 /* =========================
    RENDERING GRAFICI
    ========================= */
@@ -888,17 +921,10 @@ const r = await fetch(
 
       if(!feeds.length) return;
 
-const labels = [];
-const data = [];
+const result = resampleHourly(feeds, 'field6', tStart, tEnd);
 
-feeds.forEach(f => {
-  const d = new Date(f.created_at);
-
-  if(d >= tStart && d <= tEnd){
-    labels.push(d);
-    data.push(Number(f.field6));
-  }
-});
+const labels = result.labels;
+const data = result.data;
 
       const startDate = labels[0];
       const endDate = labels[labels.length - 1];
@@ -942,12 +968,30 @@ x:{
   type:'time',
 
   // 🔥 FORZA PARTENZA A MEZZANOTTE
-  min: new Date(document.getElementById('day').value + "T00:00:00"),
-  max: new Date(document.getElementById('day').value + "T23:59:59"),
+min: (function(){
+  const mode = document.getElementById('viewMode').value;
+
+  if(mode === "live"){
+    const now = new Date();
+    return new Date(now.getTime() - 24 * 60 * 60 * 1000);
+  }
+
+  return new Date(document.getElementById('day').value + "T00:00:00");
+})(),
+
+max: (function(){
+  const mode = document.getElementById('viewMode').value;
+
+  if(mode === "live"){
+    return new Date();
+  }
+
+  return new Date(document.getElementById('day').value + "T23:59:59");
+})(),
 
   time:{
-    unit:'hour'
-  },
+  unit:'hour'
+},
 
   ticks:{
     autoSkip:false,
@@ -958,10 +1002,9 @@ callback: function(value, index) {
   const date = new Date(value);
   const mode = document.getElementById('viewMode').value;
 
-  // 🔵 MODALITÀ GIORNO
+  // GIORNO
   if(mode === "day"){
 
-    // mostra la data a mezzanotte
     if(date.getHours() === 0){
       return date.toLocaleDateString('it-IT', {
         day:'2-digit',
@@ -969,7 +1012,6 @@ callback: function(value, index) {
       });
     }
 
-    // ore ogni 4 ore
     if(date.getHours() % 4 === 0){
       return date.toLocaleTimeString('it-IT', {
         hour:'2-digit',
@@ -980,9 +1022,8 @@ callback: function(value, index) {
     return '';
   }
 
-  // 🔴 MODALITÀ LIVE (ultime 24h)
+  // LIVE (ultime 24h)
 
-  // prima etichetta → mostra data
   if(index === 0){
     return date.toLocaleDateString('it-IT', {
       day:'2-digit',
@@ -990,8 +1031,7 @@ callback: function(value, index) {
     });
   }
 
-  // ore ogni 4 ore
-  if(date.getHours() % 4 === 0){
+  if(index % 4 === 0){
     return date.toLocaleTimeString('it-IT', {
       hour:'2-digit',
       minute:'2-digit'
@@ -1134,12 +1174,30 @@ x:{
   type:'time',
 
   // 🔥 FORZA PARTENZA A MEZZANOTTE
-  min: new Date(document.getElementById('day').value + "T00:00:00"),
-  max: new Date(document.getElementById('day').value + "T23:59:59"),
+ min: (function(){
+  const mode = document.getElementById('viewMode').value;
 
-  time:{
-    unit:'hour'
-  },
+  if(mode === "live"){
+    const now = new Date();
+    return new Date(now.getTime() - 24 * 60 * 60 * 1000);
+  }
+
+  return new Date(document.getElementById('day').value + "T00:00:00");
+})(),
+
+max: (function(){
+  const mode = document.getElementById('viewMode').value;
+
+  if(mode === "live"){
+    return new Date();
+  }
+
+  return new Date(document.getElementById('day').value + "T23:59:59");
+})(),
+
+time:{
+  unit:'hour'
+},
 
   ticks:{
     autoSkip:false,
@@ -1150,10 +1208,9 @@ callback: function(value, index) {
   const date = new Date(value);
   const mode = document.getElementById('viewMode').value;
 
-  // 🔵 MODALITÀ GIORNO
+  // GIORNO
   if(mode === "day"){
 
-    // mostra la data a mezzanotte
     if(date.getHours() === 0){
       return date.toLocaleDateString('it-IT', {
         day:'2-digit',
@@ -1161,7 +1218,6 @@ callback: function(value, index) {
       });
     }
 
-    // ore ogni 4 ore
     if(date.getHours() % 4 === 0){
       return date.toLocaleTimeString('it-IT', {
         hour:'2-digit',
@@ -1172,9 +1228,8 @@ callback: function(value, index) {
     return '';
   }
 
-  // 🔴 MODALITÀ LIVE (ultime 24h)
+  // LIVE (ultime 24h)
 
-  // prima etichetta → mostra data
   if(index === 0){
     return date.toLocaleDateString('it-IT', {
       day:'2-digit',
@@ -1182,8 +1237,7 @@ callback: function(value, index) {
     });
   }
 
-  // ore ogni 4 ore
-  if(date.getHours() % 4 === 0){
+  if(index % 4 === 0){
     return date.toLocaleTimeString('it-IT', {
       hour:'2-digit',
       minute:'2-digit'
