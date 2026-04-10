@@ -826,6 +826,39 @@ function selectAll(v){
   renderCharts();
 }
 
+function resampleHourly(feeds, field, tStart, tEnd){
+
+  const buckets = {};
+
+  feeds.forEach(f => {
+    const d = new Date(f.created_at);
+
+    if(d < tStart || d > tEnd) return;
+
+    const hour = new Date(d);
+    hour.setMinutes(0,0,0);
+
+    const key = hour.getTime();
+
+    if(!buckets[key]){
+      buckets[key] = [];
+    }
+
+    const val = Number(f[field]);
+    if(!isNaN(val)){
+      buckets[key].push(val);
+    }
+  });
+
+ const result = resampleHourly(feeds, 'field6', tStart, tEnd);
+
+const labels = result.labels;
+const data = result.data;
+
+  return { labels, data };
+}
+
+  
 /* =========================
    RENDERING GRAFICI
    ========================= */
@@ -888,17 +921,10 @@ const r = await fetch(
 
       if(!feeds.length) return;
 
-const labels = [];
-const data = [];
+const result = resampleHourly(feeds, 'field6', tStart, tEnd);
 
-feeds.forEach(f => {
- const d = new Date(f.created_at);
-
-  if(d >= tStart && d <= tEnd){
-    labels.push(d);
-    data.push(Number(f.field6));
-  }
-});
+const labels = result.labels;
+const data = result.data;
 
       const startDate = labels[0];
       const endDate = labels[labels.length - 1];
