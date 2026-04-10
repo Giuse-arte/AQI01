@@ -964,109 +964,96 @@ const data = result.data;
           },
 
 scales:{
-x:{
-  type:'time',
+x: (function(){
 
-  // 🔥 FORZA PARTENZA A MEZZANOTTE
-min: (function(){
   const mode = document.getElementById('viewMode').value;
 
+  // 🔴 LIVE
   if(mode === "live"){
-    const now = new Date();
-    return new Date(now.getTime() - 24 * 60 * 60 * 1000);
-  }
+    return {
+      type: 'time',
 
-  return new Date(document.getElementById('day').value + "T00:00:00");
-})(),
+      min: (function(){
+        const now = new Date();
+        return new Date(now.getTime() - 24 * 60 * 60 * 1000);
+      })(),
 
-max: (function(){
-  const mode = document.getElementById('viewMode').value;
+      max: new Date(),
 
-  if(mode === "live"){
-    return new Date();
-  }
+      time:{
+        unit: 'hour',
+        stepSize: 2,
+        displayFormats:{
+          hour:'HH:mm'
+        }
+      },
 
-  return new Date(document.getElementById('day').value + "T23:59:59");
-})(),
+      ticks:{
+        autoSkip: false,
+        callback: function(value){
 
-  time:{
-  unit:'hour'
-},
+          const date = new Date(value);
+          const hours = date.getHours();
 
-  ticks:{
-    autoSkip:false,
-    maxRotation:45,
-    minRotation:45,
+          // DATA a mezzanotte
+          if(hours === 0){
+            return date.toLocaleDateString('it-IT', {
+              day:'2-digit',
+              month:'short'
+            });
+          }
 
-callback: function(value, index) {
-  const date = new Date(value);
-  const mode = document.getElementById('viewMode').value;
+          // ogni 4 ore
+          if(hours % 4 === 0){
+            return date.toLocaleTimeString('it-IT', {
+              hour:'2-digit',
+              minute:'2-digit'
+            });
+          }
 
-  // GIORNO
-  if(mode === "day"){
-
-    if(date.getHours() === 0){
-      return date.toLocaleDateString('it-IT', {
-        day:'2-digit',
-        month:'short'
-      });
-    }
-
-    if(date.getHours() % 4 === 0){
-      return date.toLocaleTimeString('it-IT', {
-        hour:'2-digit',
-        minute:'2-digit'
-      });
-    }
-
-    return '';
-  }
-
-  // LIVE (ultime 24h)
-
-  if(index === 0){
-    return date.toLocaleDateString('it-IT', {
-      day:'2-digit',
-      month:'short'
-    });
-  }
-
-  if(index % 4 === 0){
-    return date.toLocaleTimeString('it-IT', {
-      hour:'2-digit',
-      minute:'2-digit'
-    });
-  }
-
-  return '';
-}
-  },
-
-  title:{
-    display:false,
-    text: (function(){
-
-      const dayInput = document.getElementById('day');
-
-      if(dayInput && dayInput.value){
-        const d = new Date(dayInput.value);
-
-        return d.toLocaleDateString('it-IT',{
-          day:'2-digit',
-          month:'short',
-          year:'numeric'
-        });
+          return '';
+        }
       }
-
-      return "";
-
-    })()
-  },
-
-  grid:{
-    display:true
+    };
   }
-},
+
+  // 🔵 GIORNO (lascia invariato)
+  return {
+    type:'time',
+
+    min: new Date(document.getElementById('day').value + "T00:00:00"),
+    max: new Date(document.getElementById('day').value + "T23:59:59"),
+
+    time:{
+      unit:'hour'
+    },
+
+    ticks:{
+      autoSkip:false,
+      callback: function(value){
+
+        const date = new Date(value);
+
+        if(date.getHours() === 0){
+          return date.toLocaleDateString('it-IT', {
+            day:'2-digit',
+            month:'short'
+          });
+        }
+
+        if(date.getHours() % 4 === 0){
+          return date.toLocaleTimeString('it-IT', {
+            hour:'2-digit',
+            minute:'2-digit'
+          });
+        }
+
+        return '';
+      }
+    }
+  };
+
+})(),
 
   y:{
     beginAtZero:true,
@@ -1173,106 +1160,96 @@ feeds.forEach(f => {
           plugins:{ legend:{ display:false } },
 
 scales:{
-x:{
-  type:'time',
+x: (function(){
 
-  // 🔥 FORZA PARTENZA A MEZZANOTTE
- min: (function(){
   const mode = document.getElementById('viewMode').value;
 
+  // 🔴 LIVE
   if(mode === "live"){
-    const now = new Date();
-    return new Date(now.getTime() - 24 * 60 * 60 * 1000);
+    return {
+      type: 'time',
+
+      min: (function(){
+        const now = new Date();
+        return new Date(now.getTime() - 24 * 60 * 60 * 1000);
+      })(),
+
+      max: new Date(),
+
+      time:{
+        unit: 'hour',
+        stepSize: 2,
+        displayFormats:{
+          hour:'HH:mm'
+        }
+      },
+
+      ticks:{
+        autoSkip: false,
+        callback: function(value){
+
+          const date = new Date(value);
+          const hours = date.getHours();
+
+          // DATA a mezzanotte
+          if(hours === 0){
+            return date.toLocaleDateString('it-IT', {
+              day:'2-digit',
+              month:'short'
+            });
+          }
+
+          // ogni 4 ore
+          if(hours % 4 === 0){
+            return date.toLocaleTimeString('it-IT', {
+              hour:'2-digit',
+              minute:'2-digit'
+            });
+          }
+
+          return '';
+        }
+      }
+    };
   }
 
-  return new Date(document.getElementById('day').value + "T00:00:00");
-})(),
+  // 🔵 GIORNO (lascia invariato)
+  return {
+    type:'time',
 
-max: (function(){
-  const mode = document.getElementById('viewMode').value;
+    min: new Date(document.getElementById('day').value + "T00:00:00"),
+    max: new Date(document.getElementById('day').value + "T23:59:59"),
 
-  if(mode === "live"){
-    return new Date();
-  }
+    time:{
+      unit:'hour'
+    },
 
-  return new Date(document.getElementById('day').value + "T23:59:59");
-})(),
+    ticks:{
+      autoSkip:false,
+      callback: function(value){
 
-time:{
-  unit:'hour'
-},
+        const date = new Date(value);
 
-  ticks:{
-    autoSkip:false,
-    maxRotation:45,
-    minRotation:45,
+        if(date.getHours() === 0){
+          return date.toLocaleDateString('it-IT', {
+            day:'2-digit',
+            month:'short'
+          });
+        }
 
-callback: function(value, index) {
-  const date = new Date(value);
-  const mode = document.getElementById('viewMode').value;
+        if(date.getHours() % 4 === 0){
+          return date.toLocaleTimeString('it-IT', {
+            hour:'2-digit',
+            minute:'2-digit'
+          });
+        }
 
-  // GIORNO
-  if(mode === "day"){
-
-    if(date.getHours() === 0){
-      return date.toLocaleDateString('it-IT', {
-        day:'2-digit',
-        month:'short'
-      });
+        return '';
+      }
     }
+  };
 
-    if(date.getHours() % 4 === 0){
-      return date.toLocaleTimeString('it-IT', {
-        hour:'2-digit',
-        minute:'2-digit'
-      });
-    }
-
-    return '';
-  }
-
-  // LIVE (ultime 24h)
-
-  if(index === 0){
-    return date.toLocaleDateString('it-IT', {
-      day:'2-digit',
-      month:'short'
-    });
-  }
-
-  if(index % 4 === 0){
-    return date.toLocaleTimeString('it-IT', {
-      hour:'2-digit',
-      minute:'2-digit'
-    });
-  }
-
-  return '';
-}
-  },
-
-title:{
-  display:true,
-  text: (() => {
-
-    const dayInput = document.getElementById('day');
-
-    if(!dayInput || !dayInput.value) return "";
-
-    const d = new Date(dayInput.value);
-
-    return d.toLocaleDateString('it-IT', {
-      day: '2-digit',
-      month: 'short'
-    });
-
-  })()
-},
-
-  grid:{
-    display:true
-  }
-},
+})(),
 
   y:{
     beginAtZero:true,
