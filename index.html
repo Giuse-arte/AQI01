@@ -623,7 +623,8 @@ async function loadKPIs(){
          pad(d.getSeconds());
   }
 
-const startStr = formatLocalDateTime(tStart);
+const startBuffer = new Date(tStart.getTime() - 2 * 60 * 60 * 1000);
+const startStr = formatLocalDateTime(startBuffer);
 const endStr = formatLocalDateTime(tEnd);
 
 const r = await fetch(
@@ -866,7 +867,8 @@ if(ch.dataset.id === "6"){
          pad(d.getSeconds());
   }
 
-const startStr = formatLocalDateTime(tStart);
+const startBuffer = new Date(tStart.getTime() - 2 * 60 * 60 * 1000);
+const startStr = formatLocalDateTime(startBuffer);
 const endStr = formatLocalDateTime(tEnd);
 
       const r = await fetch(
@@ -1036,7 +1038,8 @@ x:{
          pad(d.getSeconds());
   }
 
-const startStr = formatLocalDateTime(tStart);
+const startBuffer = new Date(tStart.getTime() - 2 * 60 * 60 * 1000);
+const startStr = formatLocalDateTime(startBuffer);
 const endStr = formatLocalDateTime(tEnd);
 
 if(ch.dataset.id !== "6"){
@@ -1058,7 +1061,8 @@ if(ch.dataset.id !== "6"){
          pad(d.getSeconds());
     }
 
-const startStr = formatLocalDateTime(tStart);
+const startBuffer = new Date(tStart.getTime() - 2 * 60 * 60 * 1000);
+const startStr = formatLocalDateTime(startBuffer);
 const endStr = formatLocalDateTime(tEnd);
 
       const r = await fetch(
