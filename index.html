@@ -940,10 +940,23 @@ x:{
     callback: function(value){
       const date = new Date(value);
 
-      // ❌ niente etichetta a mezzanotte
       if(date.getHours() === 0){
-        return '';
-      }
+
+  const mode = document.getElementById('viewMode').value;
+
+  if(mode === "live"){
+    const now = new Date();
+    return now.toLocaleDateString('it-IT', {
+      day:'2-digit',
+      month:'short'
+    });
+  }
+
+  return date.toLocaleDateString('it-IT', {
+    day:'2-digit',
+    month:'short'
+  });
+}
 
       // ✔ etichette ogni 4 ore
       if(date.getHours() % 4 === 0){
@@ -1113,10 +1126,23 @@ x:{
     callback: function(value){
       const date = new Date(value);
 
-      // ❌ niente etichetta a mezzanotte
       if(date.getHours() === 0){
-        return '';
-      }
+
+  const mode = document.getElementById('viewMode').value;
+
+  if(mode === "live"){
+    const now = new Date();
+    return now.toLocaleDateString('it-IT', {
+      day:'2-digit',
+      month:'short'
+    });
+  }
+
+  return date.toLocaleDateString('it-IT', {
+    day:'2-digit',
+    month:'short'
+  });
+}
 
       // ✔ etichette ogni 4 ore
       if(date.getHours() % 4 === 0){
