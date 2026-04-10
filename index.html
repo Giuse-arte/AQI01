@@ -1127,7 +1127,7 @@ const r = await fetch(
       const field = "field" + ch.dataset.id;
 
       const labels = [];
-const data = [];
+      const data = [];
 
 feeds.forEach(f => {
   const d = new Date(f.created_at);
@@ -1137,6 +1137,11 @@ feeds.forEach(f => {
     data.push(Number(f[field]));
   }
 });
+
+  if(!labels.length){
+  console.log("PM2.5: nessun dato disponibile");
+  return;
+  }
 
       const d = document.createElement('div');
       d.className = 'chart';
