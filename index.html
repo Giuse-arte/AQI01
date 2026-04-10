@@ -896,7 +896,7 @@ function renderCharts(){
   document.querySelectorAll('aside input[data-id]:checked').forEach(ch => {
 
 // =========================
-// PM2.5 con Chart.js (FIX)
+// PM2.5 con Chart.js (GIORNO)
 // =========================
 if(ch.dataset.id === "6"){
 
@@ -1101,7 +1101,10 @@ callback: function(value, index) {
 
 const startStr = formatLocalDateTime(tStart);
 const endStr = formatLocalDateTime(tEnd);
-
+    
+// =========================
+// Altri sensori (LIVE)
+// =========================
 if(ch.dataset.id !== "6"){
 
   (async function(){
@@ -1248,26 +1251,23 @@ callback: function(value, index) {
 }
   },
 
-  title:{
-    display:false,
-    text: (function(){
+title:{
+  display:true,
+  text: (() => {
 
-      const dayInput = document.getElementById('day');
+    const dayInput = document.getElementById('day');
 
-      if(dayInput && dayInput.value){
-        const d = new Date(dayInput.value);
+    if(!dayInput || !dayInput.value) return "";
 
-        return d.toLocaleDateString('it-IT',{
-          day:'2-digit',
-          month:'short',
-          year:'numeric'
-        });
-      }
+    const d = new Date(dayInput.value);
 
-      return "";
+    return d.toLocaleDateString('it-IT', {
+      day: '2-digit',
+      month: 'short'
+    });
 
-    })()
-  },
+  })()
+},
 
   grid:{
     display:true
