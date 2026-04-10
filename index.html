@@ -502,24 +502,6 @@
 /* ID del canale ThingSpeak da cui leggere i dati */
 const CHANNEL = 2789658;
 
-const hum = document.getElementById('hum');
-const temp = document.getElementById('temp');
-const press = document.getElementById('press');
-const pm1 = document.getElementById('pm1');
-const pm25 = document.getElementById('pm25');
-const pm10 = document.getElementById('pm10');
-const aqiVal = document.getElementById('aqiVal');
-const aqiBadge = document.getElementById('aqiBadge');
-const aqiTitle = document.getElementById('aqiTitle');
-
-const remember = document.getElementById('remember');
-const start = document.getElementById('start');
-const end = document.getElementById('end');
-const mode = document.getElementById('mode');
-const update = document.getElementById('update');
-const day = document.getElementById('day');
-const dayLabel = document.getElementById('dayLabel');
-
 /*
   fmt1 → formatta un valore numerico con 1 decimale
   - Se il valore è null, undefined o NaN → restituisce '—'
@@ -533,16 +515,6 @@ const fmt1 = v => v == null || isNaN(v) ? '—' : Number(v).toFixed(1);
   - Usato per PM e valori medi
 */
 const fmt0 = v => v == null || isNaN(v) ? '—' : Math.round(Number(v));
-
-function formatLocalDateTime(d){
-  const pad = n => n.toString().padStart(2,'0');
-  return d.getFullYear() + '-' +
-         pad(d.getMonth()+1) + '-' +
-         pad(d.getDate()) + ' ' +
-         pad(d.getHours()) + ':' +
-         pad(d.getMinutes()) + ':' +
-         pad(d.getSeconds());
-}
 
 /* =========================
    DATI DI DEMO (FALLBACK)
@@ -639,6 +611,17 @@ function savePreferences(){
 async function loadKPIs(){
   try{
     const { start: tStart, end: tEnd } = getTimeRange();
+
+  function formatLocalDateTime(d){
+  const pad = n => n.toString().padStart(2,'0');
+
+  return d.getFullYear() + '-' +
+         pad(d.getMonth()+1) + '-' +
+         pad(d.getDate()) + ' ' +
+         pad(d.getHours()) + ':' +
+         pad(d.getMinutes()) + ':' +
+         pad(d.getSeconds());
+  }
 
 const startStr = formatLocalDateTime(tStart);
 const endStr = formatLocalDateTime(tEnd);
@@ -826,39 +809,6 @@ function selectAll(v){
   renderCharts();
 }
 
-function resampleHourly(feeds, field, tStart, tEnd){
-
-  const buckets = {};
-
-  feeds.forEach(f => {
-    const d = new Date(f.created_at);
-
-    if(d < tStart || d > tEnd) return;
-
-    const hour = new Date(d);
-    hour.setMinutes(0,0,0);
-
-    const key = hour.getTime();
-
-    if(!buckets[key]){
-      buckets[key] = [];
-    }
-
-    const val = Number(f[field]);
-    if(!isNaN(val)){
-      buckets[key].push(val);
-    }
-  });
-
- const result = resampleHourly(feeds, 'field6', tStart, tEnd);
-
-const labels = result.labels;
-const data = result.data;
-
-  return { labels, data };
-}
-
-  
 /* =========================
    RENDERING GRAFICI
    ========================= */
@@ -876,9 +826,9 @@ function renderCharts(){
   const subtitle = document.getElementById('subtitle');
   subtitle.textContent =
     'Inizio rilevamento dati: ' +
-    tStart.toLocaleDateString('it-IT') +
+    new Date(start.value).toLocaleDateString('it-IT') +
     ' | Fine: ' +
-    tEnd.toLocaleDateString('it-IT');
+    new Date(end.value).toLocaleDateString('it-IT');
 
   /* Metadati grafici */
   const meta = {
@@ -905,14 +855,23 @@ if(ch.dataset.id === "6"){
     try{
       const { start: tStart, end: tEnd } = getTimeRange();
 
-const bufferStart = new Date(tStart.getTime() - 3 * 60 * 60 * 1000);
+    function formatLocalDateTime(d){
+    const pad = n => n.toString().padStart(2,'0');
 
-const startStr = formatLocalDateTime(bufferStart);
+    return d.getFullYear() + '-' +
+         pad(d.getMonth()+1) + '-' +
+         pad(d.getDate()) + ' ' +
+         pad(d.getHours()) + ':' +
+         pad(d.getMinutes()) + ':' +
+         pad(d.getSeconds());
+  }
+
+const startStr = formatLocalDateTime(tStart);
 const endStr = formatLocalDateTime(tEnd);
 
-const r = await fetch(
-  `https://api.thingspeak.com/channels/${CHANNEL}/feeds.json?start=${startStr}&end=${endStr}&results=8000`
-);
+      const r = await fetch(
+        `https://api.thingspeak.com/channels/${CHANNEL}/feeds.json?start=${startStr}&end=${endStr}&results=8000`
+      );
 
       if(!r.ok) throw new Error();
 
@@ -921,10 +880,8 @@ const r = await fetch(
 
       if(!feeds.length) return;
 
-const result = resampleHourly(feeds, 'field6', tStart, tEnd);
-
-const labels = result.labels;
-const data = result.data;
+const labels = feeds.map(f => new Date(f.created_at));
+const data = feeds.map(f => Number(f.field6));
 
       const startDate = labels[0];
       const endDate = labels[labels.length - 1];
@@ -968,82 +925,40 @@ x:{
   type:'time',
 
   // 🔥 FORZA PARTENZA A MEZZANOTTE
-min: (function(){
-  const mode = document.getElementById('viewMode').value;
-
-  if(mode === "live"){
-    const now = new Date();
-    return new Date(now.getTime() - 24 * 60 * 60 * 1000);
-  }
-
-  return new Date(document.getElementById('day').value + "T00:00:00");
-})(),
-
-max: (function(){
-  const mode = document.getElementById('viewMode').value;
-
-  if(mode === "live"){
-    return new Date();
-  }
-
-  return new Date(document.getElementById('day').value + "T23:59:59");
-})(),
+  min: new Date(document.getElementById('day').value + "T00:00:00"),
+  max: new Date(document.getElementById('day').value + "T23:59:59"),
 
   time:{
-  unit:'hour'
-},
+    unit:'hour'
+  },
 
   ticks:{
     autoSkip:false,
     maxRotation:45,
     minRotation:45,
 
-callback: function(value, index) {
-  const date = new Date(value);
-  const mode = document.getElementById('viewMode').value;
+    callback: function(value){
+      const date = new Date(value);
 
-  // GIORNO
-  if(mode === "day"){
+      // ❌ niente etichetta a mezzanotte
+      if(date.getHours() === 0){
+        return '';
+      }
 
-    if(date.getHours() === 0){
-      return date.toLocaleDateString('it-IT', {
-        day:'2-digit',
-        month:'short'
-      });
+      // ✔ etichette ogni 4 ore
+      if(date.getHours() % 4 === 0){
+        return date.toLocaleTimeString('it-IT',{
+          hour:'2-digit',
+          minute:'2-digit'
+        });
+      }
+
+      return '';
     }
-
-    if(date.getHours() % 4 === 0){
-      return date.toLocaleTimeString('it-IT', {
-        hour:'2-digit',
-        minute:'2-digit'
-      });
-    }
-
-    return '';
-  }
-
-  // LIVE (ultime 24h)
-
-  if(index === 0){
-    return date.toLocaleDateString('it-IT', {
-      day:'2-digit',
-      month:'short'
-    });
-  }
-
-  if(index % 4 === 0){
-    return date.toLocaleTimeString('it-IT', {
-      hour:'2-digit',
-      minute:'2-digit'
-    });
-  }
-
-  return '';
-}
   },
 
   title:{
-    display:false,
+    display:true,
     text: (function(){
 
       const dayInput = document.getElementById('day');
@@ -1097,7 +1012,16 @@ callback: function(value, index) {
 
   const { start: tStart, end: tEnd } = getTimeRange();
 
+  function formatLocalDateTime(d){
+  const pad = n => n.toString().padStart(2,'0');
 
+    return d.getFullYear() + '-' +
+         pad(d.getMonth()+1) + '-' +
+         pad(d.getDate()) + ' ' +
+         pad(d.getHours()) + ':' +
+         pad(d.getMinutes()) + ':' +
+         pad(d.getSeconds());
+  }
 
 const startStr = formatLocalDateTime(tStart);
 const endStr = formatLocalDateTime(tEnd);
@@ -1110,14 +1034,23 @@ if(ch.dataset.id !== "6"){
 
       const { start: tStart, end: tEnd } = getTimeRange();
 
-     const bufferStart = new Date(tStart.getTime() - 3 * 60 * 60 * 1000);
+    function formatLocalDateTime(d){
+    const pad = n => n.toString().padStart(2,'0');
 
-const startStr = formatLocalDateTime(bufferStart);
+    return d.getFullYear() + '-' +
+         pad(d.getMonth()+1) + '-' +
+         pad(d.getDate()) + ' ' +
+         pad(d.getHours()) + ':' +
+         pad(d.getMinutes()) + ':' +
+         pad(d.getSeconds());
+    }
+
+const startStr = formatLocalDateTime(tStart);
 const endStr = formatLocalDateTime(tEnd);
 
-const r = await fetch(
-  `https://api.thingspeak.com/channels/${CHANNEL}/feeds.json?start=${startStr}&end=${endStr}&results=8000`
-);
+      const r = await fetch(
+        `https://api.thingspeak.com/channels/${CHANNEL}/feeds.json?start=${startStr}&end=${endStr}&results=8000`
+      );
 
       const j = await r.json();
       const feeds = j.feeds || [];
@@ -1126,22 +1059,8 @@ const r = await fetch(
 
       const field = "field" + ch.dataset.id;
 
-      const labels = [];
-      const data = [];
-
-feeds.forEach(f => {
-  const d = new Date(f.created_at);
-
-  if(d >= tStart && d <= tEnd){
-    labels.push(d);
-    data.push(Number(f[field]));
-  }
-});
-
-  if(!labels.length){
-  console.log("PM2.5: nessun dato disponibile");
-  return;
-  }
+      const labels = feeds.map(f => new Date(f.created_at));
+      const data = feeds.map(f => Number(f[field]));
 
       const d = document.createElement('div');
       d.className = 'chart';
@@ -1179,82 +1098,40 @@ x:{
   type:'time',
 
   // 🔥 FORZA PARTENZA A MEZZANOTTE
- min: (function(){
-  const mode = document.getElementById('viewMode').value;
+  min: new Date(document.getElementById('day').value + "T00:00:00"),
+  max: new Date(document.getElementById('day').value + "T23:59:59"),
 
-  if(mode === "live"){
-    const now = new Date();
-    return new Date(now.getTime() - 24 * 60 * 60 * 1000);
-  }
-
-  return new Date(document.getElementById('day').value + "T00:00:00");
-})(),
-
-max: (function(){
-  const mode = document.getElementById('viewMode').value;
-
-  if(mode === "live"){
-    return new Date();
-  }
-
-  return new Date(document.getElementById('day').value + "T23:59:59");
-})(),
-
-time:{
-  unit:'hour'
-},
+  time:{
+    unit:'hour'
+  },
 
   ticks:{
     autoSkip:false,
     maxRotation:45,
     minRotation:45,
 
-callback: function(value, index) {
-  const date = new Date(value);
-  const mode = document.getElementById('viewMode').value;
+    callback: function(value){
+      const date = new Date(value);
 
-  // GIORNO
-  if(mode === "day"){
+      // ❌ niente etichetta a mezzanotte
+      if(date.getHours() === 0){
+        return '';
+      }
 
-    if(date.getHours() === 0){
-      return date.toLocaleDateString('it-IT', {
-        day:'2-digit',
-        month:'short'
-      });
+      // ✔ etichette ogni 4 ore
+      if(date.getHours() % 4 === 0){
+        return date.toLocaleTimeString('it-IT',{
+          hour:'2-digit',
+          minute:'2-digit'
+        });
+      }
+
+      return '';
     }
-
-    if(date.getHours() % 4 === 0){
-      return date.toLocaleTimeString('it-IT', {
-        hour:'2-digit',
-        minute:'2-digit'
-      });
-    }
-
-    return '';
-  }
-
-  // LIVE (ultime 24h)
-
-  if(index === 0){
-    return date.toLocaleDateString('it-IT', {
-      day:'2-digit',
-      month:'short'
-    });
-  }
-
-  if(index % 4 === 0){
-    return date.toLocaleTimeString('it-IT', {
-      hour:'2-digit',
-      minute:'2-digit'
-    });
-  }
-
-  return '';
-}
   },
 
   title:{
-    display:false,
+    display:true,
     text: (function(){
 
       const dayInput = document.getElementById('day');
