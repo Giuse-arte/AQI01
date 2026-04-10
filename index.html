@@ -1244,11 +1244,7 @@ x:{
         return out;
       };
 
-      const labels = feeds.map(f =>
-        new Date(f.created_at).toLocaleTimeString('it-IT',{
-          hour:'2-digit', minute:'2-digit'
-        })
-      );
+      const labels = feeds.map(f => new Date(f.created_at));
 
       const pm25 = avgSeries('field6');
       const pm10 = avgSeries('field7');
