@@ -1219,151 +1219,75 @@ x:{
 
 const comboCheckbox = document.querySelector('aside input[data-id="combo"]');
 
-// 👉 se NON selezionato → NON creare il grafico
 if(comboCheckbox && comboCheckbox.checked){
 
-  (async function(){
+  (async () => {
 
-    try{
+    try {
 
       const r = await fetch(
         `https://api.thingspeak.com/channels/${CHANNEL}/feeds.json?results=48`
       );
 
-      if(!r.ok){
-        console.error("Errore fetch combo");
-        return;
-      }
-
       const j = await r.json();
       const feeds = j.feeds || [];
 
-      console.log("COMBO FEEDS:", feeds.length);
+      feeds.sort((a,b) =>
+        new Date(a.created_at) - new Date(b.created_at)
+      );
 
-      if(!feeds.length){
-        console.warn("Combo: nessun dato disponibile");
-      }
-
-      // 👉 ORDINA DATI (fondamentale)
-      feeds.sort((a,b) => new Date(a.created_at) - new Date(b.created_at));
-
-      // =========================
-      // MEDIA MOBILE 24h
-      // =========================
-      const avgSeries = (field) => {
-        const out = [];
-
-        for(let i=0; i<feeds.length; i++){
-          const slice = feeds.slice(Math.max(0, i-47), i+1);
-
-          const avg = slice.reduce((s,x) =>
-            s + Number(x[field] || 0), 0
-          ) / slice.length;
-
-          out.push(avg);
-        }
-
-        return out;
-      };
-
-      // =========================
-      // LABELS (DATE REALI)
-      // =========================
       const labels = feeds.map(f => {
         const d = new Date(f.created_at);
         d.setSeconds(0,0);
         return d;
       });
 
+      const avgSeries = (field) => {
+        const out = [];
+        for(let i=0;i<feeds.length;i++){
+          const slice = feeds.slice(Math.max(0,i-47), i+1);
+          const avg = slice.reduce((s,x)=>s + Number(x[field]||0),0)/slice.length;
+          out.push(avg);
+        }
+        return out;
+      };
+
       const pm25 = avgSeries('field6');
       const pm10 = avgSeries('field7');
 
-      // =========================
-      // CREA CONTENITORE
-      // =========================
       const d = document.createElement('div');
       d.className = 'chart';
 
       d.innerHTML = `
         <div>
-          <span class="chart-title">PM10, PM2.5 (μg/m³) Media mobile ultime 24h</span>
-          <span class="chart-sensor">PMS5003</span>
+          <span class="chart-title">PM10 / PM2.5 media mobile</span>
         </div>
-        <canvas style="height:260px;"></canvas>
+        <canvas></canvas>
       `;
 
       chartsContainer.appendChild(d);
 
-      const canvas = d.querySelector('canvas');
-      const ctx = canvas.getContext('2d');
+      const ctx = d.querySelector('canvas').getContext('2d');
 
-      // 👉 evita duplicati
-      if(window.pmChart){
-        window.pmChart.destroy();
-      }
+      if(window.pmChart) window.pmChart.destroy();
 
-      // =========================
-      // CREA GRAFICO
-      // =========================
       window.pmChart = new Chart(ctx,{
         type:'line',
         data:{
           labels,
           datasets:[
-            {
-              label:'PM2.5 (24h)',
-              data:pm25,
-              tension:0.3,
-              borderWidth:2,
-              pointRadius:1
-            },
-            {
-              label:'PM10 (24h)',
-              data:pm10,
-              tension:0.3,
-              borderWidth:2,
-              pointRadius:1
-            },
-            {
-              label:'Soglia UE PM2.5',
-              data:labels.map(()=>25),
-              borderDash:[5,5],
-              pointRadius:0
-            },
-            {
-              label:'Soglia UE PM10',
-              data:labels.map(()=>50),
-              borderDash:[5,5],
-              pointRadius:0
-            }
+            { label:'PM2.5', data:pm25, tension:0.3 },
+            { label:'PM10', data:pm10, tension:0.3 }
           ]
         },
         options:{
           responsive:true,
-          maintainAspectRatio:false,
-          plugins:{
-            legend:{ display:true }
-          },
-          scales:{
-            x:{
-              type:'time',
-              time:{
-                unit:'hour'
-              }
-            },
-            y:{
-              beginAtZero:true,
-              title:{
-                display:true,
-                text:'µg/m³'
-              }
-            }
-          }
+          maintainAspectRatio:false
         }
       });
 
-    }catch(e){
-      console.error("Errore grafico combinato:", e);
+    } catch(err) {
+      console.error("Combo error:", err);
     }
 
   })();
