@@ -896,7 +896,7 @@ function renderCharts(){
   document.querySelectorAll('aside input[data-id]:checked').forEach(ch => {
 
 // =========================
-// PM2.5 con Chart.js (GIORNO)
+// PM2.5 con Chart.js (FIX)
 // =========================
 if(ch.dataset.id === "6"){
 
@@ -964,96 +964,109 @@ const data = result.data;
           },
 
 scales:{
-x: (function(){
+x:{
+  type:'time',
 
+  // 🔥 FORZA PARTENZA A MEZZANOTTE
+min: (function(){
   const mode = document.getElementById('viewMode').value;
 
-  // 🔴 LIVE
   if(mode === "live"){
-    return {
-      type: 'time',
-
-      min: (function(){
-        const now = new Date();
-        return new Date(now.getTime() - 24 * 60 * 60 * 1000);
-      })(),
-
-      max: new Date(),
-
-      time:{
-        unit: 'hour',
-        stepSize: 2,
-        displayFormats:{
-          hour:'HH:mm'
-        }
-      },
-
-      ticks:{
-        autoSkip: false,
-        callback: function(value){
-
-          const date = new Date(value);
-          const hours = date.getHours();
-
-          // DATA a mezzanotte
-          if(hours === 0){
-            return date.toLocaleDateString('it-IT', {
-              day:'2-digit',
-              month:'short'
-            });
-          }
-
-          // ogni 4 ore
-          if(hours % 4 === 0){
-            return date.toLocaleTimeString('it-IT', {
-              hour:'2-digit',
-              minute:'2-digit'
-            });
-          }
-
-          return '';
-        }
-      }
-    };
+    const now = new Date();
+    return new Date(now.getTime() - 24 * 60 * 60 * 1000);
   }
 
-  // 🔵 GIORNO (lascia invariato)
-  return {
-    type:'time',
-
-    min: new Date(document.getElementById('day').value + "T00:00:00"),
-    max: new Date(document.getElementById('day').value + "T23:59:59"),
-
-    time:{
-      unit:'hour'
-    },
-
-    ticks:{
-      autoSkip:false,
-      callback: function(value){
-
-        const date = new Date(value);
-
-        if(date.getHours() === 0){
-          return date.toLocaleDateString('it-IT', {
-            day:'2-digit',
-            month:'short'
-          });
-        }
-
-        if(date.getHours() % 4 === 0){
-          return date.toLocaleTimeString('it-IT', {
-            hour:'2-digit',
-            minute:'2-digit'
-          });
-        }
-
-        return '';
-      }
-    }
-  };
-
+  return new Date(document.getElementById('day').value + "T00:00:00");
 })(),
+
+max: (function(){
+  const mode = document.getElementById('viewMode').value;
+
+  if(mode === "live"){
+    return new Date();
+  }
+
+  return new Date(document.getElementById('day').value + "T23:59:59");
+})(),
+
+  time:{
+  unit:'hour'
+},
+
+  ticks:{
+    autoSkip:false,
+    maxRotation:45,
+    minRotation:45,
+
+callback: function(value, index) {
+  const date = new Date(value);
+  const mode = document.getElementById('viewMode').value;
+
+  // GIORNO
+  if(mode === "day"){
+
+    if(date.getHours() === 0){
+      return date.toLocaleDateString('it-IT', {
+        day:'2-digit',
+        month:'short'
+      });
+    }
+
+    if(date.getHours() % 4 === 0){
+      return date.toLocaleTimeString('it-IT', {
+        hour:'2-digit',
+        minute:'2-digit'
+      });
+    }
+
+    return '';
+  }
+
+  // LIVE (ultime 24h)
+
+  if(index === 0){
+    return date.toLocaleDateString('it-IT', {
+      day:'2-digit',
+      month:'short'
+    });
+  }
+
+  if(index % 4 === 0){
+    return date.toLocaleTimeString('it-IT', {
+      hour:'2-digit',
+      minute:'2-digit'
+    });
+  }
+
+  return '';
+}
+  },
+
+  title:{
+    display:false,
+    text: (function(){
+
+      const dayInput = document.getElementById('day');
+
+      if(dayInput && dayInput.value){
+        const d = new Date(dayInput.value);
+
+        return d.toLocaleDateString('it-IT',{
+          day:'2-digit',
+          month:'short',
+          year:'numeric'
+        });
+      }
+
+      return "";
+
+    })()
+  },
+
+  grid:{
+    display:true
+  }
+},
 
   y:{
     beginAtZero:true,
@@ -1088,10 +1101,7 @@ x: (function(){
 
 const startStr = formatLocalDateTime(tStart);
 const endStr = formatLocalDateTime(tEnd);
-    
-// =========================
-// Altri sensori (LIVE)
-// =========================
+
 if(ch.dataset.id !== "6"){
 
   (async function(){
@@ -1160,96 +1170,109 @@ feeds.forEach(f => {
           plugins:{ legend:{ display:false } },
 
 scales:{
-x: (function(){
+x:{
+  type:'time',
 
+  // 🔥 FORZA PARTENZA A MEZZANOTTE
+ min: (function(){
   const mode = document.getElementById('viewMode').value;
 
-  // 🔴 LIVE
   if(mode === "live"){
-    return {
-      type: 'time',
-
-      min: (function(){
-        const now = new Date();
-        return new Date(now.getTime() - 24 * 60 * 60 * 1000);
-      })(),
-
-      max: new Date(),
-
-      time:{
-        unit: 'hour',
-        stepSize: 2,
-        displayFormats:{
-          hour:'HH:mm'
-        }
-      },
-
-      ticks:{
-        autoSkip: false,
-        callback: function(value){
-
-          const date = new Date(value);
-          const hours = date.getHours();
-
-          // DATA a mezzanotte
-          if(hours === 0){
-            return date.toLocaleDateString('it-IT', {
-              day:'2-digit',
-              month:'short'
-            });
-          }
-
-          // ogni 4 ore
-          if(hours % 4 === 0){
-            return date.toLocaleTimeString('it-IT', {
-              hour:'2-digit',
-              minute:'2-digit'
-            });
-          }
-
-          return '';
-        }
-      }
-    };
+    const now = new Date();
+    return new Date(now.getTime() - 24 * 60 * 60 * 1000);
   }
 
-  // 🔵 GIORNO (lascia invariato)
-  return {
-    type:'time',
-
-    min: new Date(document.getElementById('day').value + "T00:00:00"),
-    max: new Date(document.getElementById('day').value + "T23:59:59"),
-
-    time:{
-      unit:'hour'
-    },
-
-    ticks:{
-      autoSkip:false,
-      callback: function(value){
-
-        const date = new Date(value);
-
-        if(date.getHours() === 0){
-          return date.toLocaleDateString('it-IT', {
-            day:'2-digit',
-            month:'short'
-          });
-        }
-
-        if(date.getHours() % 4 === 0){
-          return date.toLocaleTimeString('it-IT', {
-            hour:'2-digit',
-            minute:'2-digit'
-          });
-        }
-
-        return '';
-      }
-    }
-  };
-
+  return new Date(document.getElementById('day').value + "T00:00:00");
 })(),
+
+max: (function(){
+  const mode = document.getElementById('viewMode').value;
+
+  if(mode === "live"){
+    return new Date();
+  }
+
+  return new Date(document.getElementById('day').value + "T23:59:59");
+})(),
+
+time:{
+  unit:'hour'
+},
+
+  ticks:{
+    autoSkip:false,
+    maxRotation:45,
+    minRotation:45,
+
+callback: function(value, index) {
+  const date = new Date(value);
+  const mode = document.getElementById('viewMode').value;
+
+  // GIORNO
+  if(mode === "day"){
+
+    if(date.getHours() === 0){
+      return date.toLocaleDateString('it-IT', {
+        day:'2-digit',
+        month:'short'
+      });
+    }
+
+    if(date.getHours() % 4 === 0){
+      return date.toLocaleTimeString('it-IT', {
+        hour:'2-digit',
+        minute:'2-digit'
+      });
+    }
+
+    return '';
+  }
+
+  // LIVE (ultime 24h)
+
+  if(index === 0){
+    return date.toLocaleDateString('it-IT', {
+      day:'2-digit',
+      month:'short'
+    });
+  }
+
+  if(index % 4 === 0){
+    return date.toLocaleTimeString('it-IT', {
+      hour:'2-digit',
+      minute:'2-digit'
+    });
+  }
+
+  return '';
+}
+  },
+
+  title:{
+    display:false,
+    text: (function(){
+
+      const dayInput = document.getElementById('day');
+
+      if(dayInput && dayInput.value){
+        const d = new Date(dayInput.value);
+
+        return d.toLocaleDateString('it-IT',{
+          day:'2-digit',
+          month:'short',
+          year:'numeric'
+        });
+      }
+
+      return "";
+
+    })()
+  },
+
+  grid:{
+    display:true
+  }
+},
 
   y:{
     beginAtZero:true,
