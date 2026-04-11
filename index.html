@@ -900,7 +900,13 @@ const data = feeds.map(f => Number(f.field6));
         <canvas id="chart_pm25" style="height:260px;"></canvas>
       `;
 
-      chartsContainer.appendChild(d);
+      const pm1 = chartsContainer.querySelector('#chart_5')?.parentElement;
+
+      if(pm1){
+        chartsContainer.insertBefore(d, pm1.nextSibling);
+      } else {
+        chartsContainer.appendChild(d);
+      }
 
       const ctx = document.getElementById('chart_pm25').getContext('2d');
 
