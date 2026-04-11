@@ -1606,7 +1606,16 @@ options:{
   maintainAspectRatio:false,
 
   plugins:{
-    legend:{ display:true }
+    legend:{
+  display:true,
+
+  labels:{
+    filter: function(item){
+      // ❌ nasconde tutte le voci "Limite"
+      return !item.text.includes('Limite');
+    }
+  }
+}
   },
 
   scales:{
