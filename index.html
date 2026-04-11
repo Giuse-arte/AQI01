@@ -1535,36 +1535,70 @@ feeds.forEach((f, i) => {
         type: 'line',
         data: {
           labels,
-          datasets: [
-            {
-              label: 'PM2.5 (24h)',
-              data: pm25,
-              tension: 0.3,
-              borderWidth: 2,
-              pointRadius: 2
-            },
-            {
-              label: 'PM10 (24h)',
-              data: pm10,
-              tension: 0.3,
-              borderWidth: 2,
-              pointRadius: 2
-            },
-            {
-              label: 'Soglia UE PM2.5',
-              data: labels.map(() => 25),
-              borderDash: [5, 5],
-              pointRadius: 0,
-              hidden: true
-            },
-            {
-              label: 'Soglia UE PM10',
-              data: labels.map(() => 50),
-              borderDash: [5, 5],
-              pointRadius: 0,
-              hidden: true
-            }
-          ]
+datasets: (function(){
+
+  const base = [
+    {
+      label: 'PM2.5 (24h)',
+      data: pm25,
+      tension: 0.3,
+      borderWidth: 2,
+      pointRadius: 2
+    },
+    {
+      label: 'PM10 (24h)',
+      data: pm10,
+      tension: 0.3,
+      borderWidth: 2,
+      pointRadius: 2
+    }
+  ];
+
+  // =========================
+  // SOGLIE DINAMICHE
+  // =========================
+
+  if(mode.value === 'EEA'){
+    base.push(
+      {
+        label: 'Limite EEA PM2.5 (25)',
+        data: labels.map(() => 25),
+        borderDash: [5,5],
+        pointRadius: 0,
+        borderWidth: 1
+      },
+      {
+        label: 'Limite EEA PM10 (50)',
+        data: labels.map(() => 50),
+        borderDash: [5,5],
+        pointRadius: 0,
+        borderWidth: 1
+      }
+    );
+  }
+
+  if(mode.value === 'EPA'){
+    base.push(
+      {
+        label: 'Limite EPA PM2.5 (35)',
+        data: labels.map(() => 35),
+        borderDash: [5,5],
+        pointRadius: 0,
+        borderWidth: 1
+      },
+      {
+        label: 'Limite EPA PM10 (150)',
+        data: labels.map(() => 150),
+        borderDash: [5,5],
+        pointRadius: 0,
+        borderWidth: 1
+      }
+    );
+  }
+
+  return base;
+
+})()
         },
 
 options:{
