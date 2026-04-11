@@ -265,6 +265,48 @@
       .charts{grid-template-columns:1fr}
     }
 
+  /* =========================
+   INFO BUTTON
+   ========================= */
+.info-btn{
+  width:18px;
+  height:18px;
+  border-radius:50%;
+  border:none;
+  background:#0b3c5d;
+  color:#fff;
+  font-size:12px;
+  font-weight:700;
+  cursor:pointer;
+  display:flex;
+  align-items:center;
+  justify-content:center;
+}
+
+/* =========================
+   POPUP INFO
+   ========================= */
+.info-popup{
+  position:fixed;
+  top:50%;
+  left:50%;
+  transform:translate(-50%,-50%);
+  background:#fff;
+  border-radius:12px;
+  box-shadow:0 10px 30px rgba(0,0,0,.2);
+  padding:16px;
+  z-index:999;
+  max-width:300px;
+  font-size:.8rem;
+}
+
+.info-overlay{
+  position:fixed;
+  inset:0;
+  background:rgba(0,0,0,.4);
+  z-index:998;
+}
+    
     /* Singolo grafico */
     .chart{
   background:var(--card);
@@ -794,6 +836,33 @@ function computeAQI(pm25, pm10){
   aqiVal.textContent = aqi;
   aqiBadge.textContent = txt;
   aqiBadge.style.background = col;
+}
+
+function openInfoPopup(){
+
+  const overlay = document.createElement('div');
+  overlay.className = 'info-overlay';
+
+  const popup = document.createElement('div');
+  popup.className = 'info-popup';
+
+  popup.innerHTML = `
+    <b>Legenda grafico</b><br><br>
+    • PM2.5 → linea principale<br>
+    • PM10 → linea principale<br>
+    • Linee tratteggiate → limiti UE<br><br>
+    Media mobile su 24 ore.
+    <br><br>
+    <button onclick="closeInfoPopup()">Chiudi</button>
+  `;
+
+  document.body.appendChild(overlay);
+  document.body.appendChild(popup);
+}
+
+function closeInfoPopup(){
+  document.querySelector('.info-popup')?.remove();
+  document.querySelector('.info-overlay')?.remove();
 }
 
 /* =========================
@@ -1344,14 +1413,19 @@ if (comboCheckbox && comboCheckbox.checked) {
       const d = document.createElement('div');
       d.className = 'chart';
 
-      d.innerHTML = `
-        <div>
-          <span class="chart-title">
-            PM10 / PM2.5 media mobile 24h
-          </span>
-        </div>
-        <canvas id="pmCombined"></canvas>
-      `;
+ d.innerHTML = `
+  <div style="display:flex;align-items:center;gap:8px;">
+    <span class="chart-title">
+      PM10 / PM2.5 media mobile 24h
+    </span>
+
+    <button class="info-btn" onclick="openInfoPopup()">
+      i
+    </button>
+  </div>
+
+  <canvas id="pmCombined"></canvas>
+`;
       //=============================
       // inserisci COMBO dopo PM10
       //=============================
@@ -1407,35 +1481,85 @@ if (comboCheckbox && comboCheckbox.checked) {
           ]
         },
 
-        options: {
-          responsive: true,
-          maintainAspectRatio: false,
+options:{
+  responsive:true,
+  maintainAspectRatio:false,
 
-          plugins: {
-            legend: {
-              display: true
-            }
-          },
+  plugins:{
+    legend:{ display:true }
+  },
 
-          scales: {
-            x: {
-              type: 'time',
+  scales:{
+    x:{
+      type:'time',
 
-              time: {
-                unit: 'hour'
-              },
+      // 🔥 ALLINEATO AGLI ALTRI GRAFICI
+      min: new Date(document.getElementById('day').value + "T00:00:00"),
+      max: new Date(document.getElementById('day').value + "T23:59:59"),
 
-              ticks: {
-                autoSkip: true,
-                maxTicksLimit: 6
-              }
-            },
+      time:{
+        unit:'hour',
+        stepSize:2
+      },
 
-            y: {
-              beginAtZero: true
-            }
+      ticks:{
+        autoSkip:false,
+        maxRotation:45,
+        minRotation:45,
+
+        callback:function(value){
+          const date = new Date(value);
+          const hours = date.getHours();
+
+          if(hours === 0){
+            return date.toLocaleDateString('it-IT',{
+              day:'2-digit',
+              month:'short'
+            });
           }
+
+          if(hours % 4 === 0){
+            return date.toLocaleTimeString('it-IT',{
+              hour:'2-digit',
+              minute:'2-digit'
+            });
+          }
+
+          return null;
         }
+      },
+
+      title:{
+        display:true,
+        text:(function(){
+          const dayInput = document.getElementById('day');
+          if(dayInput && dayInput.value){
+            const d = new Date(dayInput.value);
+            return d.toLocaleDateString('it-IT',{
+              day:'2-digit',
+              month:'short',
+              year:'numeric'
+            });
+          }
+          return "";
+        })()
+      },
+
+      grid:{ display:true }
+    },
+
+    y:{
+      beginAtZero:false,
+
+      title:{
+        display:true,
+        text:'µg/m³'
+      },
+
+      grid:{ display:true }
+    }
+  }
+}
       });
 
     } catch (err) {
