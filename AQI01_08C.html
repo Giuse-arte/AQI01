@@ -960,8 +960,9 @@ x:{
   max: new Date(document.getElementById('day').value + "T23:59:59"),
 
   time:{
-    unit:'hour'
-  },
+  unit:'hour',
+  stepSize: 2
+},
 
   ticks:{
     autoSkip:false,
@@ -969,36 +970,29 @@ x:{
     minRotation:45,
 
    callback: function(value){
-      const date = new Date(value);
+  const date = new Date(value);
 
-      if(date.getHours() === 0){
+  const hours = date.getHours();
 
-  const mode = document.getElementById('viewMode').value;
-
-  if(mode === "live"){
-    const now = new Date();
-    return now.toLocaleDateString('it-IT', {
+  // ?? mostra data solo a mezzanotte
+  if(hours === 0){
+    return date.toLocaleDateString('it-IT', {
       day:'2-digit',
       month:'short'
     });
   }
 
-  return date.toLocaleDateString('it-IT', {
-    day:'2-digit',
-    month:'short'
-  });
+  // ?? etichette ogni 4 ore
+  if(hours % 4 === 0){
+    return date.toLocaleTimeString('it-IT',{
+      hour:'2-digit',
+      minute:'2-digit'
+    });
+  }
+
+  // ?? niente etichetta
+  return null;
 }
-
-      // ✔ etichette ogni 4 ore
-      if(date.getHours() % 4 === 0){
-        return date.toLocaleTimeString('it-IT',{
-          hour:'2-digit',
-          minute:'2-digit'
-        });
-      }
-
-      return '';
-    }
   },
 
   title:{
@@ -1205,45 +1199,39 @@ x:{
   max: new Date(document.getElementById('day').value + "T23:59:59"),
 
   time:{
-    unit:'hour'
-  },
+  unit:'hour',
+  stepSize: 2
+},
 
   ticks:{
     autoSkip:false,
     maxRotation:45,
     minRotation:45,
 
-    callback: function(value){
-      const date = new Date(value);
+   callback: function(value){
+  const date = new Date(value);
 
-      if(date.getHours() === 0){
+  const hours = date.getHours();
 
-  const mode = document.getElementById('viewMode').value;
-
-  if(mode === "live"){
-    const now = new Date();
-    return now.toLocaleDateString('it-IT', {
+  // ?? mostra data solo a mezzanotte
+  if(hours === 0){
+    return date.toLocaleDateString('it-IT', {
       day:'2-digit',
       month:'short'
     });
   }
 
-  return date.toLocaleDateString('it-IT', {
-    day:'2-digit',
-    month:'short'
-  });
+  // ?? etichette ogni 4 ore
+  if(hours % 4 === 0){
+    return date.toLocaleTimeString('it-IT',{
+      hour:'2-digit',
+      minute:'2-digit'
+    });
+  }
+
+  // ?? niente etichetta
+  return null;
 }
-
-      // ✔ etichette ogni 4 ore
-      if(date.getHours() % 4 === 0){
-        return date.toLocaleTimeString('it-IT',{
-          hour:'2-digit',
-          minute:'2-digit'
-        });
-      }
-
-      return '';
-    }
   },
 
   title:{
