@@ -1342,9 +1342,18 @@ if (comboCheckbox && comboCheckbox.checked) {
         </div>
         <canvas id="pmCombined"></canvas>
       `;
+      //=============================
+      // inserisci COMBO dopo PM10
+      //=============================
+      const pm10 = chartsContainer.querySelector('#chart_7')?.parentElement;
 
-      chartsContainer.appendChild(d);
-
+      if(pm10){
+        chartsContainer.insertBefore(d, pm10.nextSibling);
+      } else {
+        chartsContainer.appendChild(d);
+      }
+     // termine inserisci COMBO dopo PM10
+      
       const ctx = d.querySelector('canvas').getContext('2d');
 
       // distrugge vecchio grafico se esiste
