@@ -824,24 +824,13 @@ function renderCharts(){
   /* Se date non impostate → esce */
   const { start: tStart, end: tEnd } = getTimeRange();
 
-  /* Modifica del 11/04/26 */
+  /* Aggiorna sottotitolo */
   const subtitle = document.getElementById('subtitle');
-
-const formatDateTime = d =>
-  d.toLocaleString('it-IT', {
-    day: '2-digit',
-    month: 'short',
-    year: 'numeric',
-    hour: '2-digit',
-    minute: '2-digit'
-  });
-
-subtitle.textContent =
-  'Inizio rilevamento dati: ' +
-  formatDateTime(tStart) +
-  ' | Fine: ' +
-  formatDateTime(tEnd);
-/* Modifica del 11/04/26 */
+  subtitle.textContent =
+    'Inizio rilevamento dati: ' +
+    new Date(start.value).toLocaleDateString('it-IT') +
+    ' | Fine: ' +
+    new Date(end.value).toLocaleDateString('it-IT');
 
   /* Metadati grafici */
   const meta = {
