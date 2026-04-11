@@ -955,71 +955,57 @@ scales:{
 x:{
   type:'time',
 
-  // 🔥 FORZA PARTENZA A MEZZANOTTE
-  min: new Date(document.getElementById('day').value + "T00:00:00"),
-  max: new Date(document.getElementById('day').value + "T23:59:59"),
-
   time:{
-  unit:'hour',
-  stepSize: 2
-},
+    unit:'hour',
+    stepSize: 2
+  },
 
   ticks:{
     autoSkip:false,
     maxRotation:45,
     minRotation:45,
 
-   callback: function(value){
-  const date = new Date(value);
+    callback: function(value){
+      const date = new Date(value);
+      const h = date.getHours();
 
-  const hours = date.getHours();
-
-  // ?? mostra data solo a mezzanotte
-  if(hours === 0){
-    return date.toLocaleDateString('it-IT', {
-      day:'2-digit',
-      month:'short'
-    });
-  }
-
-  // ?? etichette ogni 4 ore
-  if(hours % 4 === 0){
-    return date.toLocaleTimeString('it-IT',{
-      hour:'2-digit',
-      minute:'2-digit'
-    });
-  }
-
-  // ?? niente etichetta
-  return null;
-}
-  },
-
-  title:{
-    display:true,
-    text: (function(){
-
-      const dayInput = document.getElementById('day');
-
-      if(dayInput && dayInput.value){
-        const d = new Date(dayInput.value);
-
-        return d.toLocaleDateString('it-IT',{
+      // Data a mezzanotte
+      if(h === 0){
+        return date.toLocaleDateString('it-IT',{
           day:'2-digit',
-          month:'short',
-          year:'numeric'
+          month:'short'
         });
       }
 
-      return "";
+      // Etichetta ogni 4 ore
+      if(h % 4 === 0){
+        return date.toLocaleTimeString('it-IT',{
+          hour:'2-digit',
+          minute:'2-digit'
+        });
+      }
 
-    })()
+      return '';
+    }
   },
 
   grid:{
-    display:true
-  }
-},
+    display:true,
+
+    // ?? differenzia le linee
+    color: function(ctx){
+      const value = ctx.tick.value;
+      const date = new Date(value);
+      const h = date.getHours();
+
+      // linee ogni 4 ore ? più scure
+      if(h % 4 === 0){
+        return 'rgba(0,0,0,0.25)';
+      }
+
+      // linee ogni 2 ore ? più leggere
+      return 'rgba(0,0,0,0.08)';
+    },
 
   y:{
   beginAtZero:false,
@@ -1194,71 +1180,57 @@ scales:{
 x:{
   type:'time',
 
-  // 🔥 FORZA PARTENZA A MEZZANOTTE
-  min: new Date(document.getElementById('day').value + "T00:00:00"),
-  max: new Date(document.getElementById('day').value + "T23:59:59"),
-
   time:{
-  unit:'hour',
-  stepSize: 2
-},
+    unit:'hour',
+    stepSize: 2
+  },
 
   ticks:{
     autoSkip:false,
     maxRotation:45,
     minRotation:45,
 
-   callback: function(value){
-  const date = new Date(value);
+    callback: function(value){
+      const date = new Date(value);
+      const h = date.getHours();
 
-  const hours = date.getHours();
-
-  // ?? mostra data solo a mezzanotte
-  if(hours === 0){
-    return date.toLocaleDateString('it-IT', {
-      day:'2-digit',
-      month:'short'
-    });
-  }
-
-  // ?? etichette ogni 4 ore
-  if(hours % 4 === 0){
-    return date.toLocaleTimeString('it-IT',{
-      hour:'2-digit',
-      minute:'2-digit'
-    });
-  }
-
-  // ?? niente etichetta
-  return null;
-}
-  },
-
-  title:{
-    display:true,
-    text: (function(){
-
-      const dayInput = document.getElementById('day');
-
-      if(dayInput && dayInput.value){
-        const d = new Date(dayInput.value);
-
-        return d.toLocaleDateString('it-IT',{
+      // Data a mezzanotte
+      if(h === 0){
+        return date.toLocaleDateString('it-IT',{
           day:'2-digit',
-          month:'short',
-          year:'numeric'
+          month:'short'
         });
       }
 
-      return "";
+      // Etichetta ogni 4 ore
+      if(h % 4 === 0){
+        return date.toLocaleTimeString('it-IT',{
+          hour:'2-digit',
+          minute:'2-digit'
+        });
+      }
 
-    })()
+      return '';
+    }
   },
 
   grid:{
-    display:true
-  }
-},
+    display:true,
+
+    // ?? differenzia le linee
+    color: function(ctx){
+      const value = ctx.tick.value;
+      const date = new Date(value);
+      const h = date.getHours();
+
+      // linee ogni 4 ore ? più scure
+      if(h % 4 === 0){
+        return 'rgba(0,0,0,0.25)';
+      }
+
+      // linee ogni 2 ore ? più leggere
+      return 'rgba(0,0,0,0.08)';
+    },
 
  y:{
   beginAtZero:false,
