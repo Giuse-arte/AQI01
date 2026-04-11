@@ -1091,11 +1091,11 @@ const endStr = formatLocalDateTime(tEnd);
         <canvas id="chart_${ch.dataset.id}"></canvas>
       `;
 
-      if(ch.dataset.id === "5"){
-        chartsContainer.prepend(d);
-      } else {
-        chartsContainer.appendChild(d);
-      }
+      if (m && ch.dataset.id === "5") {  // Se è PM1 (id=5)
+  chartsContainer.prepend(d); // Inserisci PM1 per primo
+} else {
+  chartsContainer.appendChild(d); // Altrimenti, aggiungi il grafico come gli altri
+}
 
       const ctx = document.getElementById(`chart_${ch.dataset.id}`);
 
