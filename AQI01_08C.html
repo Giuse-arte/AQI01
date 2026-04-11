@@ -1407,35 +1407,85 @@ if (comboCheckbox && comboCheckbox.checked) {
           ]
         },
 
-        options: {
-          responsive: true,
-          maintainAspectRatio: false,
+options:{
+  responsive:true,
+  maintainAspectRatio:false,
 
-          plugins: {
-            legend: {
-              display: true
-            }
-          },
+  plugins:{
+    legend:{ display:true }
+  },
 
-          scales: {
-            x: {
-              type: 'time',
+  scales:{
+    x:{
+      type:'time',
 
-              time: {
-                unit: 'hour'
-              },
+      // 🔥 ALLINEATO AGLI ALTRI GRAFICI
+      min: new Date(document.getElementById('day').value + "T00:00:00"),
+      max: new Date(document.getElementById('day').value + "T23:59:59"),
 
-              ticks: {
-                autoSkip: true,
-                maxTicksLimit: 6
-              }
-            },
+      time:{
+        unit:'hour',
+        stepSize:2
+      },
 
-            y: {
-              beginAtZero: true
-            }
+      ticks:{
+        autoSkip:false,
+        maxRotation:45,
+        minRotation:45,
+
+        callback:function(value){
+          const date = new Date(value);
+          const hours = date.getHours();
+
+          if(hours === 0){
+            return date.toLocaleDateString('it-IT',{
+              day:'2-digit',
+              month:'short'
+            });
           }
+
+          if(hours % 4 === 0){
+            return date.toLocaleTimeString('it-IT',{
+              hour:'2-digit',
+              minute:'2-digit'
+            });
+          }
+
+          return null;
         }
+      },
+
+      title:{
+        display:true,
+        text:(function(){
+          const dayInput = document.getElementById('day');
+          if(dayInput && dayInput.value){
+            const d = new Date(dayInput.value);
+            return d.toLocaleDateString('it-IT',{
+              day:'2-digit',
+              month:'short',
+              year:'numeric'
+            });
+          }
+          return "";
+        })()
+      },
+
+      grid:{ display:true }
+    },
+
+    y:{
+      beginAtZero:false,
+
+      title:{
+        display:true,
+        text:'µg/m³'
+      },
+
+      grid:{ display:true }
+    }
+  }
+}
       });
 
     } catch (err) {
