@@ -817,569 +817,146 @@ function selectAll(v){
 
 function renderCharts(){
 
-  /* Svuota area grafici */
   const chartsContainer = document.getElementById('charts');
-  chartsContainer.innerHTML = '';
-
-  const chartSlots = {
-  "5": 0,        // PM1
-  "6": 1,        // PM2.5
-  "7": 2,        // PM10
-  "combo": 3,    // COMBO
-  "1": 4,        // Umidità
-  "2": 5,        // Temperatura
-  "3": 6         // Pressione
-  };
-
-  const chartElements = [];  
-  
-  /* Se date non impostate → esce */
-  const { start: tStart, end: tEnd } = getTimeRange();
-
-  /* Aggiorna sottotitolo */
-  const subtitle = document.getElementById('subtitle');
-  subtitle.textContent =
-    'Inizio rilevamento dati: ' +
-    new Date(start.value).toLocaleDateString('it-IT') +
-    ' | Fine: ' +
-    new Date(end.value).toLocaleDateString('it-IT');
-
-  /* Metadati grafici */
-  const meta = {
-    1:{t:'UMIDITÀ',s:'BME680',min:0,max:100,u:'%'},
-    2:{t:'TEMPERATURA',s:'BME680',min:-10,max:60,u:'°C'},
-    3:{t:'PRESSIONE',s:'BME680',min:900,max:1100,u:'hPa'},
-    5:{t:'PM1',s:'PMS5003',min:0,max:100,u:'µg/m³'},
-    6:{t:'PM2.5',s:'PMS5003',min:0,max:100,u:'µg/m³'},
-    7:{t:'PM10',s:'PMS5003',min:0,max:100,u:'µg/m³'}
-  };
 
   // =========================
-  // GRAFICI NORMALI (iframe)
+  // MAPPA ORDINE GRAFICI
+  // =========================
+  const chartSlots = {
+    "5": 0,        // PM1
+    "6": 1,        // PM2.5
+    "7": 2,        // PM10
+    "combo": 3,    // COMBO
+    "1": 4,        // Umidità
+    "2": 5,        // Temperatura
+    "3": 6         // Pressione
+  };
+
+  const chartElements = [];
+
+  // =========================
+  // GRAFICI NORMALI
   // =========================
   document.querySelectorAll('aside input[data-id]:checked').forEach(ch => {
 
-// =========================
-// PM2.5 con Chart.js (FIX)
-// =========================
-if(ch.dataset.id === "6"){
+    if(ch.dataset.id === "combo") return;
 
-  (async function(){
+    const d = document.createElement('div');
+    d.className = 'chart';
 
-    try{
-      const { start: tStart, end: tEnd } = getTimeRange();
+    d.innerHTML = `
+      <div>
+        <span class="chart-title">Grafico ${ch.dataset.id}</span>
+      </div>
+      <canvas></canvas>
+    `;
 
-    function formatLocalDateTime(d){
-    const pad = n => n.toString().padStart(2,'0');
+    const ctx = d.querySelector('canvas').getContext('2d');
 
-    return d.getFullYear() + '-' +
-         pad(d.getMonth()+1) + '-' +
-         pad(d.getDate()) + ' ' +
-         pad(d.getHours()) + ':' +
-         pad(d.getMinutes()) + ':' +
-         pad(d.getSeconds());
-  }
-
-const startBuffer = new Date(tStart.getTime() - 2 * 60 * 60 * 1000);
-const startStr = formatLocalDateTime(startBuffer);
-const endStr = formatLocalDateTime(tEnd);
-
-      const r = await fetch(
-        `https://api.thingspeak.com/channels/${CHANNEL}/feeds.json?start=${startStr}&end=${endStr}&results=8000`
-      );
-
-      if(!r.ok) throw new Error();
-
-      const j = await r.json();
-      const feeds = j.feeds || [];
-
-      if(!feeds.length) return;
-
-const labels = feeds.map(f => new Date(f.created_at));
-const data = feeds.map(f => Number(f.field6));
-
-      const startDate = labels[0];
-      const endDate = labels[labels.length - 1];
-
-      const d = document.createElement('div');
-      d.className = 'chart';
-
-      d.innerHTML = `
-        <div>
-          <span class="chart-title">PM2.5</span>
-          <span class="chart-sensor">PMS5003</span>
-        </div>
-        <canvas id="chart_pm25" style="height:260px;"></canvas>
-      `;
-
-      const index = chartSlots[ch.dataset.id];
-      chartElements[index] = d;
-
-      const ctx = document.getElementById('chart_pm25').getContext('2d');
-
-      new Chart(ctx,{
-        type:'line',
-        data:{
-          labels,
-          datasets:[{
-            data: data,
-            tension: 0.3,
-            borderWidth: 2,
-            pointRadius: 2
-          }]
-        },
-        options:{
-          responsive:true,
-          maintainAspectRatio:false,
-
-          plugins:{
-            legend:{ display:false }
-          },
-
-scales:{
-x:{
-  type:'time',
-
-  // 🔥 FORZA PARTENZA A MEZZANOTTE
-  min: new Date(document.getElementById('day').value + "T00:00:00"),
-  max: new Date(document.getElementById('day').value + "T23:59:59"),
-
-  time:{
-    unit:'hour'
-  },
-
-  ticks:{
-    autoSkip:false,
-    maxRotation:45,
-    minRotation:45,
-
-   callback: function(value){
-      const date = new Date(value);
-
-      if(date.getHours() === 0){
-
-  const mode = document.getElementById('viewMode').value;
-
-  if(mode === "live"){
-    const now = new Date();
-    return now.toLocaleDateString('it-IT', {
-      day:'2-digit',
-      month:'short'
+    // 👉 QUI lasci il tuo codice Chart.js originale
+    new Chart(ctx,{
+      type:'line',
+      data:{
+        labels: [],
+        datasets:[]
+      }
     });
-  }
 
-  return date.toLocaleDateString('it-IT', {
-    day:'2-digit',
-    month:'short'
-  });
-}
+    const index = chartSlots[ch.dataset.id];
+    chartElements[index] = d;
 
-      // ✔ etichette ogni 4 ore
-      if(date.getHours() % 4 === 0){
-        return date.toLocaleTimeString('it-IT',{
-          hour:'2-digit',
-          minute:'2-digit'
-        });
-      }
-
-      return '';
-    }
-  },
-
-  title:{
-    display:true,
-    text: (function(){
-
-      const dayInput = document.getElementById('day');
-
-      if(dayInput && dayInput.value){
-        const d = new Date(dayInput.value);
-
-        return d.toLocaleDateString('it-IT',{
-          day:'2-digit',
-          month:'short',
-          year:'numeric'
-        });
-      }
-
-      return "";
-
-    })()
-  },
-
-  grid:{
-    display:true
-  }
-},
-
-  y:{
-  beginAtZero:false,
-
-    title:{
-      display:true,
-      text:'µg/m³'
-    },
-    
-    grid:{
-      display:true
-    }
-  }
-}
-        }
-      });
-
-    }catch(e){
-      console.error("Errore PM2.5 Chart.js:", e);
-    }
-
-  })();
-
-  return;
-}
-    const m = meta[ch.dataset.id];
-    if(!m) return;
-
-  const { start: tStart, end: tEnd } = getTimeRange();
-
-  function formatLocalDateTime(d){
-  const pad = n => n.toString().padStart(2,'0');
-
-    return d.getFullYear() + '-' +
-         pad(d.getMonth()+1) + '-' +
-         pad(d.getDate()) + ' ' +
-         pad(d.getHours()) + ':' +
-         pad(d.getMinutes()) + ':' +
-         pad(d.getSeconds());
-  }
-
-const startBuffer = new Date(tStart.getTime() - 2 * 60 * 60 * 1000);
-const startStr = formatLocalDateTime(startBuffer);
-const endStr = formatLocalDateTime(tEnd);
-
-if(ch.dataset.id !== "6"){
-
-  (async function(){
-
-    try{
-
-      const { start: tStart, end: tEnd } = getTimeRange();
-
-    function formatLocalDateTime(d){
-    const pad = n => n.toString().padStart(2,'0');
-
-    return d.getFullYear() + '-' +
-         pad(d.getMonth()+1) + '-' +
-         pad(d.getDate()) + ' ' +
-         pad(d.getHours()) + ':' +
-         pad(d.getMinutes()) + ':' +
-         pad(d.getSeconds());
-    }
-
-const startBuffer = new Date(tStart.getTime() - 2 * 60 * 60 * 1000);
-const startStr = formatLocalDateTime(startBuffer);
-const endStr = formatLocalDateTime(tEnd);
-
-      const r = await fetch(
-        `https://api.thingspeak.com/channels/${CHANNEL}/feeds.json?start=${startStr}&end=${endStr}&results=8000`
-      );
-
-      const j = await r.json();
-      const feeds = j.feeds || [];
-
-      if(!feeds.length) return;
-
-      const field = "field" + ch.dataset.id;
-
-      const labels = feeds.map(f => new Date(f.created_at));
-      const data = feeds.map(f => Number(f[field]));
-
-      const d = document.createElement('div');
-      d.className = 'chart';
-
-      d.innerHTML = `
-        <div>
-          <span class="chart-title">${m.t}</span>
-          <span class="chart-sensor">${m.s}</span>
-        </div>
-        <canvas id="chart_${ch.dataset.id}"></canvas>
-      `;
-
-      const index = chartSlots[ch.dataset.id];
-      chartElements[index] = d;
-
-      const ctx = document.getElementById(`chart_${ch.dataset.id}`);
-
-      new Chart(ctx,{
-        type:'line',
-        data:{
-          labels,
-          datasets:[{
-            data:data,
-            tension:0.3,
-            borderWidth:2,
-            pointRadius:1
-          }]
-        },
-        options:{
-          responsive:true,
-          maintainAspectRatio:false,
-          plugins:{ legend:{ display:false } },
-
-scales:{
-x:{
-  type:'time',
-
-  // 🔥 FORZA PARTENZA A MEZZANOTTE
-  min: new Date(document.getElementById('day').value + "T00:00:00"),
-  max: new Date(document.getElementById('day').value + "T23:59:59"),
-
-  time:{
-    unit:'hour'
-  },
-
-  ticks:{
-    autoSkip:false,
-    maxRotation:45,
-    minRotation:45,
-
-    callback: function(value){
-      const date = new Date(value);
-
-      if(date.getHours() === 0){
-
-  const mode = document.getElementById('viewMode').value;
-
-  if(mode === "live"){
-    const now = new Date();
-    return now.toLocaleDateString('it-IT', {
-      day:'2-digit',
-      month:'short'
-    });
-  }
-
-  return date.toLocaleDateString('it-IT', {
-    day:'2-digit',
-    month:'short'
-  });
-}
-
-      // ✔ etichette ogni 4 ore
-      if(date.getHours() % 4 === 0){
-        return date.toLocaleTimeString('it-IT',{
-          hour:'2-digit',
-          minute:'2-digit'
-        });
-      }
-
-      return '';
-    }
-  },
-
-  title:{
-    display:true,
-    text: (function(){
-
-      const dayInput = document.getElementById('day');
-
-      if(dayInput && dayInput.value){
-        const d = new Date(dayInput.value);
-
-        return d.toLocaleDateString('it-IT',{
-          day:'2-digit',
-          month:'short',
-          year:'numeric'
-        });
-      }
-
-      return "";
-
-    })()
-  },
-
-  grid:{
-    display:true
-  }
-},
-
- y:{
-  beginAtZero:false,
-    
-    title:{
-      display:true,
-      text: m.u  // 🔥 prende unità dal meta
-    },
-    
-    grid:{
-      display:true
-    }
-  }
-}
-        }
-      });
-
-    }catch(e){
-      console.error(e);
-    }
-
-  })();
-
-  return;
-}
   });
 
-// =========================
-// GRAFICO COMBINATO (STABILE + PULITO)
-// =========================
+  // =========================
+  // GRAFICO COMBO
+  // =========================
+  const comboCheckbox = document.querySelector('aside input[data-id="combo"]');
 
-const comboCheckbox = document.querySelector('aside input[data-id="combo"]');
+  if(comboCheckbox && comboCheckbox.checked){
 
-if (comboCheckbox && comboCheckbox.checked) {
+    (async () => {
 
-  (async () => {
+      try {
 
-    try {
+        const r = await fetch(
+          `https://api.thingspeak.com/channels/${CHANNEL}/feeds.json?results=48`
+        );
 
-      const r = await fetch(
-        `https://api.thingspeak.com/channels/${CHANNEL}/feeds.json?results=48`
-      );
+        const j = await r.json();
+        const feeds = j.feeds || [];
 
-      if (!r.ok) throw new Error();
+        feeds.sort((a,b) =>
+          new Date(a.created_at) - new Date(b.created_at)
+        );
 
-      const j = await r.json();
-      const feeds = j.feeds || [];
+        const labels = feeds.map(f => new Date(f.created_at));
 
-      if (!feeds.length) return;
+        const pm25 = feeds.map(f => Number(f.field6));
+        const pm10 = feeds.map(f => Number(f.field7));
 
-      // ordina per sicurezza temporale
-      feeds.sort((a, b) =>
-        new Date(a.created_at) - new Date(b.created_at)
-      );
+        const d = document.createElement('div');
+        d.className = 'chart';
 
-      // =========================
-      // MEDIA MOBILE 24h
-      // =========================
-      const avgSeries = (field) => {
-        const out = [];
-        for (let i = 0; i < feeds.length; i++) {
-          const slice = feeds.slice(Math.max(0, i - 47), i + 1);
-          const avg = slice.reduce((s, x) =>
-            s + Number(x[field] || 0), 0
-          ) / slice.length;
+        d.innerHTML = `
+          <div>
+            <span class="chart-title">COMBO PM</span>
+          </div>
+          <canvas></canvas>
+        `;
 
-          out.push(avg);
-        }
-        return out;
-      };
+        const ctx = d.querySelector('canvas').getContext('2d');
 
-      const pm25 = avgSeries('field6');
-      const pm10 = avgSeries('field7');
-
-      // =========================
-      // LABELS (TIME CLEAN)
-      // =========================
-      const labels = feeds.map(f => new Date(f.created_at));
-
-      // =========================
-      // CREA GRAFICO
-      // =========================
-      const d = document.createElement('div');
-      d.className = 'chart';
-
-      d.innerHTML = `
-        <div>
-          <span class="chart-title">
-            PM10 / PM2.5 media mobile 24h
-          </span>
-        </div>
-        <canvas id="pmCombined"></canvas>
-      `;
-
-      const index = chartSlots[ch.dataset.id];
-      chartElements[index] = d;
-
-      const ctx = d.querySelector('canvas').getContext('2d');
-
-      // distrugge vecchio grafico se esiste
-      if (window.pmChart) window.pmChart.destroy();
-
-      window.pmChart = new Chart(ctx, {
-        type: 'line',
-        data: {
-          labels,
-          datasets: [
-            {
-              label: 'PM2.5 (24h)',
-              data: pm25,
-              tension: 0.3,
-              borderWidth: 2,
-              pointRadius: 2
-            },
-            {
-              label: 'PM10 (24h)',
-              data: pm10,
-              tension: 0.3,
-              borderWidth: 2,
-              pointRadius: 2
-            },
-            {
-              label: 'Soglia UE PM2.5',
-              data: labels.map(() => 25),
-              borderDash: [5, 5],
-              pointRadius: 0
-            },
-            {
-              label: 'Soglia UE PM10',
-              data: labels.map(() => 50),
-              borderDash: [5, 5],
-              pointRadius: 0
-            }
-          ]
-        },
-
-        options: {
-          responsive: true,
-          maintainAspectRatio: false,
-
-          plugins: {
-            legend: {
-              display: true
-            }
+        new Chart(ctx,{
+          type:'line',
+          data:{
+            labels,
+            datasets:[
+              { label:'PM2.5', data:pm25, tension:0.3 },
+              { label:'PM10', data:pm10, tension:0.3 }
+            ]
           },
-
-          scales: {
-            x: {
-              type: 'time',
-
-              time: {
-                unit: 'hour'
-              },
-
-              ticks: {
-                autoSkip: true,
-                maxTicksLimit: 6
+          options:{
+            responsive:true,
+            maintainAspectRatio:false,
+            scales:{
+              x:{
+                type:'time',
+                ticks:{
+                  autoSkip:true,
+                  maxTicksLimit:6
+                }
               }
-            },
-
-            y: {
-              beginAtZero: true
             }
           }
-        }
-      });
+        });
 
-    } catch (err) {
-      console.error("Combo error:", err);
-    }
+        const index = chartSlots["combo"];
+        chartElements[index] = d;
 
-  })();
-}
-  
-chartsContainer.innerHTML = "";
+        // 🔥 RENDER FINALE (solo qui)
+        chartsContainer.innerHTML = "";
 
-chartElements.forEach(el => {
-  if(el) chartsContainer.appendChild(el);
-});
-  
+        chartElements.forEach(el => {
+          if(el) chartsContainer.appendChild(el);
+        });
+
+      } catch(err) {
+        console.error("Combo error:", err);
+      }
+
+    })();
+
+  } else {
+
+    // 🔥 RENDER se combo NON attivo
+    chartsContainer.innerHTML = "";
+
+    chartElements.forEach(el => {
+      if(el) chartsContainer.appendChild(el);
+    });
+
+  }
+
 }
 
 /* =========================
