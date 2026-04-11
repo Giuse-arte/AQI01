@@ -1411,9 +1411,27 @@ if (comboCheckbox && comboCheckbox.checked) {
 
     try {
 
-      const r = await fetch(
-        `https://api.thingspeak.com/channels/${CHANNEL}/feeds.json?results=48`
-      );
+      const { start: tStart, end: tEnd } = getTimeRange();
+
+function formatLocalDateTime(d){
+  const pad = n => n.toString().padStart(2,'0');
+  return d.getFullYear() + '-' +
+         pad(d.getMonth()+1) + '-' +
+         pad(d.getDate()) + ' ' +
+         pad(d.getHours()) + ':' +
+         pad(d.getMinutes()) + ':' +
+         pad(d.getSeconds());
+}
+
+// 🔥 buffer per media mobile 24h
+const startBuffer = new Date(tStart.getTime() - 24 * 60 * 60 * 1000);
+
+const startStr = formatLocalDateTime(startBuffer);
+const endStr = formatLocalDateTime(tEnd);
+
+const r = await fetch(
+  `https://api.thingspeak.com/channels/${CHANNEL}/feeds.json?start=${startStr}&end=${endStr}&results=8000`
+);
 
       if (!r.ok) throw new Error();
 
@@ -1443,13 +1461,23 @@ if (comboCheckbox && comboCheckbox.checked) {
         return out;
       };
 
-      const pm25 = avgSeries('field6');
-      const pm10 = avgSeries('field7');
+      const fullPM25 = avgSeries('field6');
+      const fullPM10 = avgSeries('field7');
+
+      // 🔥 allinea con filtro
+      const pm25 = fullPM25.slice(fullPM25.length - filtered.length);
+      const pm10 = fullPM10.slice(fullPM10.length - filtered.length);
 
       // =========================
       // LABELS (TIME CLEAN)
       // =========================
-      const labels = feeds.map(f => new Date(f.created_at));
+      // 🔥 FILTRA SOLO IL GIORNO SELEZIONATO
+      const filtered = feeds.filter(f => {
+        const d = new Date(f.created_at);
+        return d >= tStart && d <= tEnd;
+      });
+
+const labels = filtered.map(f => new Date(f.created_at));
 
       // =========================
       // CREA GRAFICO
@@ -1514,13 +1542,15 @@ if (comboCheckbox && comboCheckbox.checked) {
               label: 'Soglia UE PM2.5',
               data: labels.map(() => 25),
               borderDash: [5, 5],
-              pointRadius: 0
+              pointRadius: 0,
+              hidden: true
             },
             {
               label: 'Soglia UE PM10',
               data: labels.map(() => 50),
               borderDash: [5, 5],
-              pointRadius: 0
+              pointRadius: 0,
+              hidden: true
             }
           ]
         },
