@@ -1446,38 +1446,54 @@ const r = await fetch(
       );
 
       // =========================
-      // MEDIA MOBILE 24h
-      // =========================
-      const avgSeries = (field) => {
-        const out = [];
-        for (let i = 0; i < feeds.length; i++) {
-          const slice = feeds.slice(Math.max(0, i - 47), i + 1);
-          const avg = slice.reduce((s, x) =>
-            s + Number(x[field] || 0), 0
-          ) / slice.length;
+// TIME RANGE
+// =========================
+const { start: tStart, end: tEnd } = getTimeRange();
 
-          out.push(avg);
-        }
-        return out;
-      };
+// =========================
+// MEDIA MOBILE 24h
+// =========================
+const avgSeries = (field) => {
+  const out = [];
 
-      const fullPM25 = avgSeries('field6');
-      const fullPM10 = avgSeries('field7');
+  for (let i = 0; i < feeds.length; i++) {
+    const slice = feeds.slice(Math.max(0, i - 47), i + 1);
 
-      // 🔥 allinea con filtro
-      const pm25 = fullPM25.slice(fullPM25.length - filtered.length);
-      const pm10 = fullPM10.slice(fullPM10.length - filtered.length);
+    const avg = slice.reduce((s, x) =>
+      s + Number(x[field] || 0), 0
+    ) / slice.length;
 
-      // =========================
-      // LABELS (TIME CLEAN)
-      // =========================
-      // 🔥 FILTRA SOLO IL GIORNO SELEZIONATO
-      const filtered = feeds.filter(f => {
-        const d = new Date(f.created_at);
-        return d >= tStart && d <= tEnd;
-      });
+    out.push(avg);
+  }
 
-const labels = filtered.map(f => new Date(f.created_at));
+  return out;
+};
+
+const fullPM25 = avgSeries('field6');
+const fullPM10 = avgSeries('field7');
+
+// =========================
+// FILTRO CORRETTO (CRITICO)
+// =========================
+const labels = [];
+const pm25 = [];
+const pm10 = [];
+
+feeds.forEach((f, i) => {
+  const d = new Date(f.created_at);
+
+  if (d >= tStart && d <= tEnd) {
+    labels.push(d);
+    pm25.push(fullPM25[i]);
+    pm10.push(fullPM10[i]);
+  }
+});
+
+    // 🔥 CONTROLLO ANTI-GRAFICO VUOTO
+    if (!labels.length) {
+      console.warn("COMBO: nessun dato nel range");
+      return;
+    }  
 
       // =========================
       // CREA GRAFICO
