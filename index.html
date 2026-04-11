@@ -284,20 +284,23 @@
 }
 
 /* =========================
-   POPUP INFO
+   POPUP INFO (MODIFICATO)
    ========================= */
 .info-popup{
   position:fixed;
   top:50%;
   left:50%;
   transform:translate(-50%,-50%);
-  background:#fff;
+  background:#33cc33; /* Verde, come nell'immagine */
+  color:#fff;
   border-radius:12px;
   box-shadow:0 10px 30px rgba(0,0,0,.2);
-  padding:16px;
+  padding:20px;
   z-index:999;
-  max-width:300px;
-  font-size:.8rem;
+  max-width:350px;
+  font-size: .85rem;
+  font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+  line-height: 1.6;
 }
 
 .info-overlay{
@@ -306,6 +309,39 @@
   background:rgba(0,0,0,.4);
   z-index:998;
 }
+
+/* Bottone per chiudere */
+.info-popup button{
+  background:#f87171;
+  color:#fff;
+  border:none;
+  padding:8px 16px;
+  border-radius:8px;
+  cursor:pointer;
+  font-weight:700;
+}
+
+.info-popup button:hover{
+  background:#dc2626;
+}
+
+/* Titolo */
+.info-popup h3{
+  font-size:1.2rem;
+  margin-bottom:10px;
+}
+
+/* Paragrafo e lista */
+.info-popup p, .info-popup ul{
+  font-size:.9rem;
+  color:#f1f1f1;
+}
+
+/* Colori per le linee */
+.info-popup .linea-rossa{color:#dc2626;}
+.info-popup .linea-arancione{color:#f97316;}
+.info-popup .linea-gialla{color:#facc15;}
+.info-popup .linea-verde{color:#16a34a;}
     
     /* Singolo grafico */
     .chart{
@@ -847,12 +883,20 @@ function openInfoPopup(){
   popup.className = 'info-popup';
 
   popup.innerHTML = `
-    <b>Legenda grafico</b><br><br>
-    • PM2.5 → linea principale<br>
-    • PM10 → linea principale<br>
-    • Linee tratteggiate → limiti UE<br><br>
-    Media mobile su 24 ore.
-    <br><br>
+    <h3>PM10, PM2.5, PM1 (µg/m³)</h3>
+    <p>
+      La Normativa Italiana / Europea e quella dell’Organizzazione Mondiale della Sanità (OMS) stabiliscono dei limiti annuali per indicare le soglie di pericolosità all’esposizione per gli esseri umani per PM10 e PM2.5. Non viene normato il PM1.
+    </p>
+    <p>
+      I dati da noi rilevati e di seguito riportati non sono certificati, ma permettono di misurare in modo sufficientemente preciso la variabilità rispetto ad uno standard al variare del tempo in luoghi predefiniti.
+    </p>
+    <hr>
+    <ul>
+      <li><span class="linea-rossa">Linea rossa</span> 40 µg/m³ (Normativa Italiana/Europea limite annuale di PM10)</li>
+      <li><span class="linea-arancione">Linea arancione</span> 15 µg/m³ (OMS, limite annuale di PM10)</li>
+      <li><span class="linea-gialla">Linea gialla</span> 25 µg/m³ (Normativa Italiana/Europea, limite annuale di PM2.5)</li>
+      <li><span class="linea-verde">Linea verde</span> 10 µg/m³ (OMS, limite annuale di PM2.5)</li>
+    </ul>
     <button onclick="closeInfoPopup()">Chiudi</button>
   `;
 
