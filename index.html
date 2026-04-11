@@ -1007,6 +1007,17 @@ x:{
       return 'rgba(0,0,0,0.08)';
     },
 
+    // ?? linee più spesse ogni 4 ore
+    lineWidth: function(ctx){
+      const value = ctx.tick.value;
+      const date = new Date(value);
+      const h = date.getHours();
+
+      return (h % 4 === 0) ? 1.5 : 0.5;
+    }
+  }
+},
+
   y:{
   beginAtZero:false,
 
@@ -1231,6 +1242,17 @@ x:{
       // linee ogni 2 ore ? più leggere
       return 'rgba(0,0,0,0.08)';
     },
+
+    // ?? linee più spesse ogni 4 ore
+    lineWidth: function(ctx){
+      const value = ctx.tick.value;
+      const date = new Date(value);
+      const h = date.getHours();
+
+      return (h % 4 === 0) ? 1.5 : 0.5;
+    }
+  }
+},
 
  y:{
   beginAtZero:false,
