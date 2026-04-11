@@ -324,8 +324,15 @@
 
 .info-body{
   padding:14px;
-  color:#111827;
+  color:#000;              /* 🔥 nero pieno */
   line-height:1.5;
+}
+
+.info-body p,
+.info-body span,
+.info-body div,
+.info-body li{
+  color:#000;              /* 🔥 forza nero su tutto */
 }
 
 .info-section{
@@ -1592,20 +1599,24 @@ feeds.forEach((f, i) => {
 datasets: (function(){
 
   const base = [
-    {
-      label: 'PM2.5 (24h)',
-      data: pm25,
-      tension: 0.3,
-      borderWidth: 2,
-      pointRadius: 2
-    },
-    {
-      label: 'PM10 (24h)',
-      data: pm10,
-      tension: 0.3,
-      borderWidth: 2,
-      pointRadius: 2
-    }
+   {
+  label: 'PM2.5 (24h)',
+  data: pm25,
+  tension: 0.3,
+  borderWidth: 2,
+  pointRadius: 2,
+  borderColor: '#ec4899',   // 🔥 rosa
+  backgroundColor: '#ec4899'
+},
+{
+  label: 'PM10 (24h)',
+  data: pm10,
+  tension: 0.3,
+  borderWidth: 2,
+  pointRadius: 2,
+  borderColor: '#3b82f6',   // 🔥 blu
+  backgroundColor: '#3b82f6'
+}
   ];
 
   // =========================
