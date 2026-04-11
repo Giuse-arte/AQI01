@@ -848,11 +848,11 @@ function renderCharts(){
 
   /* Aggiorna sottotitolo */
   const subtitle = document.getElementById('subtitle');
-  subtitle.textContent =
-    'Inizio rilevamento dati: ' +
-    new Date(start.value).toLocaleDateString('it-IT') +
-    ' | Fine: ' +
-    new Date(end.value).toLocaleDateString('it-IT');
+    subtitle.textContent =
+      'Inizio rilevamento dati: ' +
+    tStart.toLocaleDateString('it-IT') +
+      ' | Fine: ' +
+    tEnd.toLocaleDateString('it-IT');
 
   /* Metadati grafici */
   const meta = {
