@@ -892,11 +892,16 @@ function openInfoPopup(){
     </p>
     <hr>
     <ul>
-      <li><span class="linea-rossa">Linea rossa</span> 40 µg/m³ (Normativa Italiana/Europea limite annuale di PM10)</li>
-      <li><span class="linea-arancione">Linea arancione</span> 15 µg/m³ (OMS, limite annuale di PM10)</li>
-      <li><span class="linea-gialla">Linea gialla</span> 25 µg/m³ (Normativa Italiana/Europea, limite annuale di PM2.5)</li>
-      <li><span class="linea-verde">Linea verde</span> 10 µg/m³ (OMS, limite annuale di PM2.5)</li>
-    </ul>
+  <li><b>EEA (Europa)</b></li>
+  <li><span style="color:#facc15">PM2.5 → 25 µg/m³</span></li>
+  <li><span style="color:#f97316">PM10 → 50 µg/m³</span></li>
+
+  <br>
+
+  <li><b>EPA (USA)</b></li>
+  <li><span style="color:#ef4444">PM2.5 → 35 µg/m³</span></li>
+  <li><span style="color:#7f1d1d">PM10 → 150 µg/m³</span></li>
+</ul>
     <button onclick="closeInfoPopup()">Chiudi</button>
   `;
 
@@ -1561,38 +1566,42 @@ datasets: (function(){
   if(mode.value === 'EEA'){
     base.push(
       {
-        label: 'Limite EEA PM2.5 (25)',
-        data: labels.map(() => 25),
-        borderDash: [5,5],
-        pointRadius: 0,
-        borderWidth: 1
-      },
-      {
-        label: 'Limite EEA PM10 (50)',
-        data: labels.map(() => 50),
-        borderDash: [5,5],
-        pointRadius: 0,
-        borderWidth: 1
-      }
+  label: 'Limite EEA PM2.5 (25)',
+  data: labels.map(() => 25),
+  borderDash: [6,4],
+  borderColor: '#facc15', // giallo
+  borderWidth: 2,
+  pointRadius: 0
+},
+{
+  label: 'Limite EEA PM10 (50)',
+  data: labels.map(() => 50),
+  borderDash: [6,4],
+  borderColor: '#f97316', // arancione
+  borderWidth: 2,
+  pointRadius: 0
+}
     );
   }
 
   if(mode.value === 'EPA'){
     base.push(
       {
-        label: 'Limite EPA PM2.5 (35)',
-        data: labels.map(() => 35),
-        borderDash: [5,5],
-        pointRadius: 0,
-        borderWidth: 1
-      },
-      {
-        label: 'Limite EPA PM10 (150)',
-        data: labels.map(() => 150),
-        borderDash: [5,5],
-        pointRadius: 0,
-        borderWidth: 1
-      }
+  label: 'Limite EPA PM2.5 (35)',
+  data: labels.map(() => 35),
+  borderDash: [6,4],
+  borderColor: '#ef4444', // rosso
+  borderWidth: 2,
+  pointRadius: 0
+},
+{
+  label: 'Limite EPA PM10 (150)',
+  data: labels.map(() => 150),
+  borderDash: [6,4],
+  borderColor: '#7f1d1d', // rosso scuro
+  borderWidth: 2,
+  pointRadius: 0
+}
     );
   }
 
