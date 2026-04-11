@@ -821,6 +821,18 @@ function renderCharts(){
   const chartsContainer = document.getElementById('charts');
   chartsContainer.innerHTML = '';
 
+  const chartSlots = {
+  "5": 0,        // PM1
+  "6": 1,        // PM2.5
+  "7": 2,        // PM10
+  "combo": 3,    // COMBO
+  "1": 4,        // Umidità
+  "2": 5,        // Temperatura
+  "3": 6         // Pressione
+  };
+
+  const chartElements = [];  
+  
   /* Se date non impostate → esce */
   const { start: tStart, end: tEnd } = getTimeRange();
 
@@ -900,7 +912,8 @@ const data = feeds.map(f => Number(f.field6));
         <canvas id="chart_pm25" style="height:260px;"></canvas>
       `;
 
-      chartsContainer.appendChild(d);
+      const index = chartSlots[ch.dataset.id];
+      chartElements[index] = d;
 
       const ctx = document.getElementById('chart_pm25').getContext('2d');
 
@@ -1091,7 +1104,8 @@ const endStr = formatLocalDateTime(tEnd);
         <canvas id="chart_${ch.dataset.id}"></canvas>
       `;
 
-      chartsContainer.appendChild(d);
+      const index = chartSlots[ch.dataset.id];
+      chartElements[index] = d;
 
       const ctx = document.getElementById(`chart_${ch.dataset.id}`);
 
@@ -1280,7 +1294,8 @@ if (comboCheckbox && comboCheckbox.checked) {
         <canvas id="pmCombined"></canvas>
       `;
 
-      chartsContainer.appendChild(d);
+      const index = chartSlots[ch.dataset.id];
+      chartElements[index] = d;
 
       const ctx = d.querySelector('canvas').getContext('2d');
 
@@ -1358,7 +1373,13 @@ if (comboCheckbox && comboCheckbox.checked) {
 
   })();
 }
+  
+chartsContainer.innerHTML = "";
 
+chartElements.forEach(el => {
+  if(el) chartsContainer.appendChild(el);
+});
+  
 }
 
 /* =========================
