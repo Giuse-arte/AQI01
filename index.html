@@ -940,37 +940,21 @@ x:{
     maxRotation:45,
     minRotation:45,
 
-    callback: function(value){
-      const date = new Date(value);
+ callback: function(value){
+  const d = new Date(value);
 
-      if(date.getHours() === 0){
-
-  const mode = document.getElementById('viewMode').value;
-
-  if(mode === "live"){
-    const now = new Date();
-    return now.toLocaleDateString('it-IT', {
+  if(d.getHours() === 0){
+    return d.toLocaleDateString('it-IT',{
       day:'2-digit',
       month:'short'
     });
   }
 
-  return date.toLocaleDateString('it-IT', {
-    day:'2-digit',
-    month:'short'
+  return d.toLocaleTimeString('it-IT',{
+    hour:'2-digit',
+    minute:'2-digit'
   });
 }
-
-      // ✔ etichette ogni 4 ore
-      if(date.getHours() % 4 === 0){
-        return date.toLocaleTimeString('it-IT',{
-          hour:'2-digit',
-          minute:'2-digit'
-        });
-      }
-
-      return '';
-    }
   },
 
   title:{
