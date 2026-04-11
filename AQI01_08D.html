@@ -47,6 +47,9 @@
       color:#111827
     }
 
+    .line-red{ color:#dc2626; font-weight:600; }
+    .line-orange{ color:#f97316; font-weight:600; }
+    
     /* =========================
        HEADER
        ========================= */
@@ -291,17 +294,56 @@
   top:50%;
   left:50%;
   transform:translate(-50%,-50%);
-  background:#33cc33; /* Verde, come nell'immagine */
-  color:#fff;
+  
+  width:600px;              /* 🔥 orizzontale */
+  max-width:90%;
+
+  background:#ffffff;
   border-radius:12px;
-  box-shadow:0 10px 30px rgba(0,0,0,.2);
-  padding:20px;
+  box-shadow:0 10px 30px rgba(0,0,0,.25);
+
   z-index:999;
-  max-width:350px;
-  font-size: .85rem;
-  font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
-  line-height: 1.6;
+  overflow:hidden;          /* importante */
+  font-size:.85rem;
 }
+
+.info-header{
+  background:#16a34a;
+  color:#fff;
+  padding:10px 14px;
+  display:flex;
+  justify-content:space-between;
+  align-items:center;
+  font-weight:700;
+}
+
+.info-close{
+  cursor:pointer;
+  font-weight:700;
+}
+
+.info-body{
+  padding:14px;
+  color:#000;              /* 🔥 nero pieno */
+  line-height:1.5;
+}
+
+.info-body p,
+.info-body span,
+.info-body div,
+.info-body li{
+  color:#000;              /* 🔥 forza nero su tutto */
+}
+
+.info-section{
+  margin-top:10px;
+}
+
+.info-divider{
+  border-top:1px solid #d1d5db;
+  margin:10px 0;
+}
+
 
 .info-overlay{
   position:fixed;
@@ -883,27 +925,41 @@ function openInfoPopup(){
   popup.className = 'info-popup';
 
   popup.innerHTML = `
-    <h3>PM10, PM2.5, PM1 (µg/m³)</h3>
+  <div class="info-header">
+    <span>PM10, PM2.5 (μg/m³)</span>
+    <span class="info-close" onclick="closeInfoPopup()">× Close</span>
+  </div>
+
+  <div class="info-body">
+
     <p>
-      La Normativa Italiana / Europea e quella dell’Organizzazione Mondiale della Sanità (OMS) stabiliscono dei limiti annuali per indicare le soglie di pericolosità all’esposizione per gli esseri umani per PM10 e PM2.5. Non viene normato il PM1.
+      La Normativa Italiana / Europea (Standard EEA) e quella per la protezione ambientale degli Stati Uniti (Standard EPA) stabiliscono dei limiti giornalieri per indicare le soglie di pericolosità all’esposizione per gli esseri umani per PM10 e PM2.5. Non viene normato il PM1.
     </p>
+
     <p>
       I dati da noi rilevati e di seguito riportati non sono certificati, ma permettono di misurare in modo sufficientemente preciso la variabilità rispetto ad uno standard al variare del tempo in luoghi predefiniti.
     </p>
-    <hr>
-    <ul>
-  <li><b>EEA (Europa)</b></li>
-  <li><span style="color:#facc15">PM2.5 → 25 µg/m³</span></li>
-  <li><span style="color:#f97316">PM10 → 50 µg/m³</span></li>
 
-  <br>
+    <div class="info-divider"></div>
 
-  <li><b>EPA (USA)</b></li>
-  <li><span style="color:#ef4444">PM2.5 → 35 µg/m³</span></li>
-  <li><span style="color:#7f1d1d">PM10 → 150 µg/m³</span></li>
-</ul>
-    <button onclick="closeInfoPopup()">Chiudi</button>
-  `;
+    <div class="info-section">
+      <b>Agenzia per la protezione ambientale Europea - Standard EEA</b><br>
+      <span class="line-red">Linea rossa</span> (in rosso)<br>
+      50 μg/m³ (Limite giornaliero di PM10)<br>
+      <span class="line-orange">Linea arancione</span> (in arancione)<br>
+      25 μg/m³ (Limite giornaliero di PM2.5)
+    </div>
+
+    <div class="info-section">
+      <b>Agenzia per la protezione ambientale degli Stati Uniti - Standard EPA</b><br>
+      <span class="line-red">Linea rossa</span> (in rosso)<br>
+      150 μg/m³ (Limite giornaliero di PM10)<br>
+      <span class="line-orange">Linea arancione</span> (in arancione)<br>
+      35 μg/m³ (Limite giornaliero di PM2.5)
+    </div>
+
+  </div>
+`;
 
   document.body.appendChild(overlay);
   document.body.appendChild(popup);
@@ -1543,20 +1599,24 @@ feeds.forEach((f, i) => {
 datasets: (function(){
 
   const base = [
-    {
-      label: 'PM2.5 (24h)',
-      data: pm25,
-      tension: 0.3,
-      borderWidth: 2,
-      pointRadius: 2
-    },
-    {
-      label: 'PM10 (24h)',
-      data: pm10,
-      tension: 0.3,
-      borderWidth: 2,
-      pointRadius: 2
-    }
+   {
+  label: 'PM2.5 (24h)',
+  data: pm25,
+  tension: 0.3,
+  borderWidth: 2,
+  pointRadius: 2,
+  borderColor: '#ec4899',   // 🔥 rosa
+  backgroundColor: '#ec4899'
+},
+{
+  label: 'PM10 (24h)',
+  data: pm10,
+  tension: 0.3,
+  borderWidth: 2,
+  pointRadius: 2,
+  borderColor: '#3b82f6',   // 🔥 blu
+  backgroundColor: '#3b82f6'
+}
   ];
 
   // =========================
