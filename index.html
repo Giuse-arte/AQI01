@@ -1517,17 +1517,13 @@ feeds.forEach((f, i) => {
       //=============================
       // inserisci COMBO dopo PM10
       //=============================
-      //const pm10 = chartsContainer.querySelector('#chart_7')?.parentElement;
-
       if(pm10){
         chartsContainer.insertBefore(d, pm10.nextSibling);
       } else {
         chartsContainer.appendChild(d);
-
-      // ?? forza riordinamento dopo inserimento
-        setTimeout(reorderCharts, 50);
-
       }
+      // ✅ SEMPRE eseguito
+      setTimeout(reorderCharts, 50);
      // termine inserisci COMBO dopo PM10
       
       const ctx = d.querySelector('canvas').getContext('2d');
