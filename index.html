@@ -817,6 +817,28 @@ function selectAll(v){
 
 function renderCharts(){
 
+  function reorderCharts(){
+
+  const container = document.getElementById('charts');
+
+  const order = [
+    '#chart_5',      // PM1
+    '#chart_pm25',   // PM2.5
+    '#chart_7',      // PM10
+    '#pmCombined',   // COMBO
+    '#chart_1',      // Umidità
+    '#chart_2',      // Temperatura
+    '#chart_3'       // Pressione
+  ];
+
+  order.forEach(selector => {
+    const el = container.querySelector(selector)?.parentElement;
+    if(el){
+      container.appendChild(el); // riordina
+    }
+  });
+}
+
   /* Svuota area grafici */
   const chartsContainer = document.getElementById('charts');
   chartsContainer.innerHTML = '';
@@ -1351,6 +1373,10 @@ if (comboCheckbox && comboCheckbox.checked) {
         chartsContainer.insertBefore(d, pm10.nextSibling);
       } else {
         chartsContainer.appendChild(d);
+
+      // ?? forza riordinamento dopo inserimento
+        setTimeout(reorderCharts, 50);
+
       }
      // termine inserisci COMBO dopo PM10
       
@@ -1430,7 +1456,8 @@ if (comboCheckbox && comboCheckbox.checked) {
 
   })();
 }
-
+// ?? riordina dopo rendering iniziale
+setTimeout(reorderCharts, 100);
 }
 
 /* =========================
