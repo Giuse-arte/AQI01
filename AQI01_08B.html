@@ -1097,11 +1097,64 @@ const endStr = formatLocalDateTime(tEnd);
         <canvas id="chart_${ch.dataset.id}"></canvas>
       `;
 
-      if (m && ch.dataset.id === "5") {  // Se è PM1 (id=5)
-  chartsContainer.prepend(d); // Inserisci PM1 per primo
-} else {
-  chartsContainer.appendChild(d); // Altrimenti, aggiungi il grafico come gli altri
+// =========================
+// ORDINAMENTO GRAFICI FISSO (Modiifica del 11-04-26
+// =========================
+
+// riferimenti ai grafici già presenti
+const pm25 = chartsContainer.querySelector('#chart_pm25')?.parentElement;
+const pm10 = chartsContainer.querySelector('#chart_7')?.parentElement;
+const combo = chartsContainer.querySelector('#pmCombined')?.parentElement;
+const hum = chartsContainer.querySelector('#chart_1')?.parentElement;
+const temp = chartsContainer.querySelector('#chart_2')?.parentElement;
+
+// PM1 ? primo
+if(ch.dataset.id === "5"){
+  chartsContainer.prepend(d);
 }
+
+// PM10 ? dopo PM2.5
+else if(ch.dataset.id === "7"){
+  const ref = chartsContainer.querySelector('#chart_pm25')?.parentElement;
+  if(ref){
+    chartsContainer.insertBefore(d, ref.nextSibling);
+  } else {
+    chartsContainer.appendChild(d);
+  }
+}
+
+// Umidità ? dopo COMBO
+else if(ch.dataset.id === "1"){
+  if(combo){
+    chartsContainer.insertBefore(d, combo.nextSibling);
+  } else {
+    chartsContainer.appendChild(d);
+  }
+}
+
+// Temperatura ? dopo Umidità
+else if(ch.dataset.id === "2"){
+  if(hum){
+    chartsContainer.insertBefore(d, hum.nextSibling);
+  } else {
+    chartsContainer.appendChild(d);
+  }
+}
+
+// Pressione ? dopo Temperatura (ULTIMO)
+else if(ch.dataset.id === "3"){
+  if(temp){
+    chartsContainer.insertBefore(d, temp.nextSibling);
+  } else {
+    chartsContainer.appendChild(d);
+  }
+}
+
+// fallback sicurezza
+else{
+  chartsContainer.appendChild(d);
+}
+// termine ORDINAMENTO GRAFICI FISSO (Modiifica del 11-04-26
 
       const ctx = document.getElementById(`chart_${ch.dataset.id}`);
 
@@ -1289,9 +1342,18 @@ if (comboCheckbox && comboCheckbox.checked) {
         </div>
         <canvas id="pmCombined"></canvas>
       `;
+      //=============================
+      // inserisci COMBO dopo PM10
+      //=============================
+      //const pm10 = chartsContainer.querySelector('#chart_7')?.parentElement;
 
-      chartsContainer.appendChild(d);
-
+      if(pm10){
+        chartsContainer.insertBefore(d, pm10.nextSibling);
+      } else {
+        chartsContainer.appendChild(d);
+      }
+     // termine inserisci COMBO dopo PM10
+      
       const ctx = d.querySelector('canvas').getContext('2d');
 
       // distrugge vecchio grafico se esiste
