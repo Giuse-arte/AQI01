@@ -975,13 +975,12 @@ function openAQIInfo(){
     const popup = document.createElement('div');
     popup.className = 'info-popup';
 
-    const currentMode = document.getElementById('mode').value; // Ottieni il valore corrente dello standard
+    const selectedMode = document.getElementById('mode').value;
 
     let imgSrc = '';
     let title = '';
 
-    // Controlla quale standard è selezionato e imposta l'immagine e il titolo di conseguenza
-    if(currentMode === 'EEA'){
+    if(selectedMode === 'EEA'){
         imgSrc = 'https://raw.githubusercontent.com/Giuse-arte/AQI01/main/Limiti-EEA.png';
         title = 'Limiti EEA (AQI)';
     } else {
