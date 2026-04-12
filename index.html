@@ -969,7 +969,7 @@ function computeAQI(pm25, pm10){
 }
 
 function openAQIInfo(){
-  
+ 
   const overlay = document.createElement('div');
   overlay.className = 'info-overlay';
 
@@ -979,10 +979,14 @@ function openAQIInfo(){
   // 🔥 selezione immagine dinamica
   const currentMode = document.getElementById('mode').value;
 
-const imgSrc = currentMode === 'EEA'
-  ? 'https://raw.githubusercontent.com/Giuse-arte/AQI01/main/Limiti-EEA.png'
-  : 'https://raw.githubusercontent.com/Giuse-arte/AQI01/main/Limiti-EPA.png';
-
+let imgSrc = '';
+  
+  if(currentMode === 'EEA'){
+    imgSrc = 'https://raw.githubusercontent.com/Giuse-arte/AQI01/main/Limiti-EEA.png';
+  } else {
+    imgSrc = 'https://raw.githubusercontent.com/Giuse-arte/AQI01/main/Limiti-EPA.png';
+  }
+console.log("MODE:", currentMode);
 const title = currentMode === 'EEA'
   ? 'Limiti EEA (AQI)'
   : 'Limiti EPA (AQI)';
@@ -1721,7 +1725,7 @@ datasets: (function(){
   // SOGLIE DINAMICHE
   // =========================
 
-  if(mode.value === 'EEA'){
+  if(currentMode === 'EEA'){
     base.push(
       {
   label: 'Limite EEA PM2.5 (25)',
