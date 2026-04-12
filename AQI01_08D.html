@@ -584,9 +584,8 @@
        <div style="display:flex;justify-content:space-between;align-items:center;">
         <div class="title" id="aqiTitle">AQI (EEA 24h)</div>
 
-        <button class="info-btn" onclick="openAQIInfo()">
-          i
-        </button>
+        <button class="info-btn aqi-info-btn" onclick="openAQIInfo()">i</button>
+         
       </div>
         <div class="sensor">PM2.5 / PM10</div>
 
@@ -886,42 +885,44 @@ function computeAQI(pm25, pm10){
 
   /* ===== STANDARD EEA ===== */
   if(mode.value === 'EEA'){
-    aqiTitle.textContent = 'AQI (EEA 24h)';
+  aqiTitle.textContent = 'AQI (EEA 24h)';
+  
+  /* Classificazione PM secondo soglie EEA */
+  const clsPM25 = (
+  pm25 <= 10 ? 1 :
+  pm25 <= 20 ? 2 :
+  pm25 <= 25 ? 3 :
+  pm25 <= 50 ? 4 : 5
+);
 
-    /* Classificazione PM secondo soglie EEA */
-    const clsPM25 =
-      pm25 <= 10 ? 1 :
-      pm25 <= 20 ? 2 :
-      pm25 <= 25 ? 3 :
-      pm25 <= 50 ? 4 : 5;
+  const clsPM10 = (
+    pm10 <= 20 ? 1 :
+    pm10 <= 40 ? 2 :
+    pm10 <= 50 ? 3 :
+    pm10 <= 100 ? 4 : 5
+    );
 
-    const clsPM10 =
-      pm10 <= 20 ? 1 :
-      pm10 <= 40 ? 2 :
-      pm10 <= 50 ? 3 :
-      pm10 <= 100 ? 4 : 5;
+  const cls = Math.max(clsPM25, clsPM10);
 
-    /* Si prende la classe peggiore */
-    const cls = Math.max(clsPM25, clsPM10);
+  const map = {
+    1:{t:'Buona',c:'#16a34a'},
+    2:{t:'Discreta',c:'#65a30d'},
+    3:{t:'Moderata',c:'#facc15'},
+    4:{t:'Scarsa',c:'#f97316'},
+    5:{t:'Molto scarsa',c:'#dc2626'}
+  };
 
-    /* Mappa testo + colore */
-    const map = {
-      1:{t:'Buona',c:'#16a34a'},
-      2:{t:'Discreta',c:'#65a30d'},
-      3:{t:'Moderata',c:'#facc15'},
-      4:{t:'Scarsa',c:'#f97316'},
-      5:{t:'Molto scarsa',c:'#dc2626'}
-    };
+  aqiVal.textContent = '—';
+  aqiBadge.textContent = map[cls].t;
+  aqiBadge.style.background = map[cls].c;
 
-    /* EEA non usa valore numerico AQI */
-    aqiVal.textContent = '—';
-    aqiBadge.textContent = map[cls].t;
-    aqiBadge.style.background = map[cls].c;
-    return;
-  }
+  return; // 🔥 IMPORTANTISSIMO
+}
 
   /* ===== STANDARD EPA ===== */
   aqiTitle.textContent = 'AQI (EPA 24h)';
+  const aqiBtn = document.querySelector('.aqi-info-btn');
+  if(aqiBtn) aqiBtn.style.display = 'flex';
 
   /* Breakpoint ufficiali EPA */
   const bpPM25 = [
@@ -969,30 +970,38 @@ function computeAQI(pm25, pm10){
 }
 
 function openAQIInfo(){
+    const overlay = document.createElement('div');
+    overlay.className = 'info-overlay';
 
-  const overlay = document.createElement('div');
-  overlay.className = 'info-overlay';
+    const popup = document.createElement('div');
+    popup.className = 'info-popup';
 
-  const popup = document.createElement('div');
-  popup.className = 'info-popup';
+    const selectedMode = document.getElementById('mode').value;
 
-  popup.innerHTML = `
-    <div class="info-header">
-      <span>Limiti EPA (AQI)</span>
-      <span class="info-close" onclick="closeAQIInfo()">× Close</span>
-    </div>
+    let imgSrc = '';
+    let title = '';
 
-    <div class="info-body">
+    if(selectedMode === 'EEA'){
+        imgSrc = 'https://raw.githubusercontent.com/Giuse-arte/AQI01/main/Limiti-EEA.png';
+        title = 'Limiti EEA (AQI)';
+    } else {
+        imgSrc = 'https://raw.githubusercontent.com/Giuse-arte/AQI01/main/Limiti-EPA.png';
+        title = 'Limiti EPA (AQI)';
+    }
 
-      <img src="https://raw.githubusercontent.com/Giuse-arte/AQI01/main/Limiti-EPA.png" class="info-image">
+    popup.innerHTML = `
+        <div class="info-header">
+            <span>${title}</span>
+            <span class="info-close" onclick="closeAQIInfo()">× Close</span>
+        </div>
+        <div class="info-body">
+            <img src="${imgSrc}" class="info-image">
+        </div>
+    `;
 
-    </div>
-  `;
-
-  document.body.appendChild(overlay);
-  document.body.appendChild(popup);
+    document.body.appendChild(overlay);
+    document.body.appendChild(popup);
 }
-
 function closeAQIInfo(){
   document.querySelector('.info-popup')?.remove();
   document.querySelector('.info-overlay')?.remove();
@@ -1705,7 +1714,7 @@ datasets: (function(){
   // SOGLIE DINAMICHE
   // =========================
 
-  if(mode.value === 'EEA'){
+  if(currentMode === 'EEA'){
     base.push(
       {
   label: 'Limite EEA PM2.5 (25)',
@@ -1882,7 +1891,7 @@ update.addEventListener('click', ()=>{
 });
 
 /* Cambio standard AQI */
-mode.addEventListener('change', loadKPIs);
+mode.addEventListener('change', renderCharts);
 
 document.getElementById('viewMode').addEventListener('change', ()=>{
 
