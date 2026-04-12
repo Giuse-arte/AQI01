@@ -885,8 +885,9 @@ function computeAQI(pm25, pm10){
 
   /* ===== STANDARD EEA ===== */
   if(mode.value === 'EEA'){
-    aqiTitle.textContent = 'AQI (EEA 24h)';
-    document.querySelector('.aqi-info-btn')?.style.display = 'none';
+  aqiTitle.textContent = 'AQI (EEA 24h)';
+  document.querySelector('.aqi-info-btn')?.style.display = 'none';
+}
     
 
     /* Classificazione PM secondo soglie EEA */
