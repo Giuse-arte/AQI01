@@ -889,17 +889,19 @@ function computeAQI(pm25, pm10){
   document.querySelector('.aqi-info-btn')?.style.display = 'none';
 
   /* Classificazione PM secondo soglie EEA */
-  const clsPM25 =
-    pm25 <= 10 ? 1 :
-    pm25 <= 20 ? 2 :
-    pm25 <= 25 ? 3 :
-    pm25 <= 50 ? 4 : 5;
+  const clsPM25 = (
+  pm25 <= 10 ? 1 :
+  pm25 <= 20 ? 2 :
+  pm25 <= 25 ? 3 :
+  pm25 <= 50 ? 4 : 5
+);
 
-  const clsPM10 =
+  const clsPM10 = (
     pm10 <= 20 ? 1 :
     pm10 <= 40 ? 2 :
     pm10 <= 50 ? 3 :
-    pm10 <= 100 ? 4 : 5;
+    pm10 <= 100 ? 4 : 5
+    );
 
   const cls = Math.max(clsPM25, clsPM10);
 
