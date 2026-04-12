@@ -584,9 +584,8 @@
        <div style="display:flex;justify-content:space-between;align-items:center;">
         <div class="title" id="aqiTitle">AQI (EEA 24h)</div>
 
-        <button class="info-btn" onclick="openAQIInfo()">
-          i
-        </button>
+        <button class="info-btn aqi-info-btn" onclick="openAQIInfo()">i</button>
+         
       </div>
         <div class="sensor">PM2.5 / PM10</div>
 
@@ -887,6 +886,7 @@ function computeAQI(pm25, pm10){
   /* ===== STANDARD EEA ===== */
   if(mode.value === 'EEA'){
     aqiTitle.textContent = 'AQI (EEA 24h)';
+    
 
     /* Classificazione PM secondo soglie EEA */
     const clsPM25 =
@@ -903,6 +903,7 @@ function computeAQI(pm25, pm10){
 
     /* Si prende la classe peggiore */
     const cls = Math.max(clsPM25, clsPM10);
+    document.querySelector('.aqi-info-btn')?.style.display = 'none';
 
     /* Mappa testo + colore */
     const map = {
@@ -922,6 +923,7 @@ function computeAQI(pm25, pm10){
 
   /* ===== STANDARD EPA ===== */
   aqiTitle.textContent = 'AQI (EPA 24h)';
+  document.querySelector('.aqi-info-btn')?.style.display = 'flex';
 
   /* Breakpoint ufficiali EPA */
   const bpPM25 = [
