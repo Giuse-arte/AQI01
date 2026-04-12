@@ -336,22 +336,23 @@
   line-height:1.5;
 }
 
-/* 🔥 forza nero su tutto il contenuto */
 .info-body{
   padding:14px;
   line-height:1.5;
-  color:#000;
 }
 
-/* testo nero di default */
-.info-body p,
+/* 🔥 testo descrittivo (solo paragrafi) */
+.info-body p{
+  color:#000 !important;
+}
+
+/* testo normale */
 .info-body div,
-.info-body b,
-.info-body br{
+.info-body b{
   color:#000;
 }
 
-/* 🔥 colori specifici (PRIORITARI) */
+/* 🔥 colori linee (prioritari) */
 .line-red{
   color:#dc2626 !important;
   font-weight:600;
