@@ -284,6 +284,15 @@
   display:flex;
   align-items:center;
   justify-content:center;
+
+  transition: all 0.2s ease; /* 🔥 animazione */
+}
+
+/* 🔥 HOVER */
+.info-btn:hover{
+  border-radius:4px;          /* da cerchio → quadrato */
+  background:#16a34a;         /* opzionale: cambia colore */
+  transform:scale(1.1);       /* piccolo zoom */
 }
 
 /* =========================
@@ -328,9 +337,29 @@
 }
 
 /* 🔥 forza nero su tutto il contenuto */
-.info-body,
-.info-body *{
-  color:#000 !important;
+.info-body{
+  padding:14px;
+  line-height:1.5;
+  color:#000;
+}
+
+/* testo nero di default */
+.info-body p,
+.info-body div,
+.info-body b,
+.info-body br{
+  color:#000;
+}
+
+/* 🔥 colori specifici (PRIORITARI) */
+.line-red{
+  color:#dc2626 !important;
+  font-weight:600;
+}
+
+.line-orange{
+  color:#f97316 !important;
+  font-weight:600;
 }
 
 .info-section{
