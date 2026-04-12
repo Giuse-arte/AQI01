@@ -130,10 +130,10 @@
        CONTENUTO PRINCIPALE
        ========================= */
     main{
-      padding:0 28px 40px;
-      max-width:1280px;
-      margin:0 auto
-    }
+  padding:0 28px 40px;
+  max-width:100%;
+  margin:0 auto
+}
 
     /* =========================
        KPI SECTION
@@ -153,47 +153,40 @@
     }
 
     /* Griglia 7 colonne per le KPI */
-    .kpi-row{
-      display:grid;
-      /* Modifica questa riga: */
-      /* grid-template-columns:repeat(7,1fr); */ 
-      
-      /* Utilizza minmax() per impostare una larghezza minima (es. 150px) */
-      /* e mantenere la flessibilità per occupare lo spazio disponibile. */
-      /* Sostituisci '150px' con la larghezza desiderata */
-      grid-template-columns:repeat(7,minmax(159px, 1fr)); 
-      gap:14px
-    }
+ .kpi-row{
+  display:grid;
+  grid-template-columns:repeat(7,1fr);
+  gap:16px
+}
 
-    /* Singola card KPI */
-    .kpi{
-      background:var(--card);
-      border-radius:var(--radius);
-      box-shadow:var(--shadow);
-      padding:14px 10px;
-      text-align:center;
-      aspect-ratio:1/1;
-      display:flex;
-      flex-direction:column;
-      justify-content:center
-    }
+ .kpi{
+  background:var(--card);
+  border-radius:var(--radius);
+  box-shadow:var(--shadow);
+  padding:22px 14px;
+  text-align:center;
+  aspect-ratio:1/1;
+  display:flex;
+  flex-direction:column;
+  justify-content:center
+}
 
-    .kpi .title{
-      font-size:.95rem;
-      font-weight:700;
-      color:#374151
-    }
+ .kpi .title{
+  font-size:1.3rem;
+  font-weight:700;
+  color:#374151
+}
 
-    .kpi .sensor{
-      font-size:.72rem;
-      color:var(--muted)
-    }
+ .kpi .sensor{
+  font-size:1rem;
+  color:var(--muted)
+}
 
-    .kpi .value{
-      margin-top:8px;
-      font-size:1.15rem;
-      font-weight:700
-    }
+.kpi .value{
+  margin-top:12px;
+  font-size:1.6rem;
+  font-weight:700
+}
 
     /* Badge AQI colorato */
     .aqi-badge{
@@ -209,11 +202,12 @@
     /* =========================
        LAYOUT GRAFICI
        ========================= */
-    .layout{
-      display:grid;
-      grid-template-columns:280px 1fr; /* ← PRIMA ERA 320px */
-      gap:20px
-    }
+   .layout{
+  display:grid;
+  grid-template-columns:280px 1fr;
+  gap:20px;
+  width:100%
+}
 
     /* Layout mobile */
     @media(max-width:900px){
@@ -250,13 +244,15 @@
 
     /* Contenitore dei grafici */
     .charts-wrapper{
-     background: var(--card);
-     border: 2px solid #d1d5db;
-     border-radius: 12px;
-     box-shadow: var(--shadow);
-     padding: 14px 14px 18px;
-    min-width:920px;
-    }
+ background: var(--card);
+ border: 2px solid #d1d5db;
+ border-radius: 12px;
+ box-shadow: var(--shadow);
+ padding: 14px 14px 18px;
+ min-width:0;
+ width:100%;
+ overflow-x:hidden;
+}
 
     /* Griglia 2x3 dei grafici */
     .charts {
