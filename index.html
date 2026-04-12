@@ -977,7 +977,16 @@ function openAQIInfo(){
   popup.className = 'info-popup';
 
   // 🔥 selezione immagine dinamica
-  const imgSrc = mode.value === 'EEA'
+  const currentMode = document.getElementById('mode').value;
+
+const imgSrc = currentMode === 'EEA'
+  ? 'https://raw.githubusercontent.com/Giuse-arte/AQI01/main/Limiti-EEA.png'
+  : 'https://raw.githubusercontent.com/Giuse-arte/AQI01/main/Limiti-EPA.png';
+
+const title = currentMode === 'EEA'
+  ? 'Limiti EEA (AQI)'
+  : 'Limiti EPA (AQI)';
+  
     ? 'https://raw.githubusercontent.com/Giuse-arte/AQI01/main/Limiti-EEA.png'
     : 'https://raw.githubusercontent.com/Giuse-arte/AQI01/main/Limiti-EPA.png';
 
