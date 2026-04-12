@@ -673,6 +673,7 @@
 
 /* ID del canale ThingSpeak da cui leggere i dati */
 const CHANNEL = 2789658;
+let lastSelectedMode = 'EEA';
 
 /*
   fmt1 → formatta un valore numerico con 1 decimale
@@ -975,7 +976,7 @@ function openAQIInfo(){
     const popup = document.createElement('div');
     popup.className = 'info-popup';
 
-    const selectedMode = document.getElementById('mode').value;
+    const selectedMode = lastSelectedMode;
 
     let imgSrc = '';
     let title = '';
@@ -1874,7 +1875,10 @@ start.addEventListener('change', savePreferences);
 end.addEventListener('change', savePreferences);
 
 // standard AQI
-mode.addEventListener('change', savePreferences);
+mode.addEventListener('change', ()=>{
+  lastSelectedMode = document.getElementById('mode').value;
+  savePreferences();
+});
 
 // checkbox "Ricorda preferenze"
 remember.addEventListener('change', savePreferences);
