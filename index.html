@@ -324,15 +324,13 @@
 
 .info-body{
   padding:14px;
-  color:#000;              /* 🔥 nero pieno */
   line-height:1.5;
 }
 
-.info-body p,
-.info-body span,
-.info-body div,
-.info-body li{
-  color:#000;              /* 🔥 forza nero su tutto */
+/* 🔥 forza nero su tutto il contenuto */
+.info-body,
+.info-body *{
+  color:#000 !important;
 }
 
 .info-section{
@@ -944,17 +942,17 @@ function openInfoPopup(){
 
     <div class="info-section">
       <b>Agenzia per la protezione ambientale Europea - Standard EEA</b><br>
-      <span class="line-red">Linea rossa</span> (in rosso)<br>
+      <span class="line-red">Linea rossa</span><br>
       50 μg/m³ (Limite giornaliero di PM10)<br>
-      <span class="line-orange">Linea arancione</span> (in arancione)<br>
+      <span class="line-orange">Linea arancione</span><br>
       25 μg/m³ (Limite giornaliero di PM2.5)
     </div>
 
     <div class="info-section">
       <b>Agenzia per la protezione ambientale degli Stati Uniti - Standard EPA</b><br>
-      <span class="line-red">Linea rossa</span> (in rosso)<br>
+      <span class="line-red">Linea rossa</span><br>
       150 μg/m³ (Limite giornaliero di PM10)<br>
-      <span class="line-orange">Linea arancione</span> (in arancione)<br>
+      <span class="line-orange">Linea arancione</span><br>
       35 μg/m³ (Limite giornaliero di PM2.5)
     </div>
 
