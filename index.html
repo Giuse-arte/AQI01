@@ -969,7 +969,7 @@ function computeAQI(pm25, pm10){
 }
 
 function openAQIInfo(){
-
+  
   const overlay = document.createElement('div');
   overlay.className = 'info-overlay';
 
@@ -1898,7 +1898,7 @@ update.addEventListener('click', ()=>{
 });
 
 /* Cambio standard AQI */
-mode.addEventListener('change', loadKPIs);
+mode.addEventListener('change', renderCharts);
 
 document.getElementById('viewMode').addEventListener('change', ()=>{
 
