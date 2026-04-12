@@ -969,42 +969,38 @@ function computeAQI(pm25, pm10){
 }
 
 function openAQIInfo(){
-  alert("FUNZIONE NUOVA ATTIVA");
-  const overlay = document.createElement('div');
-  overlay.className = 'info-overlay';
+    const overlay = document.createElement('div');
+    overlay.className = 'info-overlay';
 
-  const popup = document.createElement('div');
-  popup.className = 'info-popup';
+    const popup = document.createElement('div');
+    popup.className = 'info-popup';
 
-  // 🔥 legge il valore corretto
-  const currentMode = document.getElementById('mode').value;
+    const currentMode = document.getElementById('mode').value; // Ottieni il valore corrente dello standard
 
-  console.log("MODE:", currentMode);
+    let imgSrc = '';
+    let title = '';
 
-  let imgSrc = '';
-  let title = '';
+    // Controlla quale standard è selezionato e imposta l'immagine e il titolo di conseguenza
+    if(currentMode === 'EEA'){
+        imgSrc = 'https://raw.githubusercontent.com/Giuse-arte/AQI01/main/Limiti-EEA.png';
+        title = 'Limiti EEA (AQI)';
+    } else {
+        imgSrc = 'https://raw.githubusercontent.com/Giuse-arte/AQI01/main/Limiti-EPA.png';
+        title = 'Limiti EPA (AQI)';
+    }
 
-  if(currentMode === 'EEA'){
-    imgSrc = 'https://raw.githubusercontent.com/Giuse-arte/AQI01/main/Limiti-EEA.png';
-    title = 'Limiti EEA (AQI)';
-  } else {
-    imgSrc = 'https://raw.githubusercontent.com/Giuse-arte/AQI01/main/Limiti-EPA.png';
-    title = 'Limiti EPA (AQI)';
-  }
+    popup.innerHTML = `
+        <div class="info-header">
+            <span>${title}</span>
+            <span class="info-close" onclick="closeAQIInfo()">× Close</span>
+        </div>
+        <div class="info-body">
+            <img src="${imgSrc}" class="info-image">
+        </div>
+    `;
 
-  popup.innerHTML = `
-    <div class="info-header">
-      <span>${title}</span>
-      <span class="info-close" onclick="closeAQIInfo()">× Close</span>
-    </div>
-
-    <div class="info-body">
-      <img src="${imgSrc}" class="info-image">
-    </div>
-  `;
-
-  document.body.appendChild(overlay);
-  document.body.appendChild(popup);
+    document.body.appendChild(overlay);
+    document.body.appendChild(popup);
 }
 function closeAQIInfo(){
   document.querySelector('.info-popup')?.remove();
