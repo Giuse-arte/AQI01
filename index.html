@@ -886,8 +886,7 @@ function computeAQI(pm25, pm10){
   /* ===== STANDARD EEA ===== */
   if(mode.value === 'EEA'){
   aqiTitle.textContent = 'AQI (EEA 24h)';
-  document.querySelector('.aqi-info-btn')?.style.display = 'none';
-
+  
   /* Classificazione PM secondo soglie EEA */
   const clsPM25 = (
   pm25 <= 10 ? 1 :
@@ -977,16 +976,23 @@ function openAQIInfo(){
   const popup = document.createElement('div');
   popup.className = 'info-popup';
 
+  // 🔥 selezione immagine dinamica
+  const imgSrc = mode.value === 'EEA'
+    ? 'https://raw.githubusercontent.com/Giuse-arte/AQI01/main/Limiti-EEA.png'
+    : 'https://raw.githubusercontent.com/Giuse-arte/AQI01/main/Limiti-EPA.png';
+
+  const title = mode.value === 'EEA'
+    ? 'Limiti EEA (AQI)'
+    : 'Limiti EPA (AQI)';
+
   popup.innerHTML = `
     <div class="info-header">
-      <span>Limiti EPA (AQI)</span>
+      <span>${title}</span>
       <span class="info-close" onclick="closeAQIInfo()">× Close</span>
     </div>
 
     <div class="info-body">
-
-      <img src="https://raw.githubusercontent.com/Giuse-arte/AQI01/main/Limiti-EPA.png" class="info-image">
-
+      <img src="${imgSrc}" class="info-image">
     </div>
   `;
 
