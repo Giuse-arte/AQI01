@@ -921,7 +921,8 @@ function computeAQI(pm25, pm10){
 
   /* ===== STANDARD EPA ===== */
   aqiTitle.textContent = 'AQI (EPA 24h)';
-  document.querySelector('.aqi-info-btn')?.style.display = 'flex';
+  const aqiBtn = document.querySelector('.aqi-info-btn');
+  if(aqiBtn) aqiBtn.style.display = 'flex';
 
   /* Breakpoint ufficiali EPA */
   const bpPM25 = [
