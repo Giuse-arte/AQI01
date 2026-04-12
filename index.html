@@ -969,34 +969,28 @@ function computeAQI(pm25, pm10){
 }
 
 function openAQIInfo(){
- 
+
   const overlay = document.createElement('div');
   overlay.className = 'info-overlay';
 
   const popup = document.createElement('div');
   popup.className = 'info-popup';
 
-  // 🔥 selezione immagine dinamica
+  // 🔥 legge il valore corretto
   const currentMode = document.getElementById('mode').value;
 
-let imgSrc = '';
-  
+  console.log("MODE:", currentMode);
+
+  let imgSrc = '';
+  let title = '';
+
   if(currentMode === 'EEA'){
     imgSrc = 'https://raw.githubusercontent.com/Giuse-arte/AQI01/main/Limiti-EEA.png';
+    title = 'Limiti EEA (AQI)';
   } else {
     imgSrc = 'https://raw.githubusercontent.com/Giuse-arte/AQI01/main/Limiti-EPA.png';
+    title = 'Limiti EPA (AQI)';
   }
-console.log("MODE:", currentMode);
-const title = currentMode === 'EEA'
-  ? 'Limiti EEA (AQI)'
-  : 'Limiti EPA (AQI)';
-  
-    ? 'https://raw.githubusercontent.com/Giuse-arte/AQI01/main/Limiti-EEA.png'
-    : 'https://raw.githubusercontent.com/Giuse-arte/AQI01/main/Limiti-EPA.png';
-
-  const title = mode.value === 'EEA'
-    ? 'Limiti EEA (AQI)'
-    : 'Limiti EPA (AQI)';
 
   popup.innerHTML = `
     <div class="info-header">
@@ -1012,7 +1006,6 @@ const title = currentMode === 'EEA'
   document.body.appendChild(overlay);
   document.body.appendChild(popup);
 }
-
 function closeAQIInfo(){
   document.querySelector('.info-popup')?.remove();
   document.querySelector('.info-overlay')?.remove();
