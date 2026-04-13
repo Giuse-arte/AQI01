@@ -1220,9 +1220,20 @@ x:{
 min: document.getElementById('viewMode').value === 'live' ? undefined : new Date(document.getElementById('day').value + "T00:00:00"),
 max: document.getElementById('viewMode').value === 'live' ? undefined : new Date(document.getElementById('day').value + "T23:59:59"),
 
-  time:{
+ time:{
   unit:'hour',
   stepSize: 1
+},
+afterBuildTicks: function(axis){
+  const min = axis.min;
+  const max = axis.max;
+  const ticks = [];
+  let t = Math.ceil(min / 3600000) * 3600000;
+  while(t <= max){
+    ticks.push({ value: t });
+    t += 3600000;
+  }
+  axis.ticks = ticks;
 },
 
   ticks:{
@@ -1487,9 +1498,20 @@ x:{
 min: document.getElementById('viewMode').value === 'live' ? undefined : new Date(document.getElementById('day').value + "T00:00:00"),
 max: document.getElementById('viewMode').value === 'live' ? undefined : new Date(document.getElementById('day').value + "T23:59:59"),
 
-  time:{
+time:{
   unit:'hour',
   stepSize: 1
+},
+afterBuildTicks: function(axis){
+  const min = axis.min;
+  const max = axis.max;
+  const ticks = [];
+  let t = Math.ceil(min / 3600000) * 3600000;
+  while(t <= max){
+    ticks.push({ value: t });
+    t += 3600000;
+  }
+  axis.ticks = ticks;
 },
 
   ticks:{
@@ -1824,10 +1846,21 @@ options:{
 min: document.getElementById('viewMode').value === 'live' ? undefined : new Date(document.getElementById('day').value + "T00:00:00"),
 max: document.getElementById('viewMode').value === 'live' ? undefined : new Date(document.getElementById('day').value + "T23:59:59"),
 
-      time:{
-        unit:'hour',
-        stepSize:1
-      },
+    time:{
+  unit:'hour',
+  stepSize: 1
+},
+afterBuildTicks: function(axis){
+  const min = axis.min;
+  const max = axis.max;
+  const ticks = [];
+  let t = Math.ceil(min / 3600000) * 3600000;
+  while(t <= max){
+    ticks.push({ value: t });
+    t += 3600000;
+  }
+  axis.ticks = ticks;
+},
 
       ticks:{
         autoSkip:false,
