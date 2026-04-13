@@ -670,6 +670,36 @@
 /* ID del canale ThingSpeak da cui leggere i dati */
 const CHANNEL = 2789658;
 
+Chart.register({
+  id: 'hourGrid',
+  afterDraw(chart) {
+    const xScale = chart.scales.x;
+    const ctx = chart.ctx;
+    const top = chart.chartArea.top;
+    const bottom = chart.chartArea.bottom;
+    const min = xScale.min;
+    const max = xScale.max;
+
+    let t = Math.ceil(min / 3600000) * 3600000;
+    while(t <= max){
+      const x = xScale.getPixelForValue(t);
+      const hour = new Date(t).getHours();
+      const isMajor = hour % 4 === 0;
+
+      ctx.save();
+      ctx.beginPath();
+      ctx.moveTo(x, top);
+      ctx.lineTo(x, bottom);
+      ctx.strokeStyle = isMajor ? 'rgba(0,0,0,0.20)' : 'rgba(0,0,0,0.06)';
+      ctx.lineWidth = isMajor ? 1.5 : 0.8;
+      ctx.stroke();
+      ctx.restore();
+
+      t += 3600000;
+    }
+  }
+});
+
 /*
   fmt1 → formatta un valore numerico con 1 decimale
   - Se il valore è null, undefined o NaN → restituisce '—'
@@ -1295,7 +1325,7 @@ grid:{
     const hour = new Date(val).getHours();
     if(isNaN(hour)) return 'rgba(0,0,0,0.07)';
     return hour % 4 === 0
-      ? 'rgba(0,0,0,0.25)'
+      ? 'rgba(0,0,0,0.20)'
       : 'rgba(0,0,0,0.07)';
   },
   lineWidth: function(context){
@@ -1322,7 +1352,7 @@ grid:{
     const hour = new Date(val).getHours();
     if(isNaN(hour)) return 'rgba(0,0,0,0.07)';
     return hour % 4 === 0
-      ? 'rgba(0,0,0,0.25)'
+      ? 'rgba(0,0,0,0.20)'
       : 'rgba(0,0,0,0.07)';
   },
   lineWidth: function(context){
@@ -1573,7 +1603,7 @@ afterBuildTicks: function(axis){
     const hour = new Date(val).getHours();
     if(isNaN(hour)) return 'rgba(0,0,0,0.07)';
     return hour % 4 === 0
-      ? 'rgba(0,0,0,0.25)'
+      ? 'rgba(0,0,0,0.20)'
       : 'rgba(0,0,0,0.07)';
   },
   lineWidth: function(context){
