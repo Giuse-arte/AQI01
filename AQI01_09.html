@@ -670,6 +670,36 @@
 /* ID del canale ThingSpeak da cui leggere i dati */
 const CHANNEL = 2789658;
 
+Chart.register({
+  id: 'hourGrid',
+  afterDraw(chart) {
+    const xScale = chart.scales.x;
+    const ctx = chart.ctx;
+    const top = chart.chartArea.top;
+    const bottom = chart.chartArea.bottom;
+    const min = xScale.min;
+    const max = xScale.max;
+
+    let t = Math.ceil(min / 3600000) * 3600000;
+    while(t <= max){
+      const x = xScale.getPixelForValue(t);
+      const hour = new Date(t).getHours();
+      const isMajor = hour % 4 === 0;
+
+      ctx.save();
+      ctx.beginPath();
+      ctx.moveTo(x, top);
+      ctx.lineTo(x, bottom);
+      ctx.strokeStyle = isMajor ? 'rgba(0,0,0,0.20)' : 'rgba(0,0,0,0.06)';
+      ctx.lineWidth = isMajor ? 1.5 : 0.8;
+      ctx.stroke();
+      ctx.restore();
+
+      t += 3600000;
+    }
+  }
+});
+
 /*
   fmt1 → formatta un valore numerico con 1 decimale
   - Se il valore è null, undefined o NaN → restituisce '—'
@@ -1220,9 +1250,20 @@ x:{
 min: document.getElementById('viewMode').value === 'live' ? undefined : new Date(document.getElementById('day').value + "T00:00:00"),
 max: document.getElementById('viewMode').value === 'live' ? undefined : new Date(document.getElementById('day').value + "T23:59:59"),
 
-  time:{
+ time:{
   unit:'hour',
-  stepSize: 2
+  stepSize: 1
+},
+afterBuildTicks: function(axis){
+  const min = axis.min;
+  const max = axis.max;
+  const ticks = [];
+  let t = Math.ceil(min / 3600000) * 3600000;
+  while(t <= max){
+    ticks.push({ value: t });
+    t += 3600000;
+  }
+  axis.ticks = ticks;
 },
 
   ticks:{
@@ -1277,9 +1318,23 @@ max: document.getElementById('viewMode').value === 'live' ? undefined : new Date
     })()
   },
 
-  grid:{
-    display:true
+grid:{
+  display: true,
+  color: function(context){
+    const val = context.tick?.value ?? context.tick;
+    const hour = new Date(val).getHours();
+    if(isNaN(hour)) return 'rgba(0,0,0,0.07)';
+    return hour % 4 === 0
+      ? 'rgba(0,0,0,0.20)'
+      : 'rgba(0,0,0,0.07)';
+  },
+  lineWidth: function(context){
+    const val = context.tick?.value ?? context.tick;
+    const hour = new Date(val).getHours();
+    if(isNaN(hour)) return 1;
+    return hour % 4 === 0 ? 2 : 1;
   }
+}
 },
 
   y:{
@@ -1290,9 +1345,23 @@ max: document.getElementById('viewMode').value === 'live' ? undefined : new Date
       text:'µg/m³'
     },
     
-    grid:{
-      display:true
-    }
+ grid:{
+  display: true,
+  color: function(context){
+    const val = context.tick?.value ?? context.tick;
+    const hour = new Date(val).getHours();
+    if(isNaN(hour)) return 'rgba(0,0,0,0.07)';
+    return hour % 4 === 0
+      ? 'rgba(0,0,0,0.20)'
+      : 'rgba(0,0,0,0.07)';
+  },
+  lineWidth: function(context){
+    const val = context.tick?.value ?? context.tick;
+    const hour = new Date(val).getHours();
+    if(isNaN(hour)) return 1;
+    return hour % 4 === 0 ? 2 : 1;
+  }
+}
   }
 }
         }
@@ -1459,9 +1528,20 @@ x:{
 min: document.getElementById('viewMode').value === 'live' ? undefined : new Date(document.getElementById('day').value + "T00:00:00"),
 max: document.getElementById('viewMode').value === 'live' ? undefined : new Date(document.getElementById('day').value + "T23:59:59"),
 
-  time:{
+time:{
   unit:'hour',
-  stepSize: 2
+  stepSize: 1
+},
+afterBuildTicks: function(axis){
+  const min = axis.min;
+  const max = axis.max;
+  const ticks = [];
+  let t = Math.ceil(min / 3600000) * 3600000;
+  while(t <= max){
+    ticks.push({ value: t });
+    t += 3600000;
+  }
+  axis.ticks = ticks;
 },
 
   ticks:{
@@ -1516,9 +1596,23 @@ max: document.getElementById('viewMode').value === 'live' ? undefined : new Date
     })()
   },
 
-  grid:{
-    display:true
+ grid:{
+  display: true,
+  color: function(context){
+    const val = context.tick?.value ?? context.tick;
+    const hour = new Date(val).getHours();
+    if(isNaN(hour)) return 'rgba(0,0,0,0.07)';
+    return hour % 4 === 0
+      ? 'rgba(0,0,0,0.20)'
+      : 'rgba(0,0,0,0.07)';
+  },
+  lineWidth: function(context){
+    const val = context.tick?.value ?? context.tick;
+    const hour = new Date(val).getHours();
+    if(isNaN(hour)) return 1;
+    return hour % 4 === 0 ? 2 : 1;
   }
+}
 },
 
  y:{
@@ -1782,10 +1876,21 @@ options:{
 min: document.getElementById('viewMode').value === 'live' ? undefined : new Date(document.getElementById('day').value + "T00:00:00"),
 max: document.getElementById('viewMode').value === 'live' ? undefined : new Date(document.getElementById('day').value + "T23:59:59"),
 
-      time:{
-        unit:'hour',
-        stepSize:2
-      },
+    time:{
+  unit:'hour',
+  stepSize: 1
+},
+afterBuildTicks: function(axis){
+  const min = axis.min;
+  const max = axis.max;
+  const ticks = [];
+  let t = Math.ceil(min / 3600000) * 3600000;
+  while(t <= max){
+    ticks.push({ value: t });
+    t += 3600000;
+  }
+  axis.ticks = ticks;
+},
 
       ticks:{
         autoSkip:false,
