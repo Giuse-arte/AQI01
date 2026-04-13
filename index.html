@@ -1319,21 +1319,7 @@ afterBuildTicks: function(axis){
   },
 
 grid:{
-  display: true,
-  color: function(context){
-    const val = context.tick?.value ?? context.tick;
-    const hour = new Date(val).getHours();
-    if(isNaN(hour)) return 'rgba(0,0,0,0.07)';
-    return hour % 4 === 0
-      ? 'rgba(0,0,0,0.20)'
-      : 'rgba(0,0,0,0.07)';
-  },
-  lineWidth: function(context){
-    const val = context.tick?.value ?? context.tick;
-    const hour = new Date(val).getHours();
-    if(isNaN(hour)) return 1;
-    return hour % 4 === 0 ? 2 : 1;
-  }
+  display: false
 }
 },
 
@@ -1345,22 +1331,10 @@ grid:{
       text:'µg/m³'
     },
     
- grid:{
+grid:{
   display: true,
-  color: function(context){
-    const val = context.tick?.value ?? context.tick;
-    const hour = new Date(val).getHours();
-    if(isNaN(hour)) return 'rgba(0,0,0,0.07)';
-    return hour % 4 === 0
-      ? 'rgba(0,0,0,0.20)'
-      : 'rgba(0,0,0,0.07)';
-  },
-  lineWidth: function(context){
-    const val = context.tick?.value ?? context.tick;
-    const hour = new Date(val).getHours();
-    if(isNaN(hour)) return 1;
-    return hour % 4 === 0 ? 2 : 1;
-  }
+  color: 'rgba(0,0,0,0.06)',
+  lineWidth: 0.8
 }
   }
 }
@@ -1597,21 +1571,7 @@ afterBuildTicks: function(axis){
   },
 
  grid:{
-  display: true,
-  color: function(context){
-    const val = context.tick?.value ?? context.tick;
-    const hour = new Date(val).getHours();
-    if(isNaN(hour)) return 'rgba(0,0,0,0.07)';
-    return hour % 4 === 0
-      ? 'rgba(0,0,0,0.20)'
-      : 'rgba(0,0,0,0.07)';
-  },
-  lineWidth: function(context){
-    const val = context.tick?.value ?? context.tick;
-    const hour = new Date(val).getHours();
-    if(isNaN(hour)) return 1;
-    return hour % 4 === 0 ? 2 : 1;
-  }
+  display: false
 }
 },
 
@@ -1623,9 +1583,11 @@ afterBuildTicks: function(axis){
       text: m.u  // 🔥 prende unità dal meta
     },
     
-    grid:{
-      display:true
-    }
+   grid:{
+  display: true,
+  color: 'rgba(0,0,0,0.06)',
+  lineWidth: 0.8
+}
   }
 }
         }
@@ -1935,7 +1897,9 @@ afterBuildTicks: function(axis){
         })()
       },
 
-      grid:{ display:true }
+      grid:{
+        display: false
+      }
     },
 
     y:{
@@ -1946,7 +1910,11 @@ afterBuildTicks: function(axis){
         text:'µg/m³'
       },
 
-      grid:{ display:true }
+      grid:{
+        display: true,
+        color: 'rgba(0,0,0,0.06)',
+        lineWidth: 0.8
+      }
     }
   }
 }
