@@ -1217,8 +1217,8 @@ x:{
   type:'time',
 
   // 🔥 FORZA PARTENZA A MEZZANOTTE
-  min: new Date(document.getElementById('day').value + "T00:00:00"),
-  max: new Date(document.getElementById('day').value + "T23:59:59"),
+min: document.getElementById('viewMode').value === 'live' ? undefined : new Date(document.getElementById('day').value + "T00:00:00"),
+max: document.getElementById('viewMode').value === 'live' ? undefined : new Date(document.getElementById('day').value + "T23:59:59"),
 
   time:{
   unit:'hour',
@@ -1456,8 +1456,8 @@ x:{
   type:'time',
 
   // 🔥 FORZA PARTENZA A MEZZANOTTE
-  min: new Date(document.getElementById('day').value + "T00:00:00"),
-  max: new Date(document.getElementById('day').value + "T23:59:59"),
+min: document.getElementById('viewMode').value === 'live' ? undefined : new Date(document.getElementById('day').value + "T00:00:00"),
+max: document.getElementById('viewMode').value === 'live' ? undefined : new Date(document.getElementById('day').value + "T23:59:59"),
 
   time:{
   unit:'hour',
@@ -1710,7 +1710,7 @@ datasets: (function(){
   // SOGLIE DINAMICHE
   // =========================
 
-  if(currentMode === 'EEA'){
+  if(document.getElementById('mode').value === 'EEA'){
     base.push(
       {
   label: 'Limite EEA PM2.5 (25)',
@@ -1779,8 +1779,8 @@ options:{
       type:'time',
 
       // 🔥 ALLINEATO AGLI ALTRI GRAFICI
-      min: new Date(document.getElementById('day').value + "T00:00:00"),
-      max: new Date(document.getElementById('day').value + "T23:59:59"),
+min: document.getElementById('viewMode').value === 'live' ? undefined : new Date(document.getElementById('day').value + "T00:00:00"),
+max: document.getElementById('viewMode').value === 'live' ? undefined : new Date(document.getElementById('day').value + "T23:59:59"),
 
       time:{
         unit:'hour',
