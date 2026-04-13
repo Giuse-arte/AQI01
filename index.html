@@ -1222,7 +1222,7 @@ max: document.getElementById('viewMode').value === 'live' ? undefined : new Date
 
   time:{
   unit:'hour',
-  stepSize: 2
+  stepSize: 1
 },
 
   ticks:{
@@ -1277,9 +1277,19 @@ max: document.getElementById('viewMode').value === 'live' ? undefined : new Date
     })()
   },
 
-  grid:{
-    display:true
+ grid:{
+  display: true,
+  color: function(context){
+    const hour = new Date(context.tick.value).getHours();
+    return hour % 4 === 0
+      ? 'rgba(0,0,0,0.25)'
+      : 'rgba(0,0,0,0.07)';
+  },
+  lineWidth: function(context){
+    const hour = new Date(context.tick.value).getHours();
+    return hour % 4 === 0 ? 2 : 1;
   }
+}
 },
 
   y:{
@@ -1290,9 +1300,19 @@ max: document.getElementById('viewMode').value === 'live' ? undefined : new Date
       text:'µg/m³'
     },
     
-    grid:{
-      display:true
-    }
+  grid:{
+  display: true,
+  color: function(context){
+    const hour = new Date(context.tick.value).getHours();
+    return hour % 4 === 0
+      ? 'rgba(0,0,0,0.25)'
+      : 'rgba(0,0,0,0.07)';
+  },
+  lineWidth: function(context){
+    const hour = new Date(context.tick.value).getHours();
+    return hour % 4 === 0 ? 2 : 1;
+  }
+}
   }
 }
         }
@@ -1461,7 +1481,7 @@ max: document.getElementById('viewMode').value === 'live' ? undefined : new Date
 
   time:{
   unit:'hour',
-  stepSize: 2
+  stepSize: 1
 },
 
   ticks:{
@@ -1517,8 +1537,18 @@ max: document.getElementById('viewMode').value === 'live' ? undefined : new Date
   },
 
   grid:{
-    display:true
+  display: true,
+  color: function(context){
+    const hour = new Date(context.tick.value).getHours();
+    return hour % 4 === 0
+      ? 'rgba(0,0,0,0.25)'
+      : 'rgba(0,0,0,0.07)';
+  },
+  lineWidth: function(context){
+    const hour = new Date(context.tick.value).getHours();
+    return hour % 4 === 0 ? 2 : 1;
   }
+}
 },
 
  y:{
@@ -1784,7 +1814,7 @@ max: document.getElementById('viewMode').value === 'live' ? undefined : new Date
 
       time:{
         unit:'hour',
-        stepSize:2
+        stepSize:1
       },
 
       ticks:{
