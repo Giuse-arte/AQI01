@@ -1277,16 +1277,20 @@ max: document.getElementById('viewMode').value === 'live' ? undefined : new Date
     })()
   },
 
- grid:{
+grid:{
   display: true,
   color: function(context){
-    const hour = new Date(context.tick.value).getHours();
+    const val = context.tick?.value ?? context.tick;
+    const hour = new Date(val).getHours();
+    if(isNaN(hour)) return 'rgba(0,0,0,0.07)';
     return hour % 4 === 0
       ? 'rgba(0,0,0,0.25)'
       : 'rgba(0,0,0,0.07)';
   },
   lineWidth: function(context){
-    const hour = new Date(context.tick.value).getHours();
+    const val = context.tick?.value ?? context.tick;
+    const hour = new Date(val).getHours();
+    if(isNaN(hour)) return 1;
     return hour % 4 === 0 ? 2 : 1;
   }
 }
@@ -1300,16 +1304,20 @@ max: document.getElementById('viewMode').value === 'live' ? undefined : new Date
       text:'µg/m³'
     },
     
-  grid:{
+ grid:{
   display: true,
   color: function(context){
-    const hour = new Date(context.tick.value).getHours();
+    const val = context.tick?.value ?? context.tick;
+    const hour = new Date(val).getHours();
+    if(isNaN(hour)) return 'rgba(0,0,0,0.07)';
     return hour % 4 === 0
       ? 'rgba(0,0,0,0.25)'
       : 'rgba(0,0,0,0.07)';
   },
   lineWidth: function(context){
-    const hour = new Date(context.tick.value).getHours();
+    const val = context.tick?.value ?? context.tick;
+    const hour = new Date(val).getHours();
+    if(isNaN(hour)) return 1;
     return hour % 4 === 0 ? 2 : 1;
   }
 }
@@ -1536,16 +1544,20 @@ max: document.getElementById('viewMode').value === 'live' ? undefined : new Date
     })()
   },
 
-  grid:{
+ grid:{
   display: true,
   color: function(context){
-    const hour = new Date(context.tick.value).getHours();
+    const val = context.tick?.value ?? context.tick;
+    const hour = new Date(val).getHours();
+    if(isNaN(hour)) return 'rgba(0,0,0,0.07)';
     return hour % 4 === 0
       ? 'rgba(0,0,0,0.25)'
       : 'rgba(0,0,0,0.07)';
   },
   lineWidth: function(context){
-    const hour = new Date(context.tick.value).getHours();
+    const val = context.tick?.value ?? context.tick;
+    const hour = new Date(val).getHours();
+    if(isNaN(hour)) return 1;
     return hour % 4 === 0 ? 2 : 1;
   }
 }
