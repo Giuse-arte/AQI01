@@ -1328,26 +1328,9 @@ afterBuildTicks: function(axis){
 }
   },
 
-  title:{
-    display:true,
-    text: (function(){
-
-      const dayInput = document.getElementById('day');
-
-      if(dayInput && dayInput.value){
-        const d = new Date(dayInput.value);
-
-        return d.toLocaleDateString('it-IT',{
-          day:'2-digit',
-          month:'short',
-          year:'numeric'
-        });
-      }
-
-      return "";
-
-    })()
-  },
+title:{
+  display:false
+},
 
 grid:{
   display: false
@@ -1580,26 +1563,9 @@ afterBuildTicks: function(axis){
 }
   },
 
-  title:{
-    display:true,
-    text: (function(){
-
-      const dayInput = document.getElementById('day');
-
-      if(dayInput && dayInput.value){
-        const d = new Date(dayInput.value);
-
-        return d.toLocaleDateString('it-IT',{
-          day:'2-digit',
-          month:'short',
-          year:'numeric'
-        });
-      }
-
-      return "";
-
-    })()
-  },
+title:{
+  display:false
+},
 
  grid:{
   display: false
@@ -1912,21 +1878,9 @@ afterBuildTicks: function(axis){
         }
       },
 
-      title:{
-        display:true,
-        text:(function(){
-          const dayInput = document.getElementById('day');
-          if(dayInput && dayInput.value){
-            const d = new Date(dayInput.value);
-            return d.toLocaleDateString('it-IT',{
-              day:'2-digit',
-              month:'short',
-              year:'numeric'
-            });
-          }
-          return "";
-        })()
-      },
+title:{
+  display:false
+},
 
       grid:{
         display: false
