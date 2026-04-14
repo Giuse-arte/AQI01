@@ -188,6 +188,12 @@
   font-weight:700
 }
 
+.kpi .minmax{
+  font-size:.72rem;
+  color:var(--muted);
+  margin-top:4px
+}
+
     /* Badge AQI colorato */
     .aqi-badge{
       margin-top:6px;
@@ -534,6 +540,7 @@
         <div class="title">Umidità</div>
         <div class="sensor">BME680</div>
         <div class="value" id="hum">— %</div>
+        <div class="minmax" id="humMM"></div>
       </div>
 
       <!-- KPI: TEMPERATURA -->
@@ -542,6 +549,7 @@
         <div class="title">Temperatura</div>
         <div class="sensor">BME680</div>
         <div class="value" id="temp">— °C</div>
+        <div class="minmax" id="tempMM"></div>
       </div>
 
       <!-- KPI: PRESSIONE -->
@@ -550,6 +558,7 @@
         <div class="title">Pressione</div>
         <div class="sensor">BME680</div>
         <div class="value" id="press">— hPa</div>
+        <div class="minmax" id="pressMM"></div>
       </div>
 
       <!-- KPI: PM1 (valore istantaneo) -->
@@ -557,6 +566,7 @@
         <div class="title">PM1</div>
         <div class="sensor">PMS5003</div>
         <div class="value" id="pm1">— µg/m³</div>
+        <div class="minmax" id="pm1MM"></div>
       </div>
 
       <!-- KPI: PM2.5 (MEDIA MOBILE 24h) -->
@@ -873,17 +883,41 @@ function applyDemoKPI(){
   feeds → array di misurazioni ThingSpeak
 */
 function applyKPI(feeds){
-  /* Se non ci sono dati → esce */
   if(!feeds.length) return;
-
-  /* Ultima misurazione disponibile */
   const last = feeds.at(-1);
 
-  /* KPI istantanei (ultimo valore) */
-  hum.textContent   = fmt1(last.field1) + ' %';
-  temp.textContent  = fmt1(last.field2) + ' °C';
-  press.textContent = fmt1(last.field3) + ' hPa';
-  pm1.textContent   = fmt0(last.field5) + ' µg/m³';
+  const isDay = document.getElementById('viewMode').value === 'day';
+
+  const avg = f =>
+    feeds.reduce((s,x) => s + Number(x[f] || 0), 0) / feeds.length;
+
+  const minVal = f =>
+    Math.min(...feeds.map(x => Number(x[f])).filter(v => !isNaN(v)));
+
+  const maxVal = f =>
+    Math.max(...feeds.map(x => Number(x[f])).filter(v => !isNaN(v)));
+
+  if(isDay){
+    hum.textContent   = fmt1(avg('field1')) + ' %';
+    temp.textContent  = fmt1(avg('field2')) + ' °C';
+    press.textContent = fmt1(avg('field3')) + ' hPa';
+    pm1.textContent   = fmt0(avg('field5')) + ' µg/m³';
+
+    humMM.textContent   = fmt1(minVal('field1')) + ' % — ' + fmt1(maxVal('field1')) + ' %';
+    tempMM.textContent  = fmt1(minVal('field2')) + ' °C — ' + fmt1(maxVal('field2')) + ' °C';
+    pressMM.textContent = fmt1(minVal('field3')) + ' hPa — ' + fmt1(maxVal('field3')) + ' hPa';
+    pm1MM.textContent   = fmt0(minVal('field5')) + ' µg/m³ — ' + fmt0(maxVal('field5')) + ' µg/m³';
+  } else {
+    hum.textContent   = fmt1(last.field1) + ' %';
+    temp.textContent  = fmt1(last.field2) + ' °C';
+    press.textContent = fmt1(last.field3) + ' hPa';
+    pm1.textContent   = fmt0(last.field5) + ' µg/m³';
+
+    humMM.textContent   = '';
+    tempMM.textContent  = '';
+    pressMM.textContent = '';
+    pm1MM.textContent   = '';
+  }
 
   /*
     Funzione helper:
