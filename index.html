@@ -189,10 +189,9 @@
 }
 
 .kpi .minmax{
-  font-size:.72rem;
+  font-size:1rem;
   color:var(--muted);
-  margin-top:4px;
-  font-size:.72rem
+  margin-top:4px
 }
 
     /* Badge AQI colorato */
@@ -284,14 +283,14 @@
   /* =========================
    INFO BUTTON
    ========================= */
-..info-btn{
-  width:36px;
-  height:36px;
+.info-btn{
+  width:32px;
+  height:32px;
   border-radius:50%;
   border:none;
   background:#0b3c5d;
   color:#fff;
-  font-size:18px;
+  font-size:16px;
   font-weight:700;
   cursor:pointer;
   display:flex;
@@ -589,7 +588,7 @@
       <div class="kpi">
        <div style="position:relative;text-align:center;">
         <div class="title" id="aqiTitle">AQI (EEA 24h)</div>
-        <button class="info-btn aqi-info-btn" onclick="openAQIInfo(document.getElementById('mode').value)" style="position:absolute;top:0;right:0;">i</button>
+        <button class="info-btn aqi-info-btn" onclick="openAQIInfo(document.getElementById('mode').value)" style="position:absolute;top:-8px;right:0;">i</button>
        </div>
         <div class="sensor">PM2.5 / PM10</div>
 
