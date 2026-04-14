@@ -438,8 +438,8 @@
   background:var(--card);
   border-radius:var(--radius);
   box-shadow:var(--shadow);
-  padding:10px;
-  height: 520px;
+  padding:10px 10px 40px 10px;
+  height: 500px;
   display: flex;
   flex-direction: column;
   border: 2px solid #d1d5db;
@@ -458,7 +458,7 @@
     /* Iframe ThingSpeak */
     iframe {
       width: 100%;
-      height: 260px; /* Aumentato un po' per dare respiro al grafico */
+      height: 230px; /* Aumentato un po' per dare respiro al grafico */
       border: 0;
       border-radius: 8px;
       overflow: hidden; /* Nasconde le scrollbar se presenti */
@@ -1241,7 +1241,7 @@ const data = feeds.map(f => Number(f.field6));
           <span class="chart-title">PM2.5</span>
           <span class="chart-sensor">PMS5003</span>
         </div>
-        <canvas id="chart_pm25" style="height:260px;"></canvas>
+        <canvas id="chart_pm25" style="height:230px;"></canvas>
       `;
 
       const pm1 = chartsContainer.querySelector('#chart_5')?.parentElement;
