@@ -155,7 +155,7 @@
     /* Griglia 7 colonne per le KPI */
  .kpi-row{
   display:grid;
-  grid-template-columns:repeat(7,1fr);
+  grid-template-columns:repeat(auto-fit, minmax(180px, 1fr));
   gap:16px
 }
 
@@ -186,6 +186,12 @@
   margin-top:12px;
   font-size:1.6rem;
   font-weight:700
+}
+
+.kpi .minmax{
+  font-size:1rem;
+  color:var(--muted);
+  margin-top:4px
 }
 
     /* Badge AQI colorato */
@@ -278,20 +284,19 @@
    INFO BUTTON
    ========================= */
 .info-btn{
-  width:18px;
-  height:18px;
+  width:32px;
+  height:32px;
   border-radius:50%;
   border:none;
   background:#0b3c5d;
   color:#fff;
-  font-size:12px;
+  font-size:16px;
   font-weight:700;
   cursor:pointer;
   display:flex;
   align-items:center;
   justify-content:center;
-
-  transition: all 0.2s ease; /* 🔥 animazione */
+  transition: all 0.2s ease;
 }
 
 /* 🔥 HOVER */
@@ -534,6 +539,7 @@
         <div class="title">Umidità</div>
         <div class="sensor">BME680</div>
         <div class="value" id="hum">— %</div>
+        <div class="minmax" id="humMM"></div>
       </div>
 
       <!-- KPI: TEMPERATURA -->
@@ -542,6 +548,7 @@
         <div class="title">Temperatura</div>
         <div class="sensor">BME680</div>
         <div class="value" id="temp">— °C</div>
+        <div class="minmax" id="tempMM"></div>
       </div>
 
       <!-- KPI: PRESSIONE -->
@@ -550,6 +557,7 @@
         <div class="title">Pressione</div>
         <div class="sensor">BME680</div>
         <div class="value" id="press">— hPa</div>
+        <div class="minmax" id="pressMM"></div>
       </div>
 
       <!-- KPI: PM1 (valore istantaneo) -->
@@ -557,6 +565,7 @@
         <div class="title">PM1</div>
         <div class="sensor">PMS5003</div>
         <div class="value" id="pm1">— µg/m³</div>
+        <div class="minmax" id="pm1MM"></div>
       </div>
 
       <!-- KPI: PM2.5 (MEDIA MOBILE 24h) -->
@@ -577,12 +586,10 @@
       <!-- KPI: AQI -->
       <!-- Titolo e contenuto cambiano in base allo standard (EEA / EPA) -->
       <div class="kpi">
-       <div style="display:flex;justify-content:space-between;align-items:center;">
+       <div style="position:relative;text-align:center;">
         <div class="title" id="aqiTitle">AQI (EEA 24h)</div>
-
-        <button class="info-btn aqi-info-btn" onclick="openAQIInfo()">i</button>
-         
-      </div>
+        <button class="info-btn aqi-info-btn" onclick="openAQIInfo(document.getElementById('mode').value)" style="position:absolute;top:-8px;right:0;">i</button>
+       </div>
         <div class="sensor">PM2.5 / PM10</div>
 
         <!-- Valore numerico AQI (solo per EPA) -->
@@ -657,7 +664,7 @@
   <!-- ========================= -->
   <!-- FOOTER -->
   <!-- ========================= -->
-  <footer>Versione 6.8.4 — Dashboard AQI </footer>
+  <footer>Versione 01.00 — Dashboard AQI </footer>
 
 </main>
 
@@ -873,23 +880,47 @@ function applyDemoKPI(){
   feeds → array di misurazioni ThingSpeak
 */
 function applyKPI(feeds){
-  /* Se non ci sono dati → esce */
   if(!feeds.length) return;
-
-  /* Ultima misurazione disponibile */
   const last = feeds.at(-1);
 
-  /* KPI istantanei (ultimo valore) */
-  hum.textContent   = fmt1(last.field1) + ' %';
-  temp.textContent  = fmt1(last.field2) + ' °C';
-  press.textContent = fmt1(last.field3) + ' hPa';
-  pm1.textContent   = fmt0(last.field5) + ' µg/m³';
+  const isDay = document.getElementById('viewMode').value === 'day';
+
+  const avg = f =>
+    feeds.reduce((s,x) => s + Number(x[f] || 0), 0) / feeds.length;
+
+  const minVal = f =>
+    Math.min(...feeds.map(x => Number(x[f])).filter(v => !isNaN(v)));
+
+  const maxVal = f =>
+    Math.max(...feeds.map(x => Number(x[f])).filter(v => !isNaN(v)));
+
+  if(isDay){
+    hum.textContent   = fmt1(avg('field1')) + ' %';
+    temp.textContent  = fmt1(avg('field2')) + ' °C';
+    press.textContent = fmt1(avg('field3')) + ' hPa';
+    pm1.textContent   = fmt0(avg('field5')) + ' µg/m³';
+
+    humMM.textContent   = fmt1(minVal('field1')) + ' % — ' + fmt1(maxVal('field1')) + ' %';
+    tempMM.textContent  = fmt1(minVal('field2')) + ' °C — ' + fmt1(maxVal('field2')) + ' °C';
+    pressMM.textContent = fmt1(minVal('field3')) + ' hPa — ' + fmt1(maxVal('field3')) + ' hPa';
+    pm1MM.textContent   = fmt0(minVal('field5')) + ' µg/m³ — ' + fmt0(maxVal('field5')) + ' µg/m³';
+  } else {
+    hum.textContent   = fmt1(last.field1) + ' %';
+    temp.textContent  = fmt1(last.field2) + ' °C';
+    press.textContent = fmt1(last.field3) + ' hPa';
+    pm1.textContent   = fmt0(last.field5) + ' µg/m³';
+
+    humMM.textContent   = '';
+    tempMM.textContent  = '';
+    pressMM.textContent = '';
+    pm1MM.textContent   = '';
+  }
 
   /*
     Funzione helper:
     calcola la media di un campo su tutte le misurazioni
   */
-  const avg = f =>
+  avg = f =>
     feeds.reduce((s,x)=>s + Number(x[f] || 0), 0) / feeds.length;
 
   /* Medie 24h per PM2.5 e PM10 */
@@ -1319,21 +1350,7 @@ afterBuildTicks: function(axis){
   },
 
 grid:{
-  display: true,
-  color: function(context){
-    const val = context.tick?.value ?? context.tick;
-    const hour = new Date(val).getHours();
-    if(isNaN(hour)) return 'rgba(0,0,0,0.07)';
-    return hour % 4 === 0
-      ? 'rgba(0,0,0,0.20)'
-      : 'rgba(0,0,0,0.07)';
-  },
-  lineWidth: function(context){
-    const val = context.tick?.value ?? context.tick;
-    const hour = new Date(val).getHours();
-    if(isNaN(hour)) return 1;
-    return hour % 4 === 0 ? 2 : 1;
-  }
+  display: false
 }
 },
 
@@ -1345,22 +1362,10 @@ grid:{
       text:'µg/m³'
     },
     
- grid:{
+grid:{
   display: true,
-  color: function(context){
-    const val = context.tick?.value ?? context.tick;
-    const hour = new Date(val).getHours();
-    if(isNaN(hour)) return 'rgba(0,0,0,0.07)';
-    return hour % 4 === 0
-      ? 'rgba(0,0,0,0.20)'
-      : 'rgba(0,0,0,0.07)';
-  },
-  lineWidth: function(context){
-    const val = context.tick?.value ?? context.tick;
-    const hour = new Date(val).getHours();
-    if(isNaN(hour)) return 1;
-    return hour % 4 === 0 ? 2 : 1;
-  }
+  color: 'rgba(0,0,0,0.06)',
+  lineWidth: 0.8
 }
   }
 }
@@ -1597,21 +1602,7 @@ afterBuildTicks: function(axis){
   },
 
  grid:{
-  display: true,
-  color: function(context){
-    const val = context.tick?.value ?? context.tick;
-    const hour = new Date(val).getHours();
-    if(isNaN(hour)) return 'rgba(0,0,0,0.07)';
-    return hour % 4 === 0
-      ? 'rgba(0,0,0,0.20)'
-      : 'rgba(0,0,0,0.07)';
-  },
-  lineWidth: function(context){
-    const val = context.tick?.value ?? context.tick;
-    const hour = new Date(val).getHours();
-    if(isNaN(hour)) return 1;
-    return hour % 4 === 0 ? 2 : 1;
-  }
+  display: false
 }
 },
 
@@ -1623,9 +1614,11 @@ afterBuildTicks: function(axis){
       text: m.u  // 🔥 prende unità dal meta
     },
     
-    grid:{
-      display:true
-    }
+   grid:{
+  display: true,
+  color: 'rgba(0,0,0,0.06)',
+  lineWidth: 0.8
+}
   }
 }
         }
@@ -1743,17 +1736,17 @@ feeds.forEach((f, i) => {
       const d = document.createElement('div');
       d.className = 'chart';
 
- d.innerHTML = `
+ const standardLabel = document.getElementById('mode').value;
+
+d.innerHTML = `
   <div style="display:flex;align-items:center;gap:8px;">
     <span class="chart-title">
-      PM10 / PM2.5 media mobile 24h
+      PM10 / PM2.5 media mobile 24h — Standard ${standardLabel}
     </span>
-
-    <button class="info-btn" onclick="openInfoPopup()">
+    <button class="info-btn combo-info-btn" onclick="openInfoPopup()" style="margin-left:auto;flex-shrink:0;">
       i
     </button>
   </div>
-
   <canvas id="pmCombined"></canvas>
 `;
       //=============================
@@ -1935,7 +1928,9 @@ afterBuildTicks: function(axis){
         })()
       },
 
-      grid:{ display:true }
+      grid:{
+        display: false
+      }
     },
 
     y:{
@@ -1946,7 +1941,11 @@ afterBuildTicks: function(axis){
         text:'µg/m³'
       },
 
-      grid:{ display:true }
+      grid:{
+        display: true,
+        color: 'rgba(0,0,0,0.06)',
+        lineWidth: 0.8
+      }
     }
   }
 }
