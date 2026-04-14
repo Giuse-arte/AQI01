@@ -159,7 +159,7 @@
   gap:16px
 }
 
- .kpi{
+.kpi{
   background:var(--card);
   border-radius:var(--radius);
   box-shadow:var(--shadow);
@@ -168,7 +168,8 @@
   aspect-ratio:1/1;
   display:flex;
   flex-direction:column;
-  justify-content:center
+  justify-content:center;
+  position:relative
 }
 
  .kpi .title{
@@ -586,10 +587,8 @@
       <!-- KPI: AQI -->
       <!-- Titolo e contenuto cambiano in base allo standard (EEA / EPA) -->
       <div class="kpi">
-       <div style="position:relative;text-align:center;">
-        <div class="title" id="aqiTitle">AQI (EEA 24h)</div>
-        <button class="info-btn aqi-info-btn" onclick="openAQIInfo(document.getElementById('mode').value)" style="position:absolute;top:-8px;right:0;">i</button>
-       </div>
+      <button class="info-btn aqi-info-btn" onclick="openAQIInfo(document.getElementById('mode').value)" style="position:absolute;top:8px;right:8px;">i</button>
+      <div class="title" id="aqiTitle">AQI (EEA 24h)</div>
         <div class="sensor">PM2.5 / PM10</div>
 
         <!-- Valore numerico AQI (solo per EPA) -->
