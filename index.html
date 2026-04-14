@@ -921,7 +921,7 @@ function applyKPI(feeds){
     Funzione helper:
     calcola la media di un campo su tutte le misurazioni
   */
-  const avg = f =>
+  avg = f =>
     feeds.reduce((s,x)=>s + Number(x[f] || 0), 0) / feeds.length;
 
   /* Medie 24h per PM2.5 e PM10 */
