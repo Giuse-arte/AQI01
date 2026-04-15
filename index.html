@@ -1262,12 +1262,14 @@ const data = feeds.map(f => Number(f.field6));
         type:'line',
         data:{
           labels,
-          datasets:[{
-            data: data,
-            tension: 0.3,
-            borderWidth: 2,
-            pointRadius: 2
-          }]
+ datasets:[{
+    data: data,
+    tension: 0.3,
+    borderWidth: 2,
+    pointRadius: 2,
+    borderColor: '#3b82f6',
+    backgroundColor: '#3b82f6'
+  }]
         },
         options:{
           responsive:true,
