@@ -61,7 +61,7 @@
     }
 
     .chart canvas{
-      margin-top: 16px;
+      margin-top: 20px;
     }
     
     /* =========================
@@ -1262,12 +1262,12 @@ const data = feeds.map(f => Number(f.field6));
         type:'line',
         data:{
           labels,
-          datasets:[{
-            data: data,
-            tension: 0.3,
-            borderWidth: 2,
-            pointRadius: 2
-          }]
+ datasets:[{
+    data: data,
+    tension: 0.3,
+    borderWidth: 2,
+    pointRadius: 1,
+  }]
         },
         options:{
           responsive:true,
