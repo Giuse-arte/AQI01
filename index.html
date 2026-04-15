@@ -1898,9 +1898,11 @@ max: document.getElementById('viewMode').value === 'live' ? undefined : new Date
 
 time:{
   unit: isExtended ? 'day' : 'hour',
-  stepSize: 1
+  stepSize: 1,
+  displayFormats:{
+    day: viewMode === 'year' ? 'MMM yyyy' : 'd MMM'
+  }
 },
-
     time:{
   unit:'hour',
   stepSize: 1
@@ -1917,32 +1919,58 @@ afterBuildTicks: function(axis){
   axis.ticks = ticks;
 },
 
-      ticks:{
-        autoSkip:false,
-        maxRotation:45,
-        minRotation:45,
+ticks:{
+  autoSkip: true,
+  maxRotation:45,
+  minRotation:45,
 
-        callback:function(value){
-          const date = new Date(value);
-          const hours = date.getHours();
+  callback:function(value){
+    const date = new Date(value);
 
-          if(hours === 0){
-            return date.toLocaleDateString('it-IT',{
-              day:'2-digit',
-              month:'short'
-            });
-          }
+    // 🔵 ANNO → nome mese ogni 4 griglie + anno a gennaio
+    if(viewMode === 'year'){
+      const month = date.getMonth();
+      const year = date.getFullYear();
+      if(month === 0){
+        return date.toLocaleDateString('it-IT',{ month:'long', year:'numeric' });
+      }
+      if(month % 4 === 0){
+        return date.toLocaleDateString('it-IT',{ month:'short' });
+      }
+      return null;
+    }
 
-          if(hours % 4 === 0){
-            return date.toLocaleTimeString('it-IT',{
-              hour:'2-digit',
-              minute:'2-digit'
-            });
-          }
+    // 🟡 MESE → data + mese, primo del mese nome intero
+    if(viewMode === 'month'){
+      const day = date.getDate();
+      if(day === 1){
+        return date.toLocaleDateString('it-IT',{ month:'long' });
+      }
+      return date.toLocaleDateString('it-IT',{
+        day:'2-digit',
+        month:'short'
+      });
+    }
 
-          return null;
-        }
-      },
+    // 🟢 7 GIORNI → data + mese corto
+    if(viewMode === 'week'){
+      return date.toLocaleDateString('it-IT',{
+        day:'2-digit',
+        month:'short'
+      });
+    }
+
+    // 🔴 LIVE / GIORNO → ore
+    const hours = date.getHours();
+    if(hours === 0){
+      return date.toLocaleDateString('it-IT',{ day:'2-digit', month:'short' });
+    }
+    if(hours % 4 === 0){
+      return date.toLocaleTimeString('it-IT',{ hour:'2-digit', minute:'2-digit' });
+    }
+    return null;
+  }
+},
 
 title:{
   display:false
