@@ -1,0 +1,52 @@
+ticks:{
+  autoSkip: true,
+  maxRotation:45,
+  minRotation:45,
+
+  callback:function(value){
+    const date = new Date(value);
+
+    // 🔵 ANNO → nome mese ogni 4 griglie + anno a gennaio
+    if(viewMode === 'year'){
+      const month = date.getMonth();
+      const year = date.getFullYear();
+      if(month === 0){
+        return date.toLocaleDateString('it-IT',{ month:'long', year:'numeric' });
+      }
+      if(month % 4 === 0){
+        return date.toLocaleDateString('it-IT',{ month:'short' });
+      }
+      return null;
+    }
+
+    // 🟡 MESE → data + mese, primo del mese nome intero
+    if(viewMode === 'month'){
+      const day = date.getDate();
+      if(day === 1){
+        return date.toLocaleDateString('it-IT',{ month:'long' });
+      }
+      return date.toLocaleDateString('it-IT',{
+        day:'2-digit',
+        month:'short'
+      });
+    }
+
+    // 🟢 7 GIORNI → data + mese corto
+    if(viewMode === 'week'){
+      return date.toLocaleDateString('it-IT',{
+        day:'2-digit',
+        month:'short'
+      });
+    }
+
+    // 🔴 LIVE / GIORNO → ore
+    const hours = date.getHours();
+    if(hours === 0){
+      return date.toLocaleDateString('it-IT',{ day:'2-digit', month:'short' });
+    }
+    if(hours % 4 === 0){
+      return date.toLocaleTimeString('it-IT',{ hour:'2-digit', minute:'2-digit' });
+    }
+    return null;
+  }
+},
