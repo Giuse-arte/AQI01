@@ -159,7 +159,7 @@
   gap:16px
 }
 
- .kpi{
+.kpi{
   background:var(--card);
   border-radius:var(--radius);
   box-shadow:var(--shadow);
@@ -168,7 +168,8 @@
   aspect-ratio:1/1;
   display:flex;
   flex-direction:column;
-  justify-content:center
+  justify-content:center;
+  position:relative
 }
 
  .kpi .title{
@@ -249,11 +250,11 @@
   }
 
     /* Contenitore dei grafici */
-    .charts-wrapper{
- background: var(--card);
+ .charts-wrapper{
+ background: transparent;
  border: 2px solid #d1d5db;
  border-radius: 12px;
- box-shadow: var(--shadow);
+ box-shadow: none;
  padding: 14px 14px 18px;
  min-width:0;
  width:100%;
@@ -433,19 +434,20 @@
 .info-popup .linea-verde{color:#16a34a;}
     
     /* Singolo grafico */
-    .chart{
+ .chart{
   background:var(--card);
   border-radius:var(--radius);
   box-shadow:var(--shadow);
-  padding:10px;
-  height: 320px; /* ✅ AGGIUNTA */
+  padding:10px 10px 40px 10px;
+  height: 500px;
   display: flex;
   flex-direction: column;
+  border: 2px solid #d1d5db;
 }
     .chart-title{
-      font-weight:700;
-      font-size:.85rem
-    }
+  font-weight:700;
+  font-size:.85rem
+}
 
     .chart-sensor{
       font-size:.7rem;
@@ -456,7 +458,7 @@
     /* Iframe ThingSpeak */
     iframe {
       width: 100%;
-      height: 260px; /* Aumentato un po' per dare respiro al grafico */
+      height: 230px; /* Aumentato un po' per dare respiro al grafico */
       border: 0;
       border-radius: 8px;
       overflow: hidden; /* Nasconde le scrollbar se presenti */
@@ -586,10 +588,8 @@
       <!-- KPI: AQI -->
       <!-- Titolo e contenuto cambiano in base allo standard (EEA / EPA) -->
       <div class="kpi">
-       <div style="position:relative;text-align:center;">
-        <div class="title" id="aqiTitle">AQI (EEA 24h)</div>
-        <button class="info-btn aqi-info-btn" onclick="openAQIInfo(document.getElementById('mode').value)" style="position:absolute;top:-8px;right:0;">i</button>
-       </div>
+      <button class="info-btn aqi-info-btn" onclick="openAQIInfo(document.getElementById('mode').value)" style="position:absolute;top:8px;right:8px;">i</button>
+      <div class="title" id="aqiTitle">AQI (EEA 24h)</div>
         <div class="sensor">PM2.5 / PM10</div>
 
         <!-- Valore numerico AQI (solo per EPA) -->
@@ -1241,7 +1241,7 @@ const data = feeds.map(f => Number(f.field6));
           <span class="chart-title">PM2.5</span>
           <span class="chart-sensor">PMS5003</span>
         </div>
-        <canvas id="chart_pm25" style="height:260px;"></canvas>
+        <canvas id="chart_pm25" style="height:230px;"></canvas>
       `;
 
       const pm1 = chartsContainer.querySelector('#chart_5')?.parentElement;
@@ -1328,26 +1328,9 @@ afterBuildTicks: function(axis){
 }
   },
 
-  title:{
-    display:true,
-    text: (function(){
-
-      const dayInput = document.getElementById('day');
-
-      if(dayInput && dayInput.value){
-        const d = new Date(dayInput.value);
-
-        return d.toLocaleDateString('it-IT',{
-          day:'2-digit',
-          month:'short',
-          year:'numeric'
-        });
-      }
-
-      return "";
-
-    })()
-  },
+title:{
+  display:false
+},
 
 grid:{
   display: false
@@ -1580,26 +1563,9 @@ afterBuildTicks: function(axis){
 }
   },
 
-  title:{
-    display:true,
-    text: (function(){
-
-      const dayInput = document.getElementById('day');
-
-      if(dayInput && dayInput.value){
-        const d = new Date(dayInput.value);
-
-        return d.toLocaleDateString('it-IT',{
-          day:'2-digit',
-          month:'short',
-          year:'numeric'
-        });
-      }
-
-      return "";
-
-    })()
-  },
+title:{
+  display:false
+},
 
  grid:{
   display: false
@@ -1739,9 +1705,17 @@ feeds.forEach((f, i) => {
  const standardLabel = document.getElementById('mode').value;
 
 d.innerHTML = `
-  <div style="display:flex;align-items:center;gap:8px;">
-    <span class="chart-title">
+  <div style="display:flex;align-items:center;gap:8px;flex-wrap:nowrap;">
+    <span class="chart-title" style="white-space:nowrap;">
       PM10 / PM2.5 media mobile 24h — Standard ${standardLabel}
+    </span>
+    <span style="display:flex;align-items:center;gap:10px;margin-left:8px;flex-shrink:0;">
+      <span style="display:flex;align-items:center;gap:4px;font-size:.72rem;color:#6b7280;">
+        <span style="width:18px;height:3px;background:#ec4899;display:inline-block;border-radius:2px;"></span>PM2.5
+      </span>
+      <span style="display:flex;align-items:center;gap:4px;font-size:.72rem;color:#6b7280;">
+        <span style="width:18px;height:3px;background:#3b82f6;display:inline-block;border-radius:2px;"></span>PM10
+      </span>
     </span>
     <button class="info-btn combo-info-btn" onclick="openInfoPopup()" style="margin-left:auto;flex-shrink:0;">
       i
@@ -1849,15 +1823,8 @@ options:{
   maintainAspectRatio:false,
 
   plugins:{
-    legend:{
-  display:true,
-
-  labels:{
-    filter: function(item){
-      // ❌ nasconde tutte le voci "Limite"
-      return !item.text.includes('Limite');
-    }
-  }
+legend:{
+  display:false
 }
   },
 
@@ -1912,21 +1879,9 @@ afterBuildTicks: function(axis){
         }
       },
 
-      title:{
-        display:true,
-        text:(function(){
-          const dayInput = document.getElementById('day');
-          if(dayInput && dayInput.value){
-            const d = new Date(dayInput.value);
-            return d.toLocaleDateString('it-IT',{
-              day:'2-digit',
-              month:'short',
-              year:'numeric'
-            });
-          }
-          return "";
-        })()
-      },
+title:{
+  display:false
+},
 
       grid:{
         display: false
