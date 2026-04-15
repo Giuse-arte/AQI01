@@ -501,9 +501,6 @@
 <select id="viewMode">
   <option value="live">Ultime 24 ore</option>
   <option value="day">Giorno</option>
-  <option value="week">Ultimi 7 giorni</option>
-  <option value="month">Ultimo mese</option>
-  <option value="year">Ultimo anno</option>
 </select>
 
 <label id="dayLabel">Giorno</label>
@@ -792,43 +789,23 @@ function savePreferences(){
 
   const mode = document.getElementById('viewMode').value;
 
-  const end = new Date();
-
   // 🔴 LIVE
   if(mode === "live"){
+    const end = new Date();
     const start = new Date(end.getTime() - 24*60*60*1000);
     return { start, end };
   }
 
   // 🔵 GIORNO
-  if(mode === "day"){
-    const selected = new Date(document.getElementById('day').value);
-    const start = new Date(selected);
-    start.setHours(0,0,0,0);
-    const dayEnd = new Date(selected);
-    dayEnd.setHours(23,59,59,999);
-    return { start, end: dayEnd };
-  }
+  const selected = new Date(document.getElementById('day').value);
 
-  // 🟢 7 GIORNI
-  if(mode === "week"){
-    const start = new Date(end.getTime() - 7*24*60*60*1000);
-    return { start, end };
-  }
+  const start = new Date(selected);
+  start.setHours(0,0,0,0);
 
-  // 🟡 MESE
-  if(mode === "month"){
-    const start = new Date(end.getTime() - 30*24*60*60*1000);
-    return { start, end };
-  }
+  const end = new Date(selected);
+  end.setHours(23,59,59,999);
 
-  // 🔵 ANNO
-  if(mode === "year"){
-    const start = new Date(end.getTime() - 365*24*60*60*1000);
-    return { start, end };
-  }
-
-  return { start: end, end };
+  return { start, end };
 }
 
 /* =========================
@@ -1192,24 +1169,6 @@ function renderCharts(){
   const chartsContainer = document.getElementById('charts');
   chartsContainer.innerHTML = '';
 
-  const viewMode = document.getElementById('viewMode').value;
-const isExtended = ['week','month','year'].includes(viewMode);
-
-function aggregateDaily(feeds, field){
-  const map = {};
-  feeds.forEach(f => {
-    const d = new Date(f.created_at);
-    const key = d.toISOString().slice(0,10);
-    if(!map[key]) map[key] = [];
-    const val = Number(f[field]);
-    if(!isNaN(val)) map[key].push(val);
-  });
-  return Object.entries(map).map(([date, vals]) => ({
-    x: new Date(date),
-    y: vals.reduce((s,v) => s+v, 0) / vals.length
-  }));
-}
-  
   /* Se date non impostate → esce */
   const { start: tStart, end: tEnd } = getTimeRange();
 
@@ -1325,11 +1284,6 @@ x:{
   // 🔥 FORZA PARTENZA A MEZZANOTTE
 min: document.getElementById('viewMode').value === 'live' ? undefined : new Date(document.getElementById('day').value + "T00:00:00"),
 max: document.getElementById('viewMode').value === 'live' ? undefined : new Date(document.getElementById('day').value + "T23:59:59"),
-
-time:{
-  unit: isExtended ? 'day' : 'hour',
-  stepSize: isExtended ? 1 : 1
-},
 
  time:{
   unit:'hour',
@@ -1467,13 +1421,8 @@ const endStr = formatLocalDateTime(tEnd);
 
       const field = "field" + ch.dataset.id;
 
-      const labels = isExtended
-  ? aggregateDaily(feeds, field).map(p => p.x)
-  : feeds.map(f => new Date(f.created_at));
-
-const data = isExtended
-  ? aggregateDaily(feeds, field).map(p => p.y)
-  : feeds.map(f => Number(f[field]));
+      const labels = feeds.map(f => new Date(f.created_at));
+      const data = feeds.map(f => Number(f[field]));
 
       const d = document.createElement('div');
       d.className = 'chart';
@@ -1570,11 +1519,6 @@ x:{
   // 🔥 FORZA PARTENZA A MEZZANOTTE
 min: document.getElementById('viewMode').value === 'live' ? undefined : new Date(document.getElementById('day').value + "T00:00:00"),
 max: document.getElementById('viewMode').value === 'live' ? undefined : new Date(document.getElementById('day').value + "T23:59:59"),
-
-time:{
-  unit: isExtended ? 'day' : 'hour',
-  stepSize: isExtended ? 1 : 1
-},
 
 time:{
   unit:'hour',
@@ -1896,13 +1840,6 @@ legend:{
 min: document.getElementById('viewMode').value === 'live' ? undefined : new Date(document.getElementById('day').value + "T00:00:00"),
 max: document.getElementById('viewMode').value === 'live' ? undefined : new Date(document.getElementById('day').value + "T23:59:59"),
 
-time:{
-  unit: isExtended ? 'day' : 'hour',
-  stepSize: 1,
-  displayFormats:{
-    day: viewMode === 'year' ? 'MMM yyyy' : 'd MMM'
-  }
-},
     time:{
   unit:'hour',
   stepSize: 1
@@ -1919,58 +1856,32 @@ afterBuildTicks: function(axis){
   axis.ticks = ticks;
 },
 
-ticks:{
-  autoSkip: true,
-  maxRotation:45,
-  minRotation:45,
+      ticks:{
+        autoSkip:false,
+        maxRotation:45,
+        minRotation:45,
 
-  callback:function(value){
-    const date = new Date(value);
+        callback:function(value){
+          const date = new Date(value);
+          const hours = date.getHours();
 
-    // 🔵 ANNO → nome mese ogni 4 griglie + anno a gennaio
-    if(viewMode === 'year'){
-      const month = date.getMonth();
-      const year = date.getFullYear();
-      if(month === 0){
-        return date.toLocaleDateString('it-IT',{ month:'long', year:'numeric' });
-      }
-      if(month % 4 === 0){
-        return date.toLocaleDateString('it-IT',{ month:'short' });
-      }
-      return null;
-    }
+          if(hours === 0){
+            return date.toLocaleDateString('it-IT',{
+              day:'2-digit',
+              month:'short'
+            });
+          }
 
-    // 🟡 MESE → data + mese, primo del mese nome intero
-    if(viewMode === 'month'){
-      const day = date.getDate();
-      if(day === 1){
-        return date.toLocaleDateString('it-IT',{ month:'long' });
-      }
-      return date.toLocaleDateString('it-IT',{
-        day:'2-digit',
-        month:'short'
-      });
-    }
+          if(hours % 4 === 0){
+            return date.toLocaleTimeString('it-IT',{
+              hour:'2-digit',
+              minute:'2-digit'
+            });
+          }
 
-    // 🟢 7 GIORNI → data + mese corto
-    if(viewMode === 'week'){
-      return date.toLocaleDateString('it-IT',{
-        day:'2-digit',
-        month:'short'
-      });
-    }
-
-    // 🔴 LIVE / GIORNO → ore
-    const hours = date.getHours();
-    if(hours === 0){
-      return date.toLocaleDateString('it-IT',{ day:'2-digit', month:'short' });
-    }
-    if(hours % 4 === 0){
-      return date.toLocaleTimeString('it-IT',{ hour:'2-digit', minute:'2-digit' });
-    }
-    return null;
-  }
-},
+          return null;
+        }
+      },
 
 title:{
   display:false
@@ -2044,12 +1955,12 @@ mode.addEventListener('change', renderCharts);
 document.getElementById('viewMode').addEventListener('change', ()=>{
 
   const mode = document.getElementById('viewMode').value;
-  if(mode === "day"){
-    day.style.display = "inline-block";
-    dayLabel.style.display = "inline-block";
-  }else{
+  if(mode === "live"){
     day.style.display = "none";
     dayLabel.style.display = "none";
+  }else{
+    day.style.display = "inline-block";
+    dayLabel.style.display = "inline-block";
   }
 
 });
