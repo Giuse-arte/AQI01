@@ -501,6 +501,9 @@
 <select id="viewMode">
   <option value="live">Ultime 24 ore</option>
   <option value="day">Giorno</option>
+  <option value="week">Ultimi 7 giorni</option>
+  <option value="month">Ultimo mese</option>
+  <option value="year">Ultimo anno</option>
 </select>
 
 <label id="dayLabel">Giorno</label>
@@ -789,23 +792,43 @@ function savePreferences(){
 
   const mode = document.getElementById('viewMode').value;
 
+  const end = new Date();
+
   // 🔴 LIVE
   if(mode === "live"){
-    const end = new Date();
     const start = new Date(end.getTime() - 24*60*60*1000);
     return { start, end };
   }
 
   // 🔵 GIORNO
-  const selected = new Date(document.getElementById('day').value);
+  if(mode === "day"){
+    const selected = new Date(document.getElementById('day').value);
+    const start = new Date(selected);
+    start.setHours(0,0,0,0);
+    const dayEnd = new Date(selected);
+    dayEnd.setHours(23,59,59,999);
+    return { start, end: dayEnd };
+  }
 
-  const start = new Date(selected);
-  start.setHours(0,0,0,0);
+  // 🟢 7 GIORNI
+  if(mode === "week"){
+    const start = new Date(end.getTime() - 7*24*60*60*1000);
+    return { start, end };
+  }
 
-  const end = new Date(selected);
-  end.setHours(23,59,59,999);
+  // 🟡 MESE
+  if(mode === "month"){
+    const start = new Date(end.getTime() - 30*24*60*60*1000);
+    return { start, end };
+  }
 
-  return { start, end };
+  // 🔵 ANNO
+  if(mode === "year"){
+    const start = new Date(end.getTime() - 365*24*60*60*1000);
+    return { start, end };
+  }
+
+  return { start: end, end };
 }
 
 /* =========================
@@ -1169,6 +1192,24 @@ function renderCharts(){
   const chartsContainer = document.getElementById('charts');
   chartsContainer.innerHTML = '';
 
+  const viewMode = document.getElementById('viewMode').value;
+const isExtended = ['week','month','year'].includes(viewMode);
+
+function aggregateDaily(feeds, field){
+  const map = {};
+  feeds.forEach(f => {
+    const d = new Date(f.created_at);
+    const key = d.toISOString().slice(0,10);
+    if(!map[key]) map[key] = [];
+    const val = Number(f[field]);
+    if(!isNaN(val)) map[key].push(val);
+  });
+  return Object.entries(map).map(([date, vals]) => ({
+    x: new Date(date),
+    y: vals.reduce((s,v) => s+v, 0) / vals.length
+  }));
+}
+  
   /* Se date non impostate → esce */
   const { start: tStart, end: tEnd } = getTimeRange();
 
@@ -1284,6 +1325,11 @@ x:{
   // 🔥 FORZA PARTENZA A MEZZANOTTE
 min: document.getElementById('viewMode').value === 'live' ? undefined : new Date(document.getElementById('day').value + "T00:00:00"),
 max: document.getElementById('viewMode').value === 'live' ? undefined : new Date(document.getElementById('day').value + "T23:59:59"),
+
+time:{
+  unit: isExtended ? 'day' : 'hour',
+  stepSize: isExtended ? 1 : 1
+},
 
  time:{
   unit:'hour',
@@ -1421,8 +1467,13 @@ const endStr = formatLocalDateTime(tEnd);
 
       const field = "field" + ch.dataset.id;
 
-      const labels = feeds.map(f => new Date(f.created_at));
-      const data = feeds.map(f => Number(f[field]));
+      const labels = isExtended
+  ? aggregateDaily(feeds, field).map(p => p.x)
+  : feeds.map(f => new Date(f.created_at));
+
+const data = isExtended
+  ? aggregateDaily(feeds, field).map(p => p.y)
+  : feeds.map(f => Number(f[field]));
 
       const d = document.createElement('div');
       d.className = 'chart';
@@ -1519,6 +1570,11 @@ x:{
   // 🔥 FORZA PARTENZA A MEZZANOTTE
 min: document.getElementById('viewMode').value === 'live' ? undefined : new Date(document.getElementById('day').value + "T00:00:00"),
 max: document.getElementById('viewMode').value === 'live' ? undefined : new Date(document.getElementById('day').value + "T23:59:59"),
+
+time:{
+  unit: isExtended ? 'day' : 'hour',
+  stepSize: isExtended ? 1 : 1
+},
 
 time:{
   unit:'hour',
@@ -1840,6 +1896,11 @@ legend:{
 min: document.getElementById('viewMode').value === 'live' ? undefined : new Date(document.getElementById('day').value + "T00:00:00"),
 max: document.getElementById('viewMode').value === 'live' ? undefined : new Date(document.getElementById('day').value + "T23:59:59"),
 
+time:{
+  unit: isExtended ? 'day' : 'hour',
+  stepSize: 1
+},
+
     time:{
   unit:'hour',
   stepSize: 1
@@ -1955,12 +2016,12 @@ mode.addEventListener('change', renderCharts);
 document.getElementById('viewMode').addEventListener('change', ()=>{
 
   const mode = document.getElementById('viewMode').value;
-  if(mode === "live"){
-    day.style.display = "none";
-    dayLabel.style.display = "none";
-  }else{
+  if(mode === "day"){
     day.style.display = "inline-block";
     dayLabel.style.display = "inline-block";
+  }else{
+    day.style.display = "none";
+    dayLabel.style.display = "none";
   }
 
 });
