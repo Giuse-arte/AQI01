@@ -1189,7 +1189,7 @@ function renderCharts(){
   const viewMode = document.getElementById('viewMode').value;
   const isExtended = ['week','month','year'].includes(viewMode);
 
-  function aggregateDaily(feeds, field){
+function aggregateDaily(feeds, field){
     const map = {};
     feeds.forEach(f => {
       const d = new Date(f.created_at);
@@ -1204,7 +1204,26 @@ function renderCharts(){
     }));
   }
 
-  function xAxisConfig(){
+  function aggregateHourly(feeds, field){
+    const map = {};
+    feeds.forEach(f => {
+      const d = new Date(f.created_at);
+      // chiave = YYYY-MM-DDTHH
+      const key = d.toISOString().slice(0,13);
+      if(!map[key]) map[key] = [];
+      const val = Number(f[field]);
+      if(!isNaN(val)) map[key].push(val);
+    });
+    return Object.entries(map).sort().map(([key, vals]) => ({
+      x: new Date(key + ':00:00'),
+      y: vals.reduce((s,v) => s+v, 0) / vals.length
+    }));
+  }
+
+function xAxisConfig(){
+
+    const now = new Date();
+
     if(viewMode === 'year'){
       return {
         type:'time',
@@ -1224,10 +1243,29 @@ function renderCharts(){
         title:{ display:false }
       };
     }
+
     if(viewMode === 'month'){
+      // asse X sempre da oggi-30gg a oggi
+      const axisStart = new Date(now.getTime() - 30*24*60*60*1000);
+      axisStart.setHours(0,0,0,0);
+      const axisEnd = new Date(now);
+      axisEnd.setHours(23,59,59,999);
+
       return {
         type:'time',
+        min: axisStart,
+        max: axisEnd,
         time:{ unit:'day', stepSize:1 },
+        afterBuildTicks: function(axis){
+          // forza 1 tick per ogni giorno del mese
+          const ticks = [];
+          let t = new Date(axisStart);
+          while(t <= axisEnd){
+            ticks.push({ value: t.getTime() });
+            t = new Date(t.getTime() + 24*60*60*1000);
+          }
+          axis.ticks = ticks;
+        },
         ticks:{
           autoSkip:false,
           maxRotation:45,
@@ -1235,32 +1273,106 @@ function renderCharts(){
           callback: function(value){
             const date = new Date(value);
             const day = date.getDate();
-            if(day === 1) return date.toLocaleDateString('en-US',{ month:'long' });
-            if(day % 2 === 0) return date.toLocaleDateString('en-US',{ day:'2-digit', month:'short' });
+            // giorno 1 → nome mese intero, sempre mostrato
+            if(day === 1){
+              return date.toLocaleDateString('en-US',{ month:'long' });
+            }
+            // giorni pari → etichetta
+            if(day % 2 === 0){
+              return date.toLocaleDateString('en-US',{
+                day:'2-digit',
+                month:'short'
+              });
+            }
             return null;
           }
         },
-        grid:{ display:true, color:'rgba(0,0,0,0.07)', lineWidth:1 },
+        grid:{
+          display:true,
+          color: function(ctx){
+            const date = new Date(ctx.tick.value);
+            const day = date.getDate();
+            // griglia del giorno 1 o giorni pari → marcata
+            if(day === 1 || day % 2 === 0){
+              return 'rgba(0,0,0,0.15)';
+            }
+            // giorni dispari → griglia secondaria leggera
+            return 'rgba(0,0,0,0.05)';
+          },
+          lineWidth: function(ctx){
+            const date = new Date(ctx.tick.value);
+            const day = date.getDate();
+            if(day === 1 || day % 2 === 0) return 1.2;
+            return 0.6;
+          }
+        },
         title:{ display:false }
       };
     }
+
     if(viewMode === 'week'){
+      // asse X da oggi-7gg a oggi
+      const axisStart = new Date(now.getTime() - 7*24*60*60*1000);
+      axisStart.setHours(0,0,0,0);
+      const axisEnd = new Date(now);
+      axisEnd.setHours(23,59,59,999);
+
       return {
         type:'time',
-        time:{ unit:'day', stepSize:1 },
+        min: axisStart,
+        max: axisEnd,
+        time:{ unit:'hour', stepSize:1 },
+        afterBuildTicks: function(axis){
+          // 1 tick ogni ora
+          const ticks = [];
+          let t = axisStart.getTime();
+          while(t <= axisEnd.getTime()){
+            ticks.push({ value: t });
+            t += 3600000;
+          }
+          axis.ticks = ticks;
+        },
         ticks:{
           autoSkip:false,
           maxRotation:45,
           minRotation:45,
           callback: function(value){
             const date = new Date(value);
-            return date.toLocaleDateString('en-US',{ day:'2-digit', month:'short' });
+            const hours = date.getHours();
+            // mezzanotte → etichetta giorno
+            if(hours === 0){
+              return date.toLocaleDateString('en-US',{
+                day:'2-digit',
+                month:'short'
+              });
+            }
+            return null;
           }
         },
-        grid:{ display:true, color:'rgba(0,0,0,0.07)', lineWidth:1 },
+        grid:{
+          display:true,
+          color: function(ctx){
+            const date = new Date(ctx.tick.value);
+            const hours = date.getHours();
+            // mezzanotte → griglia marcata
+            if(hours === 0) return 'rgba(0,0,0,0.20)';
+            // ogni 6 ore → griglia secondaria
+            if(hours % 6 === 0) return 'rgba(0,0,0,0.10)';
+            // altre ore → nessuna griglia
+            return 'rgba(0,0,0,0)';
+          },
+          lineWidth: function(ctx){
+            const date = new Date(ctx.tick.value);
+            const hours = date.getHours();
+            if(hours === 0) return 1.5;
+            if(hours % 6 === 0) return 0.8;
+            return 0;
+          }
+        },
         title:{ display:false }
       };
     }
+
     // LIVE / GIORNO
     return {
       type:'time',
@@ -1353,11 +1465,14 @@ const endStr = formatLocalDateTime(tEnd);
 
       if(!feeds.length) return;
 
-const labels = isExtended
-  ? aggregateDaily(feeds, 'field6').map(p => p.x)
+const aggFn = viewMode === 'year' ? aggregateDaily : 
+              isExtended ? aggregateHourly : null;
+
+const labels = aggFn
+  ? aggFn(feeds, 'field6').map(p => p.x)
   : feeds.map(f => new Date(f.created_at));
-const data = isExtended
-  ? aggregateDaily(feeds, 'field6').map(p => p.y)
+const data = aggFn
+  ? aggFn(feeds, 'field6').map(p => p.y)
   : feeds.map(f => Number(f.field6));
 
       const startDate = labels[0];
@@ -1476,11 +1591,14 @@ const endStr = formatLocalDateTime(tEnd);
 
       const field = "field" + ch.dataset.id;
 
-const labels = isExtended
-        ? aggregateDaily(feeds, field).map(p => p.x)
+const aggFn = viewMode === 'year' ? aggregateDaily :
+                    isExtended ? aggregateHourly : null;
+
+      const labels = aggFn
+        ? aggFn(feeds, field).map(p => p.x)
         : feeds.map(f => new Date(f.created_at));
-      const data = isExtended
-        ? aggregateDaily(feeds, field).map(p => p.y)
+      const data = aggFn
+        ? aggFn(feeds, field).map(p => p.y)
         : feeds.map(f => Number(f[field]));
 
       const d = document.createElement('div');
@@ -1661,9 +1779,9 @@ const pm25 = [];
 const pm10 = [];
 
 if(isExtended){
-  // Aggregazione giornaliera per periodi estesi
-  const agg25 = aggregateDaily(feeds, 'field6');
-  const agg10 = aggregateDaily(feeds, 'field7');
+  const aggFn = viewMode === 'year' ? aggregateDaily : aggregateHourly;
+  const agg25 = aggFn(feeds, 'field6');
+  const agg10 = aggFn(feeds, 'field7');
   agg25.forEach(p => { labels.push(p.x); pm25.push(p.y); });
   agg10.forEach(p => { pm10.push(p.y); });
 } else {
