@@ -513,6 +513,9 @@
 <input type="hidden" id="start">
 <input type="hidden" id="end">
     
+    <label>Data inizio</label>
+    <input type="date" id="startDate">
+
     <label>Standard</label>
 
     <!-- Scelta standard AQI -->
@@ -777,11 +780,12 @@ function savePreferences(){
     .map(c => c.dataset.id);
 
   // oggetto preferenze completo
-  const prefs = {
+ const prefs = {
     charts: selectedCharts,
     start: start.value,
     end: end.value,
-    mode: mode.value
+    mode: mode.value,
+    startDate: document.getElementById('startDate').value
   };
 
   // salvataggio persistente nel browser
@@ -792,23 +796,31 @@ function getTimeRange(){
   const vm = document.getElementById('viewMode').value;
   const now = new Date();
 
+  const startDateVal = document.getElementById('startDate').value;
+  const hardStart = startDateVal ? new Date(startDateVal + 'T00:00:00') : null;
+
+  function applyHardStart(start, end){
+    if(hardStart && start < hardStart) start = hardStart;
+    return { start, end };
+  }
+
   if(vm === "live"){
-    return { start: new Date(now.getTime() - 24*60*60*1000), end: now };
+    return applyHardStart(new Date(now.getTime() - 24*60*60*1000), now);
   }
   if(vm === "day"){
     const selected = new Date(document.getElementById('day').value);
     const start = new Date(selected); start.setHours(0,0,0,0);
     const end = new Date(selected); end.setHours(23,59,59,999);
-    return { start, end };
+    return applyHardStart(start, end);
   }
   if(vm === "week"){
-    return { start: new Date(now.getTime() - 7*24*60*60*1000), end: now };
+    return applyHardStart(new Date(now.getTime() - 7*24*60*60*1000), now);
   }
   if(vm === "month"){
-    return { start: new Date(now.getTime() - 30*24*60*60*1000), end: now };
+    return applyHardStart(new Date(now.getTime() - 30*24*60*60*1000), now);
   }
   if(vm === "year"){
-    return { start: new Date(now.getTime() - 365*24*60*60*1000), end: now };
+    return applyHardStart(new Date(now.getTime() - 365*24*60*60*1000), now);
   }
   return { start: now, end: now };
 }
@@ -1838,6 +1850,7 @@ document.querySelectorAll('aside input[data-id]').forEach(cb=>{
 // date inizio / fine
 start.addEventListener('change', savePreferences);
 end.addEventListener('change', savePreferences);
+document.getElementById('startDate').addEventListener('change', savePreferences);
 
 // standard AQI
 mode.addEventListener('change', savePreferences);
@@ -1892,6 +1905,7 @@ document.addEventListener('DOMContentLoaded', () => {
     if (prefs.start) start.value = prefs.start;
     if (prefs.end) end.value = prefs.end;
     if (prefs.mode) mode.value = prefs.mode;
+    if (prefs.startDate) document.getElementById('startDate').value = prefs.startDate;
 
     // Ripristiniamo i grafici selezionati
     if (Array.isArray(prefs.charts)) {
