@@ -688,6 +688,7 @@
 /* ID del canale ThingSpeak da cui leggere i dati */
 const CHANNEL = 2789658;
 const chartDataStore = {};
+let rawFeedsStore = []; // dati grezzi ThingSpeak per CSV
 
 Chart.register({
   id: 'hourGrid',
@@ -1143,76 +1144,181 @@ function closeInfoPopup(){
 function exportCSV(){
 
   const sep = ';';
+  const vm = document.getElementById('viewMode').value;
+  const isExtended = ['week','month','year'].includes(vm);
 
-  // ordine fisso colonne
-  const order = [
-    { key:'PM1 (µg/m³)',                    col:'PM1 (µg/m³)'            },
-    { key:'PM2.5 (µg/m³)',                  col:'PM2.5 (µg/m³)'          },
-    { key:'PM10 (µg/m³)',                   col:'PM10 (µg/m³)'           },
-    { key:'PM2.5 media mobile 24h (µg/m³)', col:'COMBO PM2.5 (µg/m³)'   },
-    { key:'PM10 media mobile 24h (µg/m³)',  col:'COMBO PM10 (µg/m³)'    },
-    { key:'UMIDITÀ (%)',                    col:'Umidità (%)'            },
-    { key:'TEMPERATURA (°C)',               col:'Temperatura (°C)'       },
-    { key:'PRESSIONE (hPa)',                col:'Pressione (hPa)'        },
-  ];
-
-  // filtra solo i grafici attivi
-  const active = order.filter(o => chartDataStore[o.key]);
-
-  if(!active.length){
+  if(!rawFeedsStore.length){
     alert('Nessun dato disponibile. Premi Aggiorna prima di estrarre il CSV.');
     return;
   }
 
-  // nome file
-  const vm = document.getElementById('viewMode').value;
+  // =========================
+  // NOME FILE
+  // =========================
   const modeLabels = {
     live:'Ultime24h', day:'Giorno',
     week:'Ultimi7gg', month:'UltimoMese', year:'UltimoAnno'
   };
-  const dateTag = new Date().toLocaleDateString('it-IT',{
-    day:'2-digit', month:'2-digit', year:'numeric'
-  }).replace(/\//g,'-');
+
+  let dateTag = '';
+  if(vm === 'day'){
+    const dayVal = document.getElementById('day').value;
+    dateTag = dayVal ? dayVal.split('-').reverse().join('-') : '';
+  } else {
+    dateTag = new Date().toLocaleDateString('it-IT',{
+      day:'2-digit', month:'2-digit', year:'numeric'
+    }).replace(/\//g,'-');
+  }
+
   const filename = `AQI01_${modeLabels[vm] || vm}_${dateTag}`;
 
   // =========================
-  // COSTRUZIONE TIMESTAMP UNIFICATO
+  // GENERA PUNTI INTERPOLATI
   // =========================
-  // raccoglie tutti i timestamp unici da tutti i grafici attivi
-  const allTimestamps = new Set();
-  active.forEach(o => {
-    chartDataStore[o.key].labels.forEach(t => {
-      allTimestamps.add(new Date(t).getTime());
+  // Funzione: dato un array di feed grezzi e un field,
+  // restituisce array di { ts, value } con punto medio tra coppie
+  function interpolate(feeds, field){
+    const valid = feeds.filter(f => {
+      const v = Number(f[field]);
+      return !isNaN(v) && f[field] !== null && f[field] !== '';
     });
+    if(!valid.length) return [];
+
+    const points = [];
+
+    // primo punto = primo dato
+    points.push({
+      ts: new Date(valid[0].created_at).getTime(),
+      value: Number(valid[0][field])
+    });
+
+    // punti successivi = interpolazione tra coppie
+    for(let i = 1; i < valid.length; i++){
+      const tA = new Date(valid[i-1].created_at).getTime();
+      const tB = new Date(valid[i].created_at).getTime();
+      const vA = Number(valid[i-1][field]);
+      const vB = Number(valid[i][field]);
+      points.push({
+        ts: Math.round((tA + tB) / 2),
+        value: (vA + vB) / 2
+      });
+    }
+    return points;
+  }
+
+  // =========================
+  // CALCOLA SERIE PER OGNI CAMPO
+  // =========================
+  const fields = [
+    { field:'field5', col:'PM1 (µg/m³)'       },
+    { field:'field6', col:'PM2.5 (µg/m³)'     },
+    { field:'field7', col:'PM10 (µg/m³)'      },
+    { field:'field1', col:'Umidità (%)'        },
+    { field:'field2', col:'Temperatura (°C)'   },
+    { field:'field3', col:'Pressione (hPa)'    },
+  ];
+
+  // per il COMBO calcola media mobile 24h sui dati grezzi
+  function movingAvg24h(feeds, field){
+    const valid = feeds.filter(f => !isNaN(Number(f[field])));
+    return valid.map((f, i) => {
+      const slice = valid.slice(Math.max(0, i-47), i+1);
+      const avg = slice.reduce((s,x) => s + Number(x[field]),0) / slice.length;
+      return {
+        ts: new Date(f.created_at).getTime(),
+        value: avg
+      };
+    });
+  }
+
+  // costruisce serie interpolate per tutti i campi
+  const series = {};
+  fields.forEach(f => {
+    series[f.field] = interpolate(rawFeedsStore, f.field);
   });
 
-  // ordina i timestamp
-  const sortedTs = [...allTimestamps].sort((a,b) => a-b);
-
-  // indice rapido per ogni grafico: timestamp → valore
-  const indexes = {};
-  active.forEach(o => {
-    indexes[o.key] = {};
-    const { labels, data } = chartDataStore[o.key];
-    labels.forEach((t, i) => {
-      indexes[o.key][new Date(t).getTime()] = data[i];
-    });
-  });
+  // COMBO usa media mobile
+  const combo25 = movingAvg24h(rawFeedsStore, 'field6');
+  const combo10 = movingAvg24h(rawFeedsStore, 'field7');
 
   // =========================
-  // RIGHE CSV
+  // TIMESTAMP UNIFICATO
+  // =========================
+  // usa i timestamp del campo PM2.5 come riferimento
+  // (o il primo campo disponibile)
+  const refSeries = series['field6'].length
+    ? series['field6']
+    : series['field5'];
+
+  if(!refSeries.length){
+    alert('Nessun dato disponibile nel range selezionato.');
+    return;
+  }
+
+  // indice rapido: ts → value per ogni serie
+  function buildIndex(pts){
+    const idx = {};
+    pts.forEach(p => { idx[p.ts] = p.value; });
+    return idx;
+  }
+
+  const idx = {
+    field5:  buildIndex(series['field5']),
+    field6:  buildIndex(series['field6']),
+    field7:  buildIndex(series['field7']),
+    field1:  buildIndex(series['field1']),
+    field2:  buildIndex(series['field2']),
+    field3:  buildIndex(series['field3']),
+    combo25: buildIndex(combo25),
+    combo10: buildIndex(combo10),
+  };
+
+  // timestamp di riferimento = unione di tutti
+  const allTs = new Set();
+  [...Object.values(series), combo25, combo10].forEach(pts => {
+    pts.forEach(p => allTs.add(p.ts));
+  });
+  const sortedTs = [...allTs].sort((a,b) => a-b);
+
+  // =========================
+  // COLONNE ATTIVE
+  // =========================
+  // mostra solo i grafici selezionati dall'utente
+  const checkboxMap = {
+    field5:  document.querySelector('aside input[data-id="5"]')?.checked,
+    field6:  document.querySelector('aside input[data-id="6"]')?.checked,
+    field7:  document.querySelector('aside input[data-id="7"]')?.checked,
+    combo:   document.querySelector('aside input[data-id="combo"]')?.checked,
+    field1:  document.querySelector('aside input[data-id="1"]')?.checked,
+    field2:  document.querySelector('aside input[data-id="2"]')?.checked,
+    field3:  document.querySelector('aside input[data-id="3"]')?.checked,
+  };
+
+  const columns = [
+    { label:'PM1 (µg/m³)',             key:'field5',  active: checkboxMap.field5  },
+    { label:'PM2.5 (µg/m³)',           key:'field6',  active: checkboxMap.field6  },
+    { label:'PM10 (µg/m³)',            key:'field7',  active: checkboxMap.field7  },
+    { label:'COMBO PM2.5 24h (µg/m³)', key:'combo25', active: checkboxMap.combo   },
+    { label:'COMBO PM10 24h (µg/m³)',  key:'combo10', active: checkboxMap.combo   },
+    { label:'Umidità (%)',             key:'field1',  active: checkboxMap.field1  },
+    { label:'Temperatura (°C)',        key:'field2',  active: checkboxMap.field2  },
+    { label:'Pressione (hPa)',         key:'field3',  active: checkboxMap.field3  },
+  ].filter(c => c.active);
+
+  // =========================
+  // COSTRUZIONE RIGHE CSV
   // =========================
   const rows = [];
 
-  // riga titolo
+  // titolo
   rows.push(filename);
-  rows.push(''); // riga vuota
+  rows.push('');
 
-  // riga intestazione colonne
-  const header = ['Data', 'Ora', 'Anno', ...active.map(o => o.col)];
+  // intestazione
+  const header = ['Data', 'Ora', 'Anno', ...columns.map(c => c.label)];
   rows.push(header.join(sep));
 
-  // righe dati
+  // dati
   sortedTs.forEach(ts => {
     const date = new Date(ts);
     const dateStr = date.toLocaleDateString('it-IT',{
@@ -1223,8 +1329,8 @@ function exportCSV(){
     });
     const yearStr = date.getFullYear().toString();
 
-    const vals = active.map(o => {
-      const v = indexes[o.key][ts];
+    const vals = columns.map(c => {
+      const v = idx[c.key]?.[ts];
       if(v == null || isNaN(v)) return '';
       return Number(v).toFixed(2).replace('.',',');
     });
@@ -1239,7 +1345,6 @@ function exportCSV(){
     ['\uFEFF' + rows.join('\n')],
     { type:'text/csv;charset=utf-8;' }
   );
-
   const url = URL.createObjectURL(blob);
   const a = document.createElement('a');
   a.href = url;
@@ -1881,12 +1986,18 @@ const r = await fetch(
       const j = await r.json();
       const feeds = j.feeds || [];
 
-      if (!feeds.length) return;
+if (!feeds.length) return;
 
       // ordina per sicurezza temporale
       feeds.sort((a, b) =>
         new Date(a.created_at) - new Date(b.created_at)
       );
+
+      // salva dati grezzi per CSV (filtrati nel range corretto)
+      rawFeedsStore = feeds.filter(f => {
+        const d = new Date(f.created_at);
+        return d >= tStart && d <= tEnd;
+      });
 
       // =========================
 // TIME RANGE
