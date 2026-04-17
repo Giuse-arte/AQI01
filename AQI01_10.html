@@ -690,7 +690,7 @@ const CHANNEL = 2789658;
 const chartDataStore = {};
 let rawFeedsStore = []; // dati grezzi ThingSpeak per CSV
 
-Chart.register({
+Chart.registerChart.register({
   id: 'hourGrid',
   afterDraw(chart) {
     const xScale = chart.scales.x;
@@ -699,93 +699,60 @@ Chart.register({
     const bottom = chart.chartArea.bottom;
     const min = xScale.min;
     const max = xScale.max;
-
     const vm = document.getElementById('viewMode').value;
 
-   // modalita ANNO e MESE - nessuna griglia dal plugin
-    // (gestita da xAxisConfig con afterBuildTicks)
     if(vm === 'year') return;
 
-    // modalita MESE - griglie ogni giorno (primarie) + 08:00 e 16:00 (secondarie)
     if(vm === 'month'){
       let t = Math.ceil(min / 3600000) * 3600000;
       while(t <= max){
         const hour = new Date(t).getHours();
         let strokeStyle = null;
         let lineWidth = 0;
-
-        if(hour === 0){
-          strokeStyle = 'rgba(0,0,0,0.20)';
-          lineWidth = 1.5;
-        } else if(hour === 8 || hour === 16){
-          strokeStyle = 'rgba(0,0,0,0.08)';
-          lineWidth = 0.8;
-        }
-
+        if(hour === 0){ strokeStyle='rgba(0,0,0,0.20)'; lineWidth=1.5; }
+        else if(hour===8||hour===16){ strokeStyle='rgba(0,0,0,0.08)'; lineWidth=0.8; }
         if(strokeStyle){
           const x = xScale.getPixelForValue(t);
-          ctx.save();
-          ctx.beginPath();
-          ctx.moveTo(x, top);
-          ctx.lineTo(x, bottom);
-          ctx.strokeStyle = strokeStyle;
-          ctx.lineWidth = lineWidth;
-          ctx.stroke();
-          ctx.restore();
+          ctx.save(); ctx.beginPath();
+          ctx.moveTo(x,top); ctx.lineTo(x,bottom);
+          ctx.strokeStyle=strokeStyle; ctx.lineWidth=lineWidth;
+          ctx.stroke(); ctx.restore();
         }
         t += 3600000;
       }
       return;
     }
 
-    // modalita WEEK - griglie ogni giorno (primarie) + 06:00, 12:00, 18:00 (secondarie)
     if(vm === 'week'){
       let t = Math.ceil(min / 3600000) * 3600000;
       while(t <= max){
         const hour = new Date(t).getHours();
         let strokeStyle = null;
         let lineWidth = 0;
-
-        if(hour === 0){
-          strokeStyle = 'rgba(0,0,0,0.20)';
-          lineWidth = 1.5;
-        } else if(hour === 6 || hour === 12 || hour === 18){
-          strokeStyle = 'rgba(0,0,0,0.08)';
-          lineWidth = 0.8;
-        }
-
+        if(hour===0){ strokeStyle='rgba(0,0,0,0.20)'; lineWidth=1.5; }
+        else if(hour===6||hour===12||hour===18){ strokeStyle='rgba(0,0,0,0.08)'; lineWidth=0.8; }
         if(strokeStyle){
           const x = xScale.getPixelForValue(t);
-          ctx.save();
-          ctx.beginPath();
-          ctx.moveTo(x, top);
-          ctx.lineTo(x, bottom);
-          ctx.strokeStyle = strokeStyle;
-          ctx.lineWidth = lineWidth;
-          ctx.stroke();
-          ctx.restore();
+          ctx.save(); ctx.beginPath();
+          ctx.moveTo(x,top); ctx.lineTo(x,bottom);
+          ctx.strokeStyle=strokeStyle; ctx.lineWidth=lineWidth;
+          ctx.stroke(); ctx.restore();
         }
         t += 3600000;
       }
       return;
     }
 
-     // modalita LIVE / GIORNO - griglie ogni ora, marcate ogni 4 ore
     let tLive = Math.ceil(min / 3600000) * 3600000;
     while(tLive <= max){
       const x = xScale.getPixelForValue(tLive);
       const hour = new Date(tLive).getHours();
       const isMajor = hour % 4 === 0;
-
-      ctx.save();
-      ctx.beginPath();
-      ctx.moveTo(x, top);
-      ctx.lineTo(x, bottom);
+      ctx.save(); ctx.beginPath();
+      ctx.moveTo(x,top); ctx.lineTo(x,bottom);
       ctx.strokeStyle = isMajor ? 'rgba(0,0,0,0.20)' : 'rgba(0,0,0,0.06)';
       ctx.lineWidth = isMajor ? 1.5 : 0.8;
-      ctx.stroke();
-      ctx.restore();
-
+      ctx.stroke(); ctx.restore();
       tLive += 3600000;
     }
   }
