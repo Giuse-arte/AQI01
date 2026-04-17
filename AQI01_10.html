@@ -526,6 +526,7 @@
 
     <!-- Pulsante aggiornamento -->
     <button id="update">Aggiorna</button>
+    <button id="exportCsv" style="background:#16a34a;">Estrai CSV</button>
   </div>
 </header>
 
@@ -686,6 +687,7 @@
 
 /* ID del canale ThingSpeak da cui leggere i dati */
 const CHANNEL = 2789658;
+const chartDataStore = {};
 
 Chart.register({
   id: 'hourGrid',
@@ -1138,6 +1140,84 @@ function closeInfoPopup(){
   document.querySelector('.info-popup')?.remove();
   document.querySelector('.info-overlay')?.remove();
 }
+function exportCSV(){
+
+  const sep = ';';
+  const sections = [];
+
+  // ordine fisso di esportazione
+  const order = [
+    'PM1 (µg/m³)',
+    'PM2.5 (µg/m³)',
+    'PM10 (µg/m³)',
+    'PM2.5 media mobile 24h (µg/m³)',
+    'PM10 media mobile 24h (µg/m³)',
+    'UMIDITÀ (%)',
+    'TEMPERATURA (°C)',
+    'PRESSIONE (hPa)'
+  ];
+
+  const keys = order.filter(k => chartDataStore[k]);
+
+  if(!keys.length){
+    alert('Nessun dato disponibile. Premi Aggiorna prima di estrarre il CSV.');
+    return;
+  }
+
+  keys.forEach(name => {
+    const { labels, data } = chartDataStore[name];
+
+    // intestazione grafico
+    sections.push(name);
+
+    // intestazione colonne
+    sections.push(['Data' + sep + 'Ora' + sep + 'Valore'].join(''));
+
+    // righe dati
+    labels.forEach((t, i) => {
+      const date = new Date(t);
+      const dateStr = date.toLocaleDateString('it-IT',{
+        day:'2-digit', month:'2-digit', year:'numeric'
+      });
+      const timeStr = date.toLocaleTimeString('it-IT',{
+        hour:'2-digit', minute:'2-digit'
+      });
+      const val = data[i] == null || isNaN(data[i])
+        ? '—'
+        : Number(data[i]).toFixed(2).replace('.',',');
+
+      sections.push(`${dateStr}${sep}${timeStr}${sep}${val}`);
+    });
+
+    // riga vuota tra grafici
+    sections.push('');
+  });
+
+  // nome file con data e modalità
+  const vm = document.getElementById('viewMode').value;
+  const modeLabels = {
+    live:'Ultime24h', day:'Giorno',
+    week:'Ultimi7gg', month:'UltimoMese', year:'UltimoAnno'
+  };
+  const dateTag = new Date().toLocaleDateString('it-IT',{
+    day:'2-digit', month:'2-digit', year:'numeric'
+  }).replace(/\//g,'-');
+
+  const filename = `AQI01_${modeLabels[vm] || vm}_${dateTag}.csv`;
+
+  // crea e scarica il file
+  const blob = new Blob(
+    ['\uFEFF' + sections.join('\n')],
+    { type:'text/csv;charset=utf-8;' }
+  );
+
+  const url = URL.createObjectURL(blob);
+  const a = document.createElement('a');
+  a.href = url;
+  a.download = filename;
+  a.click();
+  URL.revokeObjectURL(url);
+}
 
 /* =========================
    SELEZIONE GRAFICI
@@ -1183,8 +1263,10 @@ function renderCharts(){
 }
 
 /* Svuota area grafici */
+/* Svuota area grafici e dati CSV */
   const chartsContainer = document.getElementById('charts');
   chartsContainer.innerHTML = '';
+  Object.keys(chartDataStore).forEach(k => delete chartDataStore[k]);
 
   const viewMode = document.getElementById('viewMode').value;
   const isExtended = ['week','month','year'].includes(viewMode);
@@ -1512,6 +1594,9 @@ const data = aggFn
         chartsContainer.appendChild(d);
       }
 
+// salva dati per CSV
+      chartDataStore['PM2.5 (µg/m³)'] = { labels, data };
+
       const ctx = document.getElementById('chart_pm25').getContext('2d');
 
       new Chart(ctx,{
@@ -1686,6 +1771,9 @@ else{
 }
 // termine ORDINAMENTO GRAFICI FISSO (Modiifica del 11-04-26
 
+    // salva dati per CSV
+      chartDataStore[`${m.t} (${m.u})`] = { labels, data };
+
       const ctx = document.getElementById(`chart_${ch.dataset.id}`);
 
       new Chart(ctx,{
@@ -1859,6 +1947,10 @@ d.innerHTML = `
       
       const ctx = d.querySelector('canvas').getContext('2d');
 
+     // salva dati per CSV
+      chartDataStore['PM2.5 media mobile 24h (µg/m³)'] = { labels, data: pm25 };
+      chartDataStore['PM10 media mobile 24h (µg/m³)'] = { labels, data: pm10 };
+
       // distrugge vecchio grafico se esiste
       if (window.pmChart) window.pmChart.destroy();
 
@@ -2000,6 +2092,8 @@ update.addEventListener('click', ()=>{
   renderCharts();
   loadKPIs();
 });
+
+document.getElementById('exportCsv').addEventListener('click', exportCSV);
 
 /* Cambio standard AQI */
 mode.addEventListener('change', renderCharts);
