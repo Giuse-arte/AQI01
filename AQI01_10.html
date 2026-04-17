@@ -1523,7 +1523,7 @@ function xAxisConfig(){
         type:'time',
         min: axisStart,
         max: axisEnd,
-        time:{ unit:'day', stepSize:1 },
+        time:{ unit:'hour', stepSize:1 },
         afterBuildTicks: function(axis){
           // 1 tick ogni ora per avere griglie secondarie a 08:00 e 16:00
           const ticks = [];
