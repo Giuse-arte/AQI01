@@ -771,10 +771,10 @@ Chart.register(Chart.register({
     }
 
      // modalita LIVE / GIORNO - griglie ogni ora, marcate ogni 4 ore
-    let t = Math.ceil(min / 3600000) * 3600000;
-    while(t <= max){
-      const x = xScale.getPixelForValue(t);
-      const hour = new Date(t).getHours();
+    let tLive = Math.ceil(min / 3600000) * 3600000;
+    while(tLive <= max){
+      const x = xScale.getPixelForValue(tLive);
+      const hour = new Date(tLive).getHours();
       const isMajor = hour % 4 === 0;
 
       ctx.save();
@@ -786,7 +786,7 @@ Chart.register(Chart.register({
       ctx.stroke();
       ctx.restore();
 
-      t += 3600000;
+      tLive += 3600000;
     }
   }
 });
