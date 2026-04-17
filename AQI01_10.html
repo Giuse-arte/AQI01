@@ -1143,57 +1143,28 @@ function closeInfoPopup(){
 function exportCSV(){
 
   const sep = ';';
-  const sections = [];
 
-  // ordine fisso di esportazione
+  // ordine fisso colonne
   const order = [
-    'PM1 (µg/m³)',
-    'PM2.5 (µg/m³)',
-    'PM10 (µg/m³)',
-    'PM2.5 media mobile 24h (µg/m³)',
-    'PM10 media mobile 24h (µg/m³)',
-    'UMIDITÀ (%)',
-    'TEMPERATURA (°C)',
-    'PRESSIONE (hPa)'
+    { key:'PM1 (µg/m³)',                    col:'PM1 (µg/m³)'            },
+    { key:'PM2.5 (µg/m³)',                  col:'PM2.5 (µg/m³)'          },
+    { key:'PM10 (µg/m³)',                   col:'PM10 (µg/m³)'           },
+    { key:'PM2.5 media mobile 24h (µg/m³)', col:'COMBO PM2.5 (µg/m³)'   },
+    { key:'PM10 media mobile 24h (µg/m³)',  col:'COMBO PM10 (µg/m³)'    },
+    { key:'UMIDITÀ (%)',                    col:'Umidità (%)'            },
+    { key:'TEMPERATURA (°C)',               col:'Temperatura (°C)'       },
+    { key:'PRESSIONE (hPa)',                col:'Pressione (hPa)'        },
   ];
 
-  const keys = order.filter(k => chartDataStore[k]);
+  // filtra solo i grafici attivi
+  const active = order.filter(o => chartDataStore[o.key]);
 
-  if(!keys.length){
+  if(!active.length){
     alert('Nessun dato disponibile. Premi Aggiorna prima di estrarre il CSV.');
     return;
   }
 
-  keys.forEach(name => {
-    const { labels, data } = chartDataStore[name];
-
-    // intestazione grafico
-    sections.push(name);
-
-    // intestazione colonne
-    sections.push(['Data' + sep + 'Ora' + sep + 'Valore'].join(''));
-
-    // righe dati
-    labels.forEach((t, i) => {
-      const date = new Date(t);
-      const dateStr = date.toLocaleDateString('it-IT',{
-        day:'2-digit', month:'2-digit', year:'numeric'
-      });
-      const timeStr = date.toLocaleTimeString('it-IT',{
-        hour:'2-digit', minute:'2-digit'
-      });
-      const val = data[i] == null || isNaN(data[i])
-        ? '—'
-        : Number(data[i]).toFixed(2).replace('.',',');
-
-      sections.push(`${dateStr}${sep}${timeStr}${sep}${val}`);
-    });
-
-    // riga vuota tra grafici
-    sections.push('');
-  });
-
-  // nome file con data e modalità
+  // nome file
   const vm = document.getElementById('viewMode').value;
   const modeLabels = {
     live:'Ultime24h', day:'Giorno',
@@ -1202,19 +1173,77 @@ function exportCSV(){
   const dateTag = new Date().toLocaleDateString('it-IT',{
     day:'2-digit', month:'2-digit', year:'numeric'
   }).replace(/\//g,'-');
+  const filename = `AQI01_${modeLabels[vm] || vm}_${dateTag}`;
 
-  const filename = `AQI01_${modeLabels[vm] || vm}_${dateTag}.csv`;
+  // =========================
+  // COSTRUZIONE TIMESTAMP UNIFICATO
+  // =========================
+  // raccoglie tutti i timestamp unici da tutti i grafici attivi
+  const allTimestamps = new Set();
+  active.forEach(o => {
+    chartDataStore[o.key].labels.forEach(t => {
+      allTimestamps.add(new Date(t).getTime());
+    });
+  });
 
-  // crea e scarica il file
+  // ordina i timestamp
+  const sortedTs = [...allTimestamps].sort((a,b) => a-b);
+
+  // indice rapido per ogni grafico: timestamp → valore
+  const indexes = {};
+  active.forEach(o => {
+    indexes[o.key] = {};
+    const { labels, data } = chartDataStore[o.key];
+    labels.forEach((t, i) => {
+      indexes[o.key][new Date(t).getTime()] = data[i];
+    });
+  });
+
+  // =========================
+  // RIGHE CSV
+  // =========================
+  const rows = [];
+
+  // riga titolo
+  rows.push(filename);
+  rows.push(''); // riga vuota
+
+  // riga intestazione colonne
+  const header = ['Data', 'Ora', 'Anno', ...active.map(o => o.col)];
+  rows.push(header.join(sep));
+
+  // righe dati
+  sortedTs.forEach(ts => {
+    const date = new Date(ts);
+    const dateStr = date.toLocaleDateString('it-IT',{
+      day:'2-digit', month:'2-digit'
+    });
+    const timeStr = date.toLocaleTimeString('it-IT',{
+      hour:'2-digit', minute:'2-digit'
+    });
+    const yearStr = date.getFullYear().toString();
+
+    const vals = active.map(o => {
+      const v = indexes[o.key][ts];
+      if(v == null || isNaN(v)) return '';
+      return Number(v).toFixed(2).replace('.',',');
+    });
+
+    rows.push([dateStr, timeStr, yearStr, ...vals].join(sep));
+  });
+
+  // =========================
+  // DOWNLOAD
+  // =========================
   const blob = new Blob(
-    ['\uFEFF' + sections.join('\n')],
+    ['\uFEFF' + rows.join('\n')],
     { type:'text/csv;charset=utf-8;' }
   );
 
   const url = URL.createObjectURL(blob);
   const a = document.createElement('a');
   a.href = url;
-  a.download = filename;
+  a.download = filename + '.csv';
   a.click();
   URL.revokeObjectURL(url);
 }
