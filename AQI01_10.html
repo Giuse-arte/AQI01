@@ -1219,15 +1219,12 @@ function exportCSV(){
   ];
 
   // per il COMBO calcola media mobile 24h sui dati grezzi
-  function movingAvg24h(feeds, field){
-    const valid = feeds.filter(f => !isNaN(Number(f[field])));
-    return valid.map((f, i) => {
-      const slice = valid.slice(Math.max(0, i-47), i+1);
-      const avg = slice.reduce((s,x) => s + Number(x[field]),0) / slice.length;
-      return {
-        ts: new Date(f.created_at).getTime(),
-        value: avg
-      };
+ function movingAvg24h(interpSeries){
+    // usa i punti già interpolati come base
+    return interpSeries.map((p, i) => {
+      const slice = interpSeries.slice(Math.max(0, i-47), i+1);
+      const avg = slice.reduce((s,x) => s + x.value, 0) / slice.length;
+      return { ts: p.ts, value: avg };
     });
   }
 
@@ -1238,8 +1235,8 @@ function exportCSV(){
   });
 
   // COMBO usa media mobile
-  const combo25 = movingAvg24h(rawFeedsStore, 'field6');
-  const combo10 = movingAvg24h(rawFeedsStore, 'field7');
+ const combo25 = movingAvg24h(series['field6']);
+  const combo10 = movingAvg24h(series['field7']);
 
   // =========================
   // TIMESTAMP UNIFICATO
@@ -1490,12 +1487,12 @@ function xAxisConfig(){
         max: axisEnd,
         time:{ unit:'day', stepSize:1 },
         afterBuildTicks: function(axis){
-          // forza 1 tick per ogni giorno del mese
+          // 1 tick ogni ora per avere griglie secondarie a 08:00 e 16:00
           const ticks = [];
-          let t = new Date(axisStart);
-          while(t <= axisEnd){
-            ticks.push({ value: t.getTime() });
-            t = new Date(t.getTime() + 24*60*60*1000);
+          let t = new Date(axisStart).getTime();
+          while(t <= axisEnd.getTime()){
+            ticks.push({ value: t });
+            t += 3600000; // ogni ora
           }
           axis.ticks = ticks;
         },
@@ -1520,25 +1517,25 @@ function xAxisConfig(){
             return null;
           }
         },
+        
         grid:{
-          display:true,
+          display: true,
           color: function(ctx){
             const date = new Date(ctx.tick.value);
-            const day = date.getDate();
-            // griglia del giorno 1 o giorni pari → marcata
-            if(day === 1 || day % 2 === 0){
-              return 'rgba(0,0,0,0.15)';
-            }
-            // giorni dispari → griglia secondaria leggera
-            return 'rgba(0,0,0,0.05)';
+            const hours = date.getHours();
+            if(hours === 0) return 'rgba(0,0,0,0.20)';
+            if(hours === 8 || hours === 16) return 'rgba(0,0,0,0.08)';
+            return 'rgba(0,0,0,0)';
           },
           lineWidth: function(ctx){
             const date = new Date(ctx.tick.value);
-            const day = date.getDate();
-            if(day === 1 || day % 2 === 0) return 1.2;
-            return 0.6;
+            const hours = date.getHours();
+            if(hours === 0) return 1.5;
+            if(hours === 8 || hours === 16) return 0.8;
+            return 0;
           }
         },
+        
         title:{ display:false }
       };
     }
@@ -1555,6 +1552,7 @@ function xAxisConfig(){
         min: axisStart,
         max: axisEnd,
         time:{ unit:'hour', stepSize:1 },
+        
         afterBuildTicks: function(axis){
           const ticks = [];
           // prima etichetta = prima ora piena dopo axisStart
