@@ -1540,8 +1540,11 @@ function xAxisConfig(){
           minRotation:45,
           callback: function(value){
             const date = new Date(value);
+            const hours = date.getHours();
             const day = date.getDate();
-            // giorno 1 → nome mese intero, sempre mostrato
+            // mostra etichetta solo a mezzanotte
+            if(hours !== 0) return null;
+            // giorno 1 → nome mese intero
             if(day === 1){
               return date.toLocaleDateString('en-US',{ month:'long' });
             }
