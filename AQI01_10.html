@@ -690,7 +690,7 @@ const CHANNEL = 2789658;
 const chartDataStore = {};
 let rawFeedsStore = []; // dati grezzi ThingSpeak per CSV
 
-Chart.register(Chart.register({
+Chart.register({
   id: 'hourGrid',
   afterDraw(chart) {
     const xScale = chart.scales.x;
