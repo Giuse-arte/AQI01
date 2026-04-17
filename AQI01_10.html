@@ -703,6 +703,26 @@ Chart.register({
 
     if(vm === 'year') return;
 
+    if(vm === 'month'){
+      let t = Math.ceil(min / 3600000) * 3600000;
+      while(t <= max){
+        const hour = new Date(t).getHours();
+        let strokeStyle = null;
+        let lineWidth = 0;
+        if(hour===0){ strokeStyle='rgba(0,0,0,0.20)'; lineWidth=1.5; }
+        else if(hour===8||hour===16){ strokeStyle='rgba(0,0,0,0.08)'; lineWidth=0.8; }
+        if(strokeStyle){
+          const x = xScale.getPixelForValue(t);
+          ctx.save(); ctx.beginPath();
+          ctx.moveTo(x,top); ctx.lineTo(x,bottom);
+          ctx.strokeStyle=strokeStyle; ctx.lineWidth=lineWidth;
+          ctx.stroke(); ctx.restore();
+        }
+        t += 3600000;
+      }
+      return;
+    }
+
     if(vm === 'week'){
       let t = Math.ceil(min / 3600000) * 3600000;
       while(t <= max){
@@ -734,26 +754,6 @@ Chart.register({
       ctx.lineWidth = isMajor ? 1.5 : 0.8;
       ctx.stroke(); ctx.restore();
       tLive += 3600000;
-    }
-  }
-});
-
-    let t = Math.ceil(min / 3600000) * 3600000;
-    while(t <= max){
-      const x = xScale.getPixelForValue(t);
-      const hour = new Date(t).getHours();
-      const isMajor = hour % 4 === 0;
-
-      ctx.save();
-      ctx.beginPath();
-      ctx.moveTo(x, top);
-      ctx.lineTo(x, bottom);
-      ctx.strokeStyle = isMajor ? 'rgba(0,0,0,0.20)' : 'rgba(0,0,0,0.06)';
-      ctx.lineWidth = isMajor ? 1.5 : 0.8;
-      ctx.stroke();
-      ctx.restore();
-
-      t += 3600000;
     }
   }
 });
