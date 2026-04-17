@@ -690,7 +690,7 @@ const CHANNEL = 2789658;
 const chartDataStore = {};
 let rawFeedsStore = []; // dati grezzi ThingSpeak per CSV
 
-Chart.register({
+Chart.register(Chart.register({
   id: 'hourGrid',
   afterDraw(chart) {
     const xScale = chart.scales.x;
@@ -700,6 +700,77 @@ Chart.register({
     const min = xScale.min;
     const max = xScale.max;
 
+    const vm = document.getElementById('viewMode').value;
+
+    // modalità ANNO e MESE → nessuna griglia dal plugin
+    // (gestita da xAxisConfig con afterBuildTicks)
+    if(vm === 'year') return;
+
+    // modalità MESE → griglie ogni giorno (primarie) + 08:00 e 16:00 (secondarie)
+    if(vm === 'month'){
+      let t = Math.ceil(min / 3600000) * 3600000;
+      while(t <= max){
+        const hour = new Date(t).getHours();
+        let strokeStyle = null;
+        let lineWidth = 0;
+
+        if(hour === 0){
+          strokeStyle = 'rgba(0,0,0,0.20)';
+          lineWidth = 1.5;
+        } else if(hour === 8 || hour === 16){
+          strokeStyle = 'rgba(0,0,0,0.08)';
+          lineWidth = 0.8;
+        }
+
+        if(strokeStyle){
+          const x = xScale.getPixelForValue(t);
+          ctx.save();
+          ctx.beginPath();
+          ctx.moveTo(x, top);
+          ctx.lineTo(x, bottom);
+          ctx.strokeStyle = strokeStyle;
+          ctx.lineWidth = lineWidth;
+          ctx.stroke();
+          ctx.restore();
+        }
+        t += 3600000;
+      }
+      return;
+    }
+
+    // modalità WEEK → griglie ogni giorno (primarie) + 06:00, 12:00, 18:00 (secondarie)
+    if(vm === 'week'){
+      let t = Math.ceil(min / 3600000) * 3600000;
+      while(t <= max){
+        const hour = new Date(t).getHours();
+        let strokeStyle = null;
+        let lineWidth = 0;
+
+        if(hour === 0){
+          strokeStyle = 'rgba(0,0,0,0.20)';
+          lineWidth = 1.5;
+        } else if(hour === 6 || hour === 12 || hour === 18){
+          strokeStyle = 'rgba(0,0,0,0.08)';
+          lineWidth = 0.8;
+        }
+
+        if(strokeStyle){
+          const x = xScale.getPixelForValue(t);
+          ctx.save();
+          ctx.beginPath();
+          ctx.moveTo(x, top);
+          ctx.lineTo(x, bottom);
+          ctx.strokeStyle = strokeStyle;
+          ctx.lineWidth = lineWidth;
+          ctx.stroke();
+          ctx.restore();
+        }
+        t += 3600000;
+      }
+      return;
+    }
+
+    // modalità LIVE / GIORNO → griglie ogni ora, marcate ogni 4 ore
     let t = Math.ceil(min / 3600000) * 3600000;
     while(t <= max){
       const x = xScale.getPixelForValue(t);
