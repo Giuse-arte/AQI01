@@ -1204,20 +1204,37 @@ function aggregateDaily(feeds, field){
     }));
   }
 
-  function aggregateHourly(feeds, field){
-    const map = {};
-    feeds.forEach(f => {
-      const d = new Date(f.created_at);
-      // chiave = YYYY-MM-DDTHH
-      const key = d.toISOString().slice(0,13);
-      if(!map[key]) map[key] = [];
-      const val = Number(f[field]);
-      if(!isNaN(val)) map[key].push(val);
+ function aggregateHourly(feeds, field){
+    // Filtra solo i feed con valore valido
+    const valid = feeds.filter(f => {
+      const v = Number(f[field]);
+      return !isNaN(v);
     });
-    return Object.entries(map).sort().map(([key, vals]) => ({
-      x: new Date(key + ':00:00'),
-      y: vals.reduce((s,v) => s+v, 0) / vals.length
-    }));
+
+    if(!valid.length) return [];
+
+    const points = [];
+
+    // Primo punto = primo dato disponibile, nessuna media
+    points.push({
+      x: new Date(valid[0].created_at),
+      y: Number(valid[0][field])
+    });
+
+    // Punti successivi = centro temporale e media tra coppie consecutive
+    for(let i = 1; i < valid.length; i++){
+      const tA = new Date(valid[i-1].created_at).getTime();
+      const tB = new Date(valid[i].created_at).getTime();
+      const vA = Number(valid[i-1][field]);
+      const vB = Number(valid[i][field]);
+
+      points.push({
+        x: new Date((tA + tB) / 2),
+        y: (vA + vB) / 2
+      });
+    }
+
+    return points;
   }
 
 function xAxisConfig(){
@@ -1310,12 +1327,12 @@ function xAxisConfig(){
       };
     }
 
-    if(viewMode === 'week'){
-      // asse X da oggi-7gg a oggi
-      const axisStart = new Date(now.getTime() - 7*24*60*60*1000);
-      axisStart.setHours(0,0,0,0);
+ if(viewMode === 'week'){
       const axisEnd = new Date(now);
       axisEnd.setHours(23,59,59,999);
+
+      // asse X parte da 7 giorni fa alla stessa ora attuale
+      const axisStart = new Date(now.getTime() - 7*24*60*60*1000);
 
       return {
         type:'time',
@@ -1323,9 +1340,9 @@ function xAxisConfig(){
         max: axisEnd,
         time:{ unit:'hour', stepSize:1 },
         afterBuildTicks: function(axis){
-          // 1 tick ogni ora
           const ticks = [];
-          let t = axisStart.getTime();
+          // prima etichetta = prima ora piena dopo axisStart
+          let t = Math.ceil(axisStart.getTime() / 3600000) * 3600000;
           while(t <= axisEnd.getTime()){
             ticks.push({ value: t });
             t += 3600000;
@@ -1354,18 +1371,16 @@ function xAxisConfig(){
           color: function(ctx){
             const date = new Date(ctx.tick.value);
             const hours = date.getHours();
-            // mezzanotte → griglia marcata
             if(hours === 0) return 'rgba(0,0,0,0.20)';
-            // ogni 6 ore → griglia secondaria
-            if(hours % 6 === 0) return 'rgba(0,0,0,0.10)';
-            // altre ore → nessuna griglia
+            // solo 06:00, 12:00, 18:00 → secondarie (NON 00:00)
+            if(hours === 6 || hours === 12 || hours === 18) return 'rgba(0,0,0,0.08)';
             return 'rgba(0,0,0,0)';
           },
           lineWidth: function(ctx){
             const date = new Date(ctx.tick.value);
             const hours = date.getHours();
             if(hours === 0) return 1.5;
-            if(hours % 6 === 0) return 0.8;
+            if(hours === 6 || hours === 12 || hours === 18) return 0.8;
             return 0;
           }
         },
