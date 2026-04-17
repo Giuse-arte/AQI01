@@ -702,11 +702,11 @@ Chart.register(Chart.register({
 
     const vm = document.getElementById('viewMode').value;
 
-    // modalità ANNO e MESE → nessuna griglia dal plugin
+   // modalita ANNO e MESE - nessuna griglia dal plugin
     // (gestita da xAxisConfig con afterBuildTicks)
     if(vm === 'year') return;
 
-    // modalità MESE → griglie ogni giorno (primarie) + 08:00 e 16:00 (secondarie)
+    // modalita MESE - griglie ogni giorno (primarie) + 08:00 e 16:00 (secondarie)
     if(vm === 'month'){
       let t = Math.ceil(min / 3600000) * 3600000;
       while(t <= max){
@@ -738,7 +738,7 @@ Chart.register(Chart.register({
       return;
     }
 
-    // modalità WEEK → griglie ogni giorno (primarie) + 06:00, 12:00, 18:00 (secondarie)
+    // modalita WEEK - griglie ogni giorno (primarie) + 06:00, 12:00, 18:00 (secondarie)
     if(vm === 'week'){
       let t = Math.ceil(min / 3600000) * 3600000;
       while(t <= max){
@@ -770,7 +770,27 @@ Chart.register(Chart.register({
       return;
     }
 
-    // modalità LIVE / GIORNO → griglie ogni ora, marcate ogni 4 ore
+     // modalita LIVE / GIORNO - griglie ogni ora, marcate ogni 4 ore
+    let t = Math.ceil(min / 3600000) * 3600000;
+    while(t <= max){
+      const x = xScale.getPixelForValue(t);
+      const hour = new Date(t).getHours();
+      const isMajor = hour % 4 === 0;
+
+      ctx.save();
+      ctx.beginPath();
+      ctx.moveTo(x, top);
+      ctx.lineTo(x, bottom);
+      ctx.strokeStyle = isMajor ? 'rgba(0,0,0,0.20)' : 'rgba(0,0,0,0.06)';
+      ctx.lineWidth = isMajor ? 1.5 : 0.8;
+      ctx.stroke();
+      ctx.restore();
+
+      t += 3600000;
+    }
+  }
+});
+
     let t = Math.ceil(min / 3600000) * 3600000;
     while(t <= max){
       const x = xScale.getPixelForValue(t);
