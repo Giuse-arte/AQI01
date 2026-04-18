@@ -1229,7 +1229,7 @@ function exportCSV(){
       }));
     }
 
-    // week e month → punto medio tra coppie consecutive (aggregateHourly)
+    // week e month → aggregazione oraria (1 punto per ora)
     if(vm === 'week' || vm === 'month'){
       const valid = feeds.filter(f => {
         const v = Number(f[field]);
@@ -1237,22 +1237,20 @@ function exportCSV(){
       });
       if(!valid.length) return [];
 
-      const points = [];
-      points.push({
-        ts: new Date(valid[0].created_at).getTime(),
-        value: Number(valid[0][field])
+      // raggruppa per ora
+      const map = {};
+      valid.forEach(f => {
+        const d = new Date(f.created_at);
+        // chiave = YYYY-MM-DDTHH
+        const key = d.toISOString().slice(0,13);
+        if(!map[key]) map[key] = [];
+        map[key].push(Number(f[field]));
       });
-      for(let i = 1; i < valid.length; i++){
-        const tA = new Date(valid[i-1].created_at).getTime();
-        const tB = new Date(valid[i].created_at).getTime();
-        const vA = Number(valid[i-1][field]);
-        const vB = Number(valid[i][field]);
-        points.push({
-          ts: Math.round((tA + tB) / 2),
-          value: (vA + vB) / 2
-        });
-      }
-      return points;
+
+      return Object.entries(map).sort().map(([key, vals]) => ({
+        ts: new Date(key + ':30:00Z').getTime(), // centro ora
+        value: vals.reduce((s,v) => s+v, 0) / vals.length
+      }));
     }
 
     // live e day → dati grezzi
