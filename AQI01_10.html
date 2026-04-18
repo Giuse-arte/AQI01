@@ -1241,11 +1241,18 @@ function exportCSV(){
       const map = {};
       valid.forEach(f => {
         const d = new Date(f.created_at);
-        // chiave = YYYY-MM-DDTHH
         const key = d.toISOString().slice(0,13);
         if(!map[key]) map[key] = [];
-        map[key].push(Number(f[field]));
+        map[key].push({
+          ts: d.getTime(),
+          value: Number(f[field])
+        });
       });
+
+      return Object.entries(map).sort().reverse().map(([key, pts]) => ({
+        ts: Math.round(pts.reduce((s,p) => s + p.ts, 0) / pts.length),
+        value: pts.reduce((s,p) => s + p.value, 0) / pts.length
+      }));
 
       return Object.entries(map).sort().reverse().map(([key, vals]) => ({
         ts: new Date(key + ':30:00Z').getTime(),
