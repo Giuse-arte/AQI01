@@ -943,56 +943,50 @@ function applyDemoKPI(){
 */
 function applyKPI(feeds){
   if(!feeds.length) return;
+
+  // ultime 24h per media mobile PM2.5 e PM10
+  const now = new Date();
+  const since24h = new Date(now.getTime() - 24*60*60*1000);
+  const feeds24h = feeds.filter(f => new Date(f.created_at) >= since24h);
+  const feedsForAvg = feeds24h.length ? feeds24h : feeds;
+
+  // ultimo dato disponibile (sempre)
   const last = feeds.at(-1);
 
+  // prime 4 card → sempre ultimo valore
+  hum.textContent   = fmt1(last.field1) + ' %';
+  temp.textContent  = fmt1(last.field2) + ' °C';
+  press.textContent = fmt1(last.field3) + ' hPa';
+  pm1.textContent   = fmt0(last.field5) + ' µg/m³';
+
+  // min/max solo in modalità GIORNO
   const isDay = document.getElementById('viewMode').value === 'day';
 
-  const avg = f =>
-    feeds.reduce((s,x) => s + Number(x[f] || 0), 0) / feeds.length;
-
-  const minVal = f =>
-    Math.min(...feeds.map(x => Number(x[f])).filter(v => !isNaN(v)));
-
-  const maxVal = f =>
-    Math.max(...feeds.map(x => Number(x[f])).filter(v => !isNaN(v)));
-
   if(isDay){
-    hum.textContent   = fmt1(avg('field1')) + ' %';
-    temp.textContent  = fmt1(avg('field2')) + ' °C';
-    press.textContent = fmt1(avg('field3')) + ' hPa';
-    pm1.textContent   = fmt0(avg('field5')) + ' µg/m³';
+    const minVal = f => Math.min(...feeds.map(x => Number(x[f])).filter(v => !isNaN(v)));
+    const maxVal = f => Math.max(...feeds.map(x => Number(x[f])).filter(v => !isNaN(v)));
 
     humMM.textContent   = fmt1(minVal('field1')) + ' % — ' + fmt1(maxVal('field1')) + ' %';
     tempMM.textContent  = fmt1(minVal('field2')) + ' °C — ' + fmt1(maxVal('field2')) + ' °C';
     pressMM.textContent = fmt1(minVal('field3')) + ' hPa — ' + fmt1(maxVal('field3')) + ' hPa';
     pm1MM.textContent   = fmt0(minVal('field5')) + ' µg/m³ — ' + fmt0(maxVal('field5')) + ' µg/m³';
   } else {
-    hum.textContent   = fmt1(last.field1) + ' %';
-    temp.textContent  = fmt1(last.field2) + ' °C';
-    press.textContent = fmt1(last.field3) + ' hPa';
-    pm1.textContent   = fmt0(last.field5) + ' µg/m³';
-
     humMM.textContent   = '';
     tempMM.textContent  = '';
     pressMM.textContent = '';
     pm1MM.textContent   = '';
   }
 
-  /*
-    Funzione helper:
-    calcola la media di un campo su tutte le misurazioni
-  */
-  avg = f =>
-    feeds.reduce((s,x)=>s + Number(x[f] || 0), 0) / feeds.length;
+  // PM2.5 e PM10 → sempre media mobile ultime 24h
+  const avg24 = f =>
+    feedsForAvg.reduce((s,x) => s + Number(x[f] || 0), 0) / feedsForAvg.length;
 
-  /* Medie 24h per PM2.5 e PM10 */
-  const pm25_24 = avg('field6');
-  const pm10_24 = avg('field7');
+  const pm25_24 = avg24('field6');
+  const pm10_24 = avg24('field7');
 
   pm25.textContent = fmt0(pm25_24) + ' µg/m³';
   pm10.textContent = fmt0(pm10_24) + ' µg/m³';
 
-  /* Calcolo AQI basato sulle medie */
   computeAQI(pm25_24, pm10_24);
 }
 
