@@ -1209,33 +1209,61 @@ function exportCSV(){
   // =========================
   // Funzione: dato un array di feed grezzi e un field,
   // restituisce array di { ts, value } con punto medio tra coppie
+  // stessa logica dei grafici
   function interpolate(feeds, field){
+    const vm = document.getElementById('viewMode').value;
+
+    // anno → media giornaliera
+    if(vm === 'year'){
+      const map = {};
+      feeds.forEach(f => {
+        const d = new Date(f.created_at);
+        const key = d.toISOString().slice(0,10);
+        if(!map[key]) map[key] = [];
+        const val = Number(f[field]);
+        if(!isNaN(val)) map[key].push(val);
+      });
+      return Object.entries(map).sort().map(([date, vals]) => ({
+        ts: new Date(date + 'T12:00:00').getTime(),
+        value: vals.reduce((s,v) => s+v, 0) / vals.length
+      }));
+    }
+
+    // week e month → punto medio tra coppie consecutive (aggregateHourly)
+    if(vm === 'week' || vm === 'month'){
+      const valid = feeds.filter(f => {
+        const v = Number(f[field]);
+        return !isNaN(v) && f[field] !== null && f[field] !== '';
+      });
+      if(!valid.length) return [];
+
+      const points = [];
+      points.push({
+        ts: new Date(valid[0].created_at).getTime(),
+        value: Number(valid[0][field])
+      });
+      for(let i = 1; i < valid.length; i++){
+        const tA = new Date(valid[i-1].created_at).getTime();
+        const tB = new Date(valid[i].created_at).getTime();
+        const vA = Number(valid[i-1][field]);
+        const vB = Number(valid[i][field]);
+        points.push({
+          ts: Math.round((tA + tB) / 2),
+          value: (vA + vB) / 2
+        });
+      }
+      return points;
+    }
+
+    // live e day → dati grezzi
     const valid = feeds.filter(f => {
       const v = Number(f[field]);
       return !isNaN(v) && f[field] !== null && f[field] !== '';
     });
-    if(!valid.length) return [];
-
-    const points = [];
-
-    // primo punto = primo dato
-    points.push({
-      ts: new Date(valid[0].created_at).getTime(),
-      value: Number(valid[0][field])
-    });
-
-    // punti successivi = interpolazione tra coppie
-    for(let i = 1; i < valid.length; i++){
-      const tA = new Date(valid[i-1].created_at).getTime();
-      const tB = new Date(valid[i].created_at).getTime();
-      const vA = Number(valid[i-1][field]);
-      const vB = Number(valid[i][field]);
-      points.push({
-        ts: Math.round((tA + tB) / 2),
-        value: (vA + vB) / 2
-      });
-    }
-    return points;
+    return valid.map(f => ({
+      ts: new Date(f.created_at).getTime(),
+      value: Number(f[field])
+    }));
   }
 
   // =========================
