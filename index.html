@@ -501,6 +501,9 @@
 <select id="viewMode">
   <option value="live">Ultime 24 ore</option>
   <option value="day">Giorno</option>
+  <option value="week">Ultimi 7 giorni</option>
+  <option value="month">Ultimo mese</option>
+  <option value="year">Ultimo anno</option>
 </select>
 
 <label id="dayLabel">Giorno</label>
@@ -510,6 +513,9 @@
 <input type="hidden" id="start">
 <input type="hidden" id="end">
     
+    <label>Data inizio</label>
+    <input type="date" id="startDate">
+
     <label>Standard</label>
 
     <!-- Scelta standard AQI -->
@@ -520,6 +526,7 @@
 
     <!-- Pulsante aggiornamento -->
     <button id="update">Aggiorna</button>
+    <button id="exportCsv" style="background:#16a34a;">Estrai CSV</button>
   </div>
 </header>
 
@@ -680,6 +687,8 @@
 
 /* ID del canale ThingSpeak da cui leggere i dati */
 const CHANNEL = 2789658;
+const chartDataStore = {};
+let rawFeedsStore = []; // dati grezzi ThingSpeak per CSV
 
 Chart.register({
   id: 'hourGrid',
@@ -690,23 +699,61 @@ Chart.register({
     const bottom = chart.chartArea.bottom;
     const min = xScale.min;
     const max = xScale.max;
+    const vm = document.getElementById('viewMode').value;
 
-    let t = Math.ceil(min / 3600000) * 3600000;
-    while(t <= max){
-      const x = xScale.getPixelForValue(t);
-      const hour = new Date(t).getHours();
+    if(vm === 'year') return;
+
+    if(vm === 'month'){
+      let t = Math.ceil(min / 3600000) * 3600000;
+      while(t <= max){
+        const hour = new Date(t).getHours();
+        let strokeStyle = null;
+        let lineWidth = 0;
+        if(hour===0){ strokeStyle='rgba(0,0,0,0.20)'; lineWidth=1.5; }
+        else if(hour===8||hour===16){ strokeStyle='rgba(0,0,0,0.08)'; lineWidth=0.8; }
+        if(strokeStyle){
+          const x = xScale.getPixelForValue(t);
+          ctx.save(); ctx.beginPath();
+          ctx.moveTo(x,top); ctx.lineTo(x,bottom);
+          ctx.strokeStyle=strokeStyle; ctx.lineWidth=lineWidth;
+          ctx.stroke(); ctx.restore();
+        }
+        t += 3600000;
+      }
+      return;
+    }
+
+    if(vm === 'week'){
+      let t = Math.ceil(min / 3600000) * 3600000;
+      while(t <= max){
+        const hour = new Date(t).getHours();
+        let strokeStyle = null;
+        let lineWidth = 0;
+        if(hour===0){ strokeStyle='rgba(0,0,0,0.20)'; lineWidth=1.5; }
+        else if(hour===6||hour===12||hour===18){ strokeStyle='rgba(0,0,0,0.08)'; lineWidth=0.8; }
+        if(strokeStyle){
+          const x = xScale.getPixelForValue(t);
+          ctx.save(); ctx.beginPath();
+          ctx.moveTo(x,top); ctx.lineTo(x,bottom);
+          ctx.strokeStyle=strokeStyle; ctx.lineWidth=lineWidth;
+          ctx.stroke(); ctx.restore();
+        }
+        t += 3600000;
+      }
+      return;
+    }
+
+    let tLive = Math.ceil(min / 3600000) * 3600000;
+    while(tLive <= max){
+      const x = xScale.getPixelForValue(tLive);
+      const hour = new Date(tLive).getHours();
       const isMajor = hour % 4 === 0;
-
-      ctx.save();
-      ctx.beginPath();
-      ctx.moveTo(x, top);
-      ctx.lineTo(x, bottom);
+      ctx.save(); ctx.beginPath();
+      ctx.moveTo(x,top); ctx.lineTo(x,bottom);
       ctx.strokeStyle = isMajor ? 'rgba(0,0,0,0.20)' : 'rgba(0,0,0,0.06)';
       ctx.lineWidth = isMajor ? 1.5 : 0.8;
-      ctx.stroke();
-      ctx.restore();
-
-      t += 3600000;
+      ctx.stroke(); ctx.restore();
+      tLive += 3600000;
     }
   }
 });
@@ -774,38 +821,49 @@ function savePreferences(){
     .map(c => c.dataset.id);
 
   // oggetto preferenze completo
-  const prefs = {
+ const prefs = {
     charts: selectedCharts,
     start: start.value,
     end: end.value,
-    mode: mode.value
+    mode: mode.value,
+    startDate: document.getElementById('startDate').value
   };
 
   // salvataggio persistente nel browser
   localStorage.setItem(PREF_KEY, JSON.stringify(prefs));
 }
 
-  function getTimeRange(){
+function getTimeRange(){
+  const vm = document.getElementById('viewMode').value;
+  const now = new Date();
 
-  const mode = document.getElementById('viewMode').value;
+  const startDateVal = document.getElementById('startDate').value;
+  const hardStart = startDateVal ? new Date(startDateVal + 'T00:00:00') : null;
 
-  // 🔴 LIVE
-  if(mode === "live"){
-    const end = new Date();
-    const start = new Date(end.getTime() - 24*60*60*1000);
+  function applyHardStart(start, end){
+    if(hardStart && start < hardStart) start = hardStart;
     return { start, end };
   }
 
-  // 🔵 GIORNO
-  const selected = new Date(document.getElementById('day').value);
-
-  const start = new Date(selected);
-  start.setHours(0,0,0,0);
-
-  const end = new Date(selected);
-  end.setHours(23,59,59,999);
-
-  return { start, end };
+  if(vm === "live"){
+    return applyHardStart(new Date(now.getTime() - 24*60*60*1000), now);
+  }
+  if(vm === "day"){
+    const selected = new Date(document.getElementById('day').value);
+    const start = new Date(selected); start.setHours(0,0,0,0);
+    const end = new Date(selected); end.setHours(23,59,59,999);
+    return applyHardStart(start, end);
+  }
+  if(vm === "week"){
+    return applyHardStart(new Date(now.getTime() - 7*24*60*60*1000), now);
+  }
+  if(vm === "month"){
+    return applyHardStart(new Date(now.getTime() - 30*24*60*60*1000), now);
+  }
+  if(vm === "year"){
+    return applyHardStart(new Date(now.getTime() - 365*24*60*60*1000), now);
+  }
+  return { start: now, end: now };
 }
 
 /* =========================
@@ -1121,6 +1179,214 @@ function closeInfoPopup(){
   document.querySelector('.info-popup')?.remove();
   document.querySelector('.info-overlay')?.remove();
 }
+function exportCSV(){
+
+  const sep = ';';
+  const vm = document.getElementById('viewMode').value;
+  const isExtended = ['week','month','year'].includes(vm);
+
+  if(!rawFeedsStore.length){
+    alert('Nessun dato disponibile. Premi Aggiorna prima di estrarre il CSV.');
+    return;
+  }
+
+  // =========================
+  // NOME FILE
+  // =========================
+  const modeLabels = {
+    live:'Ultime24h', day:'Giorno',
+    week:'Ultimi7gg', month:'UltimoMese', year:'UltimoAnno'
+  };
+
+  let dateTag = '';
+  if(vm === 'day'){
+    const dayVal = document.getElementById('day').value;
+    dateTag = dayVal ? dayVal.split('-').reverse().join('-') : '';
+  } else {
+    dateTag = new Date().toLocaleDateString('it-IT',{
+      day:'2-digit', month:'2-digit', year:'numeric'
+    }).replace(/\//g,'-');
+  }
+
+  const filename = `AQI01_${modeLabels[vm] || vm}_${dateTag}`;
+
+  // =========================
+  // GENERA PUNTI INTERPOLATI
+  // =========================
+  // Funzione: dato un array di feed grezzi e un field,
+  // restituisce array di { ts, value } con punto medio tra coppie
+  function interpolate(feeds, field){
+    const valid = feeds.filter(f => {
+      const v = Number(f[field]);
+      return !isNaN(v) && f[field] !== null && f[field] !== '';
+    });
+    if(!valid.length) return [];
+
+    const points = [];
+
+    // primo punto = primo dato
+    points.push({
+      ts: new Date(valid[0].created_at).getTime(),
+      value: Number(valid[0][field])
+    });
+
+    // punti successivi = interpolazione tra coppie
+    for(let i = 1; i < valid.length; i++){
+      const tA = new Date(valid[i-1].created_at).getTime();
+      const tB = new Date(valid[i].created_at).getTime();
+      const vA = Number(valid[i-1][field]);
+      const vB = Number(valid[i][field]);
+      points.push({
+        ts: Math.round((tA + tB) / 2),
+        value: (vA + vB) / 2
+      });
+    }
+    return points;
+  }
+
+  // =========================
+  // CALCOLA SERIE PER OGNI CAMPO
+  // =========================
+  const fields = [
+    { field:'field5', col:'PM1 (µg/m³)'       },
+    { field:'field6', col:'PM2.5 (µg/m³)'     },
+    { field:'field7', col:'PM10 (µg/m³)'      },
+    { field:'field1', col:'Umidità (%)'        },
+    { field:'field2', col:'Temperatura (°C)'   },
+    { field:'field3', col:'Pressione (hPa)'    },
+  ];
+
+  // per il COMBO calcola media mobile 24h sui dati grezzi
+ function movingAvg24h(interpSeries){
+    // usa i punti già interpolati come base
+    return interpSeries.map((p, i) => {
+      const slice = interpSeries.slice(Math.max(0, i-47), i+1);
+      const avg = slice.reduce((s,x) => s + x.value, 0) / slice.length;
+      return { ts: p.ts, value: avg };
+    });
+  }
+
+  // costruisce serie interpolate per tutti i campi
+  const series = {};
+  fields.forEach(f => {
+    series[f.field] = interpolate(rawFeedsStore, f.field);
+  });
+
+  // COMBO usa media mobile
+ const combo25 = movingAvg24h(series['field6']);
+  const combo10 = movingAvg24h(series['field7']);
+
+  // =========================
+  // TIMESTAMP UNIFICATO
+  // =========================
+  // usa i timestamp del campo PM2.5 come riferimento
+  // (o il primo campo disponibile)
+  const refSeries = series['field6'].length
+    ? series['field6']
+    : series['field5'];
+
+  if(!refSeries.length){
+    alert('Nessun dato disponibile nel range selezionato.');
+    return;
+  }
+
+  // indice rapido: ts → value per ogni serie
+  function buildIndex(pts){
+    const idx = {};
+    pts.forEach(p => { idx[p.ts] = p.value; });
+    return idx;
+  }
+
+  const idx = {
+    field5:  buildIndex(series['field5']),
+    field6:  buildIndex(series['field6']),
+    field7:  buildIndex(series['field7']),
+    field1:  buildIndex(series['field1']),
+    field2:  buildIndex(series['field2']),
+    field3:  buildIndex(series['field3']),
+    combo25: buildIndex(combo25),
+    combo10: buildIndex(combo10),
+  };
+
+  // timestamp di riferimento = unione di tutti
+  const allTs = new Set();
+  [...Object.values(series), combo25, combo10].forEach(pts => {
+    pts.forEach(p => allTs.add(p.ts));
+  });
+  const sortedTs = [...allTs].sort((a,b) => a-b);
+
+  // =========================
+  // COLONNE ATTIVE
+  // =========================
+  // mostra solo i grafici selezionati dall'utente
+  const checkboxMap = {
+    field5:  document.querySelector('aside input[data-id="5"]')?.checked,
+    field6:  document.querySelector('aside input[data-id="6"]')?.checked,
+    field7:  document.querySelector('aside input[data-id="7"]')?.checked,
+    combo:   document.querySelector('aside input[data-id="combo"]')?.checked,
+    field1:  document.querySelector('aside input[data-id="1"]')?.checked,
+    field2:  document.querySelector('aside input[data-id="2"]')?.checked,
+    field3:  document.querySelector('aside input[data-id="3"]')?.checked,
+  };
+
+  const columns = [
+    { label:'PM1 (µg/m³)',             key:'field5',  active: checkboxMap.field5  },
+    { label:'PM2.5 (µg/m³)',           key:'field6',  active: checkboxMap.field6  },
+    { label:'PM10 (µg/m³)',            key:'field7',  active: checkboxMap.field7  },
+    { label:'COMBO PM2.5 24h (µg/m³)', key:'combo25', active: checkboxMap.combo   },
+    { label:'COMBO PM10 24h (µg/m³)',  key:'combo10', active: checkboxMap.combo   },
+    { label:'Umidità (%)',             key:'field1',  active: checkboxMap.field1  },
+    { label:'Temperatura (°C)',        key:'field2',  active: checkboxMap.field2  },
+    { label:'Pressione (hPa)',         key:'field3',  active: checkboxMap.field3  },
+  ].filter(c => c.active);
+
+  // =========================
+  // COSTRUZIONE RIGHE CSV
+  // =========================
+  const rows = [];
+
+  // titolo
+  rows.push(filename);
+  rows.push('');
+
+  // intestazione
+  const header = ['Data', 'Ora', 'Anno', ...columns.map(c => c.label)];
+  rows.push(header.join(sep));
+
+  // dati
+  sortedTs.forEach(ts => {
+    const date = new Date(ts);
+    const dateStr = date.toLocaleDateString('it-IT',{
+      day:'2-digit', month:'2-digit'
+    });
+    const timeStr = date.toLocaleTimeString('it-IT',{
+      hour:'2-digit', minute:'2-digit'
+    });
+    const yearStr = date.getFullYear().toString();
+
+    const vals = columns.map(c => {
+      const v = idx[c.key]?.[ts];
+      if(v == null || isNaN(v)) return '';
+      return Number(v).toFixed(2).replace('.',',');
+    });
+
+    rows.push([dateStr, timeStr, yearStr, ...vals].join(sep));
+  });
+
+  // =========================
+  // DOWNLOAD
+  // =========================
+  const blob = new Blob(
+    ['\uFEFF' + rows.join('\n')],
+    { type:'text/csv;charset=utf-8;' }
+  );
+  const url = URL.createObjectURL(blob);
+  const a = document.createElement('a');
+  a.href = url;
+  a.download = filename + '.csv';
+  a.click();
+  URL.revokeObjectURL(url);
+}
 
 /* =========================
    SELEZIONE GRAFICI
@@ -1165,9 +1431,247 @@ function renderCharts(){
   });
 }
 
-  /* Svuota area grafici */
+/* Svuota area grafici */
+/* Svuota area grafici e dati CSV */
   const chartsContainer = document.getElementById('charts');
   chartsContainer.innerHTML = '';
+  Object.keys(chartDataStore).forEach(k => delete chartDataStore[k]);
+
+  const viewMode = document.getElementById('viewMode').value;
+  const isExtended = ['week','month','year'].includes(viewMode);
+
+function aggregateDaily(feeds, field){
+    const map = {};
+    feeds.forEach(f => {
+      const d = new Date(f.created_at);
+      const key = d.toISOString().slice(0,10);
+      if(!map[key]) map[key] = [];
+      const val = Number(f[field]);
+      if(!isNaN(val)) map[key].push(val);
+    });
+    return Object.entries(map).sort().map(([date, vals]) => ({
+      x: new Date(date + 'T12:00:00'),
+      y: vals.reduce((s,v) => s+v, 0) / vals.length
+    }));
+  }
+
+ function aggregateHourly(feeds, field){
+    // Filtra solo i feed con valore valido
+    const valid = feeds.filter(f => {
+      const v = Number(f[field]);
+      return !isNaN(v);
+    });
+
+    if(!valid.length) return [];
+
+    const points = [];
+
+    // Primo punto = primo dato disponibile, nessuna media
+    points.push({
+      x: new Date(valid[0].created_at),
+      y: Number(valid[0][field])
+    });
+
+    // Punti successivi = centro temporale e media tra coppie consecutive
+    for(let i = 1; i < valid.length; i++){
+      const tA = new Date(valid[i-1].created_at).getTime();
+      const tB = new Date(valid[i].created_at).getTime();
+      const vA = Number(valid[i-1][field]);
+      const vB = Number(valid[i][field]);
+
+      points.push({
+        x: new Date((tA + tB) / 2),
+        y: (vA + vB) / 2
+      });
+    }
+
+    return points;
+  }
+
+function xAxisConfig(){
+
+    const now = new Date();
+
+    if(viewMode === 'year'){
+      return {
+        type:'time',
+        time:{ unit:'month', stepSize:1 },
+        ticks:{
+          autoSkip:false,
+          maxRotation:45,
+          minRotation:45,
+          callback: function(value){
+            const date = new Date(value);
+            const month = date.getMonth();
+            if(month === 0) return date.getFullYear().toString();
+            return date.toLocaleDateString('en-US',{ month:'short' });
+          }
+        },
+        grid:{ display:true, color:'rgba(0,0,0,0.07)', lineWidth:1 },
+        title:{ display:false }
+      };
+    }
+
+    if(viewMode === 'month'){
+      // asse X sempre da oggi-30gg a oggi
+      const axisStart = new Date(now.getTime() - 30*24*60*60*1000);
+      axisStart.setHours(0,0,0,0);
+      const axisEnd = new Date(now);
+      axisEnd.setHours(23,59,59,999);
+
+      return {
+        type:'time',
+        min: axisStart,
+        max: axisEnd,
+        time:{ unit:'hour', stepSize:1 },
+        afterBuildTicks: function(axis){
+          // 1 tick ogni ora per avere griglie secondarie a 08:00 e 16:00
+          const ticks = [];
+          let t = new Date(axisStart).getTime();
+          while(t <= axisEnd.getTime()){
+            ticks.push({ value: t });
+            t += 3600000; // ogni ora
+          }
+          axis.ticks = ticks;
+        },
+        ticks:{
+          autoSkip:false,
+          maxRotation:45,
+          minRotation:45,
+          callback: function(value){
+            const date = new Date(value);
+            const hours = date.getHours();
+            const day = date.getDate();
+            // mostra etichetta solo a mezzanotte
+            if(hours !== 0) return null;
+            // giorno 1 → nome mese intero
+            if(day === 1){
+              return date.toLocaleDateString('en-US',{ month:'long' });
+            }
+            // giorni pari → etichetta
+            if(day % 2 === 0){
+              return date.toLocaleDateString('en-US',{
+                day:'2-digit',
+                month:'short'
+              });
+            }
+            return null;
+          }
+        },
+        
+        grid:{
+          display: true,
+          color: function(ctx){
+            const date = new Date(ctx.tick.value);
+            const hours = date.getHours();
+            if(hours === 0) return 'rgba(0,0,0,0.20)';
+            if(hours === 8 || hours === 16) return 'rgba(0,0,0,0.08)';
+            return 'rgba(0,0,0,0)';
+          },
+          lineWidth: function(ctx){
+            const date = new Date(ctx.tick.value);
+            const hours = date.getHours();
+            if(hours === 0) return 1.5;
+            if(hours === 8 || hours === 16) return 0.8;
+            return 0;
+          }
+        },
+        
+        title:{ display:false }
+      };
+    }
+
+ if(viewMode === 'week'){
+      const axisEnd = new Date(now);
+      axisEnd.setHours(23,59,59,999);
+
+      // asse X parte da 7 giorni fa alla stessa ora attuale
+      const axisStart = new Date(now.getTime() - 7*24*60*60*1000);
+
+      return {
+        type:'time',
+        min: axisStart,
+        max: axisEnd,
+        time:{ unit:'hour', stepSize:1 },
+        
+        afterBuildTicks: function(axis){
+          const ticks = [];
+          // prima etichetta = prima ora piena dopo axisStart
+          let t = Math.ceil(axisStart.getTime() / 3600000) * 3600000;
+          while(t <= axisEnd.getTime()){
+            ticks.push({ value: t });
+            t += 3600000;
+          }
+          axis.ticks = ticks;
+        },
+        ticks:{
+          autoSkip:false,
+          maxRotation:45,
+          minRotation:45,
+          callback: function(value){
+            const date = new Date(value);
+            const hours = date.getHours();
+            // mezzanotte → etichetta giorno
+            if(hours === 0){
+              return date.toLocaleDateString('en-US',{
+                day:'2-digit',
+                month:'short'
+              });
+            }
+            return null;
+          }
+        },
+        grid:{
+          display:true,
+          color: function(ctx){
+            const date = new Date(ctx.tick.value);
+            const hours = date.getHours();
+            if(hours === 0) return 'rgba(0,0,0,0.20)';
+            // solo 06:00, 12:00, 18:00 → secondarie (NON 00:00)
+            if(hours === 6 || hours === 12 || hours === 18) return 'rgba(0,0,0,0.08)';
+            return 'rgba(0,0,0,0)';
+          },
+          lineWidth: function(ctx){
+            const date = new Date(ctx.tick.value);
+            const hours = date.getHours();
+            if(hours === 0) return 1.5;
+            if(hours === 6 || hours === 12 || hours === 18) return 0.8;
+            return 0;
+          }
+        },
+        title:{ display:false }
+      };
+    }
+
+    // LIVE / GIORNO
+    return {
+      type:'time',
+      min: viewMode === 'day' ? new Date(document.getElementById('day').value + "T00:00:00") : undefined,
+      max: viewMode === 'day' ? new Date(document.getElementById('day').value + "T23:59:59") : undefined,
+      time:{ unit:'hour', stepSize:1 },
+      afterBuildTicks: function(axis){
+        if(!axis.min || !axis.max) return;
+        const ticks = [];
+        let t = Math.ceil(axis.min / 3600000) * 3600000;
+        while(t <= axis.max){ ticks.push({ value:t }); t += 3600000; }
+        axis.ticks = ticks;
+      },
+      ticks:{
+        autoSkip:false,
+        maxRotation:45,
+        minRotation:45,
+        callback: function(value){
+          const date = new Date(value);
+          const hours = date.getHours();
+          if(hours === 0) return date.toLocaleDateString('it-IT',{ day:'2-digit', month:'short' });
+          if(hours % 4 === 0) return date.toLocaleTimeString('it-IT',{ hour:'2-digit', minute:'2-digit' });
+          return null;
+        }
+      },
+      grid:{ display:false },
+      title:{ display:false }
+    };
+  }
 
   /* Se date non impostate → esce */
   const { start: tStart, end: tEnd } = getTimeRange();
@@ -1231,8 +1735,15 @@ const endStr = formatLocalDateTime(tEnd);
 
       if(!feeds.length) return;
 
-const labels = feeds.map(f => new Date(f.created_at));
-const data = feeds.map(f => Number(f.field6));
+const aggFn = viewMode === 'year' ? aggregateDaily : 
+              isExtended ? aggregateHourly : null;
+
+const labels = aggFn
+  ? aggFn(feeds, 'field6').map(p => p.x)
+  : feeds.map(f => new Date(f.created_at));
+const data = aggFn
+  ? aggFn(feeds, 'field6').map(p => p.y)
+  : feeds.map(f => Number(f.field6));
 
       const startDate = labels[0];
       const endDate = labels[labels.length - 1];
@@ -1256,6 +1767,9 @@ const data = feeds.map(f => Number(f.field6));
         chartsContainer.appendChild(d);
       }
 
+// salva dati per CSV
+      chartDataStore['PM2.5 (µg/m³)'] = { labels, data };
+
       const ctx = document.getElementById('chart_pm25').getContext('2d');
 
       new Chart(ctx,{
@@ -1278,82 +1792,11 @@ const data = feeds.map(f => Number(f.field6));
           },
 
 scales:{
-x:{
-  type:'time',
-
-  // 🔥 FORZA PARTENZA A MEZZANOTTE
-min: document.getElementById('viewMode').value === 'live' ? undefined : new Date(document.getElementById('day').value + "T00:00:00"),
-max: document.getElementById('viewMode').value === 'live' ? undefined : new Date(document.getElementById('day').value + "T23:59:59"),
-
- time:{
-  unit:'hour',
-  stepSize: 1
-},
-afterBuildTicks: function(axis){
-  const min = axis.min;
-  const max = axis.max;
-  const ticks = [];
-  let t = Math.ceil(min / 3600000) * 3600000;
-  while(t <= max){
-    ticks.push({ value: t });
-    t += 3600000;
-  }
-  axis.ticks = ticks;
-},
-
-  ticks:{
-    autoSkip:false,
-    maxRotation:45,
-    minRotation:45,
-
-   callback: function(value){
-  const date = new Date(value);
-
-  const hours = date.getHours();
-
-  // ?? mostra data solo a mezzanotte
-  if(hours === 0){
-    return date.toLocaleDateString('it-IT', {
-      day:'2-digit',
-      month:'short'
-    });
-  }
-
-  // ?? etichette ogni 4 ore
-  if(hours % 4 === 0){
-    return date.toLocaleTimeString('it-IT',{
-      hour:'2-digit',
-      minute:'2-digit'
-    });
-  }
-
-  // ?? niente etichetta
-  return null;
-}
-  },
-
-title:{
-  display:false
-},
-
-grid:{
-  display: false
-}
-},
-
+  x: xAxisConfig(),
   y:{
-  beginAtZero:false,
-
-    title:{
-      display:true,
-      text:'µg/m³'
-    },
-    
-grid:{
-  display: true,
-  color: 'rgba(0,0,0,0.06)',
-  lineWidth: 0.8
-}
+    beginAtZero:false,
+    title:{ display:true, text:'µg/m³' },
+    grid:{ display:true, color:'rgba(0,0,0,0.06)', lineWidth:0.8 }
   }
 }
         }
@@ -1421,8 +1864,15 @@ const endStr = formatLocalDateTime(tEnd);
 
       const field = "field" + ch.dataset.id;
 
-      const labels = feeds.map(f => new Date(f.created_at));
-      const data = feeds.map(f => Number(f[field]));
+const aggFn = viewMode === 'year' ? aggregateDaily :
+                    isExtended ? aggregateHourly : null;
+
+      const labels = aggFn
+        ? aggFn(feeds, field).map(p => p.x)
+        : feeds.map(f => new Date(f.created_at));
+      const data = aggFn
+        ? aggFn(feeds, field).map(p => p.y)
+        : feeds.map(f => Number(f[field]));
 
       const d = document.createElement('div');
       d.className = 'chart';
@@ -1494,6 +1944,9 @@ else{
 }
 // termine ORDINAMENTO GRAFICI FISSO (Modiifica del 11-04-26
 
+    // salva dati per CSV
+      chartDataStore[`${m.t} (${m.u})`] = { labels, data };
+
       const ctx = document.getElementById(`chart_${ch.dataset.id}`);
 
       new Chart(ctx,{
@@ -1513,82 +1966,11 @@ else{
           plugins:{ legend:{ display:false } },
 
 scales:{
-x:{
-  type:'time',
-
-  // 🔥 FORZA PARTENZA A MEZZANOTTE
-min: document.getElementById('viewMode').value === 'live' ? undefined : new Date(document.getElementById('day').value + "T00:00:00"),
-max: document.getElementById('viewMode').value === 'live' ? undefined : new Date(document.getElementById('day').value + "T23:59:59"),
-
-time:{
-  unit:'hour',
-  stepSize: 1
-},
-afterBuildTicks: function(axis){
-  const min = axis.min;
-  const max = axis.max;
-  const ticks = [];
-  let t = Math.ceil(min / 3600000) * 3600000;
-  while(t <= max){
-    ticks.push({ value: t });
-    t += 3600000;
-  }
-  axis.ticks = ticks;
-},
-
-  ticks:{
-    autoSkip:false,
-    maxRotation:45,
-    minRotation:45,
-
-   callback: function(value){
-  const date = new Date(value);
-
-  const hours = date.getHours();
-
-  // ?? mostra data solo a mezzanotte
-  if(hours === 0){
-    return date.toLocaleDateString('it-IT', {
-      day:'2-digit',
-      month:'short'
-    });
-  }
-
-  // ?? etichette ogni 4 ore
-  if(hours % 4 === 0){
-    return date.toLocaleTimeString('it-IT',{
-      hour:'2-digit',
-      minute:'2-digit'
-    });
-  }
-
-  // ?? niente etichetta
-  return null;
-}
-  },
-
-title:{
-  display:false
-},
-
- grid:{
-  display: false
-}
-},
-
- y:{
-  beginAtZero:false,
-    
-    title:{
-      display:true,
-      text: m.u  // 🔥 prende unità dal meta
-    },
-    
-   grid:{
-  display: true,
-  color: 'rgba(0,0,0,0.06)',
-  lineWidth: 0.8
-}
+  x: xAxisConfig(),
+  y:{
+    beginAtZero:false,
+    title:{ display:true, text:m.u },
+    grid:{ display:true, color:'rgba(0,0,0,0.06)', lineWidth:0.8 }
   }
 }
         }
@@ -1643,12 +2025,18 @@ const r = await fetch(
       const j = await r.json();
       const feeds = j.feeds || [];
 
-      if (!feeds.length) return;
+if (!feeds.length) return;
 
       // ordina per sicurezza temporale
       feeds.sort((a, b) =>
         new Date(a.created_at) - new Date(b.created_at)
       );
+
+      // salva dati grezzi per CSV (filtrati nel range corretto)
+      rawFeedsStore = feeds.filter(f => {
+        const d = new Date(f.created_at);
+        return d >= tStart && d <= tEnd;
+      });
 
       // =========================
 // TIME RANGE
@@ -1660,39 +2048,36 @@ const r = await fetch(
 // =========================
 const avgSeries = (field) => {
   const out = [];
-
   for (let i = 0; i < feeds.length; i++) {
     const slice = feeds.slice(Math.max(0, i - 47), i + 1);
-
-    const avg = slice.reduce((s, x) =>
-      s + Number(x[field] || 0), 0
-    ) / slice.length;
-
+    const avg = slice.reduce((s, x) => s + Number(x[field] || 0), 0) / slice.length;
     out.push(avg);
   }
-
   return out;
 };
 
-const fullPM25 = avgSeries('field6');
-const fullPM10 = avgSeries('field7');
-
-// =========================
-// FILTRO CORRETTO (CRITICO)
-// =========================
 const labels = [];
 const pm25 = [];
 const pm10 = [];
 
-feeds.forEach((f, i) => {
-  const d = new Date(f.created_at);
-
-  if (d >= tStart && d <= tEnd) {
-    labels.push(d);
-    pm25.push(fullPM25[i]);
-    pm10.push(fullPM10[i]);
-  }
-});
+if(isExtended){
+  const aggFn = viewMode === 'year' ? aggregateDaily : aggregateHourly;
+  const agg25 = aggFn(feeds, 'field6');
+  const agg10 = aggFn(feeds, 'field7');
+  agg25.forEach(p => { labels.push(p.x); pm25.push(p.y); });
+  agg10.forEach(p => { pm10.push(p.y); });
+} else {
+  const fullPM25 = avgSeries('field6');
+  const fullPM10 = avgSeries('field7');
+  feeds.forEach((f, i) => {
+    const d = new Date(f.created_at);
+    if(d >= tStart && d <= tEnd){
+      labels.push(d);
+      pm25.push(fullPM25[i]);
+      pm10.push(fullPM10[i]);
+    }
+  });
+}
 
     // 🔥 CONTROLLO ANTI-GRAFICO VUOTO
     if (!labels.length) {
@@ -1740,6 +2125,10 @@ d.innerHTML = `
      // termine inserisci COMBO dopo PM10
       
       const ctx = d.querySelector('canvas').getContext('2d');
+
+     // salva dati per CSV
+      chartDataStore['PM2.5 media mobile 24h (µg/m³)'] = { labels, data: pm25 };
+      chartDataStore['PM10 media mobile 24h (µg/m³)'] = { labels, data: pm10 };
 
       // distrugge vecchio grafico se esiste
       if (window.pmChart) window.pmChart.destroy();
@@ -1832,79 +2221,12 @@ legend:{
 }
   },
 
-  scales:{
-    x:{
-      type:'time',
-
-      // 🔥 ALLINEATO AGLI ALTRI GRAFICI
-min: document.getElementById('viewMode').value === 'live' ? undefined : new Date(document.getElementById('day').value + "T00:00:00"),
-max: document.getElementById('viewMode').value === 'live' ? undefined : new Date(document.getElementById('day').value + "T23:59:59"),
-
-    time:{
-  unit:'hour',
-  stepSize: 1
-},
-afterBuildTicks: function(axis){
-  const min = axis.min;
-  const max = axis.max;
-  const ticks = [];
-  let t = Math.ceil(min / 3600000) * 3600000;
-  while(t <= max){
-    ticks.push({ value: t });
-    t += 3600000;
-  }
-  axis.ticks = ticks;
-},
-
-      ticks:{
-        autoSkip:false,
-        maxRotation:45,
-        minRotation:45,
-
-        callback:function(value){
-          const date = new Date(value);
-          const hours = date.getHours();
-
-          if(hours === 0){
-            return date.toLocaleDateString('it-IT',{
-              day:'2-digit',
-              month:'short'
-            });
-          }
-
-          if(hours % 4 === 0){
-            return date.toLocaleTimeString('it-IT',{
-              hour:'2-digit',
-              minute:'2-digit'
-            });
-          }
-
-          return null;
-        }
-      },
-
-title:{
-  display:false
-},
-
-      grid:{
-        display: false
-      }
-    },
-
+scales:{
+    x: xAxisConfig(),
     y:{
       beginAtZero:false,
-
-      title:{
-        display:true,
-        text:'µg/m³'
-      },
-
-      grid:{
-        display: true,
-        color: 'rgba(0,0,0,0.06)',
-        lineWidth: 0.8
-      }
+      title:{ display:true, text:'µg/m³' },
+      grid:{ display:true, color:'rgba(0,0,0,0.06)', lineWidth:0.8 }
     }
   }
 }
@@ -1932,6 +2254,7 @@ document.querySelectorAll('aside input[data-id]').forEach(cb=>{
 // date inizio / fine
 start.addEventListener('change', savePreferences);
 end.addEventListener('change', savePreferences);
+document.getElementById('startDate').addEventListener('change', savePreferences);
 
 // standard AQI
 mode.addEventListener('change', savePreferences);
@@ -1949,20 +2272,20 @@ update.addEventListener('click', ()=>{
   loadKPIs();
 });
 
+document.getElementById('exportCsv').addEventListener('click', exportCSV);
+
 /* Cambio standard AQI */
 mode.addEventListener('change', renderCharts);
 
 document.getElementById('viewMode').addEventListener('change', ()=>{
-
-  const mode = document.getElementById('viewMode').value;
-  if(mode === "live"){
-    day.style.display = "none";
-    dayLabel.style.display = "none";
-  }else{
+  const vm = document.getElementById('viewMode').value;
+  if(vm === "day"){
     day.style.display = "inline-block";
     dayLabel.style.display = "inline-block";
+  } else {
+    day.style.display = "none";
+    dayLabel.style.display = "none";
   }
-
 });
 
 document.getElementById('viewMode').dispatchEvent(new Event('change'));
@@ -1988,6 +2311,7 @@ document.addEventListener('DOMContentLoaded', () => {
     if (prefs.start) start.value = prefs.start;
     if (prefs.end) end.value = prefs.end;
     if (prefs.mode) mode.value = prefs.mode;
+    if (prefs.startDate) document.getElementById('startDate').value = prefs.startDate;
 
     // Ripristiniamo i grafici selezionati
     if (Array.isArray(prefs.charts)) {
