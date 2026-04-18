@@ -1229,7 +1229,7 @@ function exportCSV(){
       }));
     }
 
-    // week e month → aggregazione oraria (1 punto per ora)
+    // week e month → coppie consecutive (stessa logica grafici)
     if(vm === 'week' || vm === 'month'){
       const valid = feeds.filter(f => {
         const v = Number(f[field]);
@@ -1237,27 +1237,31 @@ function exportCSV(){
       });
       if(!valid.length) return [];
 
-      // raggruppa per ora
-      const map = {};
-      valid.forEach(f => {
-        const d = new Date(f.created_at);
-        const key = d.toISOString().slice(0,13);
-        if(!map[key]) map[key] = [];
-        map[key].push({
-          ts: d.getTime(),
-          value: Number(f[field])
+      const points = [];
+
+      // accoppia 1a+2a, 3a+4a, 5a+6a ...
+      for(let i = 0; i < valid.length - 1; i += 2){
+        const tA = new Date(valid[i].created_at).getTime();
+        const tB = new Date(valid[i+1].created_at).getTime();
+        const vA = Number(valid[i][field]);
+        const vB = Number(valid[i+1][field]);
+        points.push({
+          ts: Math.round((tA + tB) / 2),
+          value: (vA + vB) / 2
         });
-      });
+      }
 
-      return Object.entries(map).sort().reverse().map(([key, pts]) => ({
-        ts: Math.round(pts.reduce((s,p) => s + p.ts, 0) / pts.length),
-        value: pts.reduce((s,p) => s + p.value, 0) / pts.length
-      }));
+      // se numero dispari aggiunge l'ultimo da solo
+      if(valid.length % 2 !== 0){
+        const last = valid[valid.length - 1];
+        points.push({
+          ts: new Date(last.created_at).getTime(),
+          value: Number(last[field])
+        });
+      }
 
-      return Object.entries(map).sort().reverse().map(([key, vals]) => ({
-        ts: new Date(key + ':30:00Z').getTime(),
-        value: vals.reduce((s,v) => s+v, 0) / vals.length
-      }));
+      // ordine dal più recente al più vecchio
+      return points.reverse();
     }
 
     // live e day → dati grezzi
