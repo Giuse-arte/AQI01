@@ -1247,8 +1247,8 @@ function exportCSV(){
         map[key].push(Number(f[field]));
       });
 
-      return Object.entries(map).sort().map(([key, vals]) => ({
-        ts: new Date(key + ':30:00Z').getTime(), // centro ora
+      return Object.entries(map).sort().reverse().map(([key, vals]) => ({
+        ts: new Date(key + ':30:00Z').getTime(),
         value: vals.reduce((s,v) => s+v, 0) / vals.length
       }));
     }
@@ -1333,7 +1333,7 @@ function exportCSV(){
   [...Object.values(series), combo25, combo10].forEach(pts => {
     pts.forEach(p => allTs.add(p.ts));
   });
-  const sortedTs = [...allTs].sort((a,b) => a-b);
+  const sortedTs = [...allTs].sort((a,b) => b-a);
 
   // =========================
   // COLONNE ATTIVE
