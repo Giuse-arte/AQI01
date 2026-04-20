@@ -159,8 +159,8 @@
     /* Griglia 7 colonne per le KPI */
  .kpi-row{
   display:grid;
-  grid-template-columns:repeat(auto-fit, minmax(180px, 1fr));
-  gap:16px
+  grid-template-columns:repeat(auto-fit, minmax(150px, 1fr));
+  gap:14px
 }
 
 .kpi{
@@ -573,6 +573,13 @@
         <div class="minmax" id="pressMM"></div>
       </div>
 
+      <!-- KPI: VOC -->
+      <div class="kpi">
+        <div class="title">VOC</div>
+        <div class="sensor">BME680</div>
+        <div class="value" id="voc">— kOhm</div>
+      </div>
+
       <!-- KPI: PM1 (valore istantaneo) -->
       <div class="kpi">
         <div class="title">PM1</div>
@@ -642,6 +649,7 @@
       <label><input type="checkbox" checked data-id="6"> PM2.5 – PMS5003</label>
       <label><input type="checkbox" checked data-id="7"> PM10 – PMS5003</label>
       <label><input type="checkbox" checked data-id="combo"> PM2.5 + PM10 (24h)</label>
+      <label><input type="checkbox" checked data-id="4"> VOC – BME680</label>
 
       <!-- ========================= -->
       <!-- MEMORIZZAZIONE PREFERENZE -->
@@ -926,6 +934,7 @@ function applyDemoKPI(){
   temp.textContent  = fmt1(d.temp)  + ' °C';
   press.textContent = fmt1(d.press) + ' hPa';
 
+  voc.textContent  = fmt1(50)     + ' kOhm';
   pm1.textContent  = fmt0(d.pm1)  + ' µg/m³';
   pm25.textContent = fmt0(d.pm25) + ' µg/m³';
   pm10.textContent = fmt0(d.pm10) + ' µg/m³';
@@ -953,10 +962,11 @@ function applyKPI(feeds){
   // ultimo dato disponibile (sempre)
   const last = feeds.at(-1);
 
-  // prime 4 card → sempre ultimo valore
+  // prime 5 card → sempre ultimo valore
   hum.textContent   = fmt1(last.field1) + ' %';
   temp.textContent  = fmt1(last.field2) + ' °C';
   press.textContent = fmt1(last.field3) + ' hPa';
+  voc.textContent   = fmt1(last.field4) + ' kOhm';
   pm1.textContent   = fmt0(last.field5) + ' µg/m³';
 
   // min/max solo in modalità GIORNO
@@ -1282,6 +1292,7 @@ function exportCSV(){
     { field:'field5', col:'PM1 (µg/m³)'       },
     { field:'field6', col:'PM2.5 (µg/m³)'     },
     { field:'field7', col:'PM10 (µg/m³)'      },
+    { field:'field4', col:'VOC (kOhm)'         },
     { field:'field1', col:'Umidità (%)'        },
     { field:'field2', col:'Temperatura (°C)'   },
     { field:'field3', col:'Pressione (hPa)'    },
@@ -1382,10 +1393,11 @@ function exportCSV(){
   // COLONNE ATTIVE
   // =========================
   // mostra solo i grafici selezionati dall'utente
-  const checkboxMap = {
+   const checkboxMap = {
     field5:  document.querySelector('aside input[data-id="5"]')?.checked,
     field6:  document.querySelector('aside input[data-id="6"]')?.checked,
     field7:  document.querySelector('aside input[data-id="7"]')?.checked,
+    field4:  document.querySelector('aside input[data-id="4"]')?.checked,
     combo:   document.querySelector('aside input[data-id="combo"]')?.checked,
     field1:  document.querySelector('aside input[data-id="1"]')?.checked,
     field2:  document.querySelector('aside input[data-id="2"]')?.checked,
@@ -1398,6 +1410,7 @@ function exportCSV(){
     { label:'PM10 (µg/m³)',            key:'field7',  active: checkboxMap.field7  },
     { label:'COMBO PM2.5 24h (µg/m³)', key:'combo25', active: checkboxMap.combo   },
     { label:'COMBO PM10 24h (µg/m³)',  key:'combo10', active: checkboxMap.combo   },
+    { label:'VOC (kOhm)',              key:'field4',  active: checkboxMap.field4  },
     { label:'Umidità (%)',             key:'field1',  active: checkboxMap.field1  },
     { label:'Temperatura (°C)',        key:'field2',  active: checkboxMap.field2  },
     { label:'Pressione (hPa)',         key:'field3',  active: checkboxMap.field3  },
@@ -1476,14 +1489,15 @@ function renderCharts(){
 
   const container = document.getElementById('charts');
 
-  const order = [
+const order = [
     '#chart_5',      // PM1
     '#chart_pm25',   // PM2.5
     '#chart_7',      // PM10
     '#pmCombined',   // COMBO
     '#chart_1',      // Umidità
     '#chart_2',      // Temperatura
-    '#chart_3'       // Pressione
+    '#chart_3',      // Pressione
+    '#chart_4'       // VOC
   ];
 
   order.forEach(selector => {
@@ -1749,6 +1763,7 @@ function xAxisConfig(){
     1:{t:'UMIDITÀ',s:'BME680',min:0,max:100,u:'%'},
     2:{t:'TEMPERATURA',s:'BME680',min:-10,max:60,u:'°C'},
     3:{t:'PRESSIONE',s:'BME680',min:900,max:1100,u:'hPa'},
+    4:{t:'VOC',s:'BME680',min:0,max:500,u:'kOhm'},
     5:{t:'PM1',s:'PMS5003',min:0,max:100,u:'µg/m³'},
     6:{t:'PM2.5',s:'PMS5003',min:0,max:100,u:'µg/m³'},
     7:{t:'PM10',s:'PMS5003',min:0,max:100,u:'µg/m³'}
@@ -1989,13 +2004,18 @@ else if(ch.dataset.id === "2"){
   }
 }
 
-// Pressione ? dopo Temperatura (ULTIMO)
+// Pressione ? dopo Temperatura
 else if(ch.dataset.id === "3"){
   if(temp){
     chartsContainer.insertBefore(d, temp.nextSibling);
   } else {
     chartsContainer.appendChild(d);
   }
+}
+
+// VOC ? ultimo
+else if(ch.dataset.id === "4"){
+  chartsContainer.appendChild(d);
 }
 
 // fallback sicurezza
