@@ -976,31 +976,24 @@ function applyKPI(feeds){
   const vocLast = Number(last.field4);
   voc.textContent = fmt1(vocLast) + ' kOhm';
 
-  // baseline = media mobile ultime 24h
-  const nowVoc = new Date();
-  const since24hVoc = new Date(nowVoc.getTime() - 24*60*60*1000);
-  // aggiorna delta VOC appena baseline disponibile
-  const vocLast = Number(last.field4);
-  function updateVocDelta(){
-    if(window.vocBaseline == null){
-      setTimeout(updateVocDelta, 100);
-      return;
-    }
-    const delta = vocLast - window.vocBaseline;
-    const sign = delta >= 0 ? '+' : '';
-    const arrow = delta >= 0 ? ' ↑' : ' ↓';
-    const color = delta >= 0 ? '#16a34a' : '#dc2626';
-    const deltaEl = document.getElementById('vocDelta');
-    if(deltaEl){
-      deltaEl.textContent = sign + fmt1(delta) + ' kOhm' + arrow;
-      deltaEl.style.color = color;
-      deltaEl.style.fontWeight = '600';
-    }
-  }
-  updateVocDelta();
+  // baseline = media delle ultime 24h disponibili nei feed
+  const vocValues = feeds
+    .map(f => Number(f.field4))
+    .filter(v => !isNaN(v));
 
-  if(window.vocBaseline !== null){
-     }
+  const vocBaseline = vocValues.length
+    ? vocValues.reduce((s, v) => s + v, 0) / vocValues.length
+    : null;
+
+  const deltaEl = document.getElementById('vocDelta');
+  if(deltaEl && vocBaseline !== null){
+    const delta = vocLast - vocBaseline;
+    const sign  = delta >= 0 ? '+' : '';
+    const arrow = delta >= 0 ? ' ↑' : ' ↓';
+    deltaEl.textContent      = sign + fmt1(delta) + ' kOhm' + arrow;
+    deltaEl.style.color      = delta >= 0 ? '#16a34a' : '#dc2626';
+    deltaEl.style.fontWeight = '600';
+  }
 
   // min/max solo in modalità GIORNO
   const isDay = document.getElementById('viewMode').value === 'day';
@@ -1978,15 +1971,15 @@ if(ch.dataset.id === "4"){
         ? aggFn(feeds, 'field4')
         : feeds.map(f => ({ x: new Date(f.created_at), y: Number(f.field4) }));
 
-      // baseline 24h su allFeeds — condivisa con card KPI
-      const baseline24h = (function(){
-        const valid = allFeeds.filter(f => !isNaN(Number(f.field4)));
-        if(!valid.length) return 0;
-        return valid.reduce((s,f) => s + Number(f.field4), 0) / valid.length;
-      })();
-
-      // salva baseline globale per card KPI
-      window.vocBaseline = baseline24h;
+      // baseline 24h → solo ultimi 24h da ora
+      const now24 = new Date();
+      const since24 = new Date(now24.getTime() - 24*60*60*1000);
+      const valid24 = allFeeds.filter(f =>
+        !isNaN(Number(f.field4)) && new Date(f.created_at) >= since24
+      );
+      const baseline24h = valid24.length
+        ? valid24.reduce((s,f) => s + Number(f.field4), 0) / valid24.length
+        : 0;
 
       const labels = vocRaw.map(p => p.x);
       const dataAbs = vocRaw.map(p => p.y);
