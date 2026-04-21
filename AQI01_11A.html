@@ -844,8 +844,7 @@ function savePreferences(){
 
 function getTimeRange(){
   const vm = document.getElementById('viewMode').value;
-  const nowVoc = new Date();
-  const since24h = new Date(nowVoc.getTime() - 24*60*60*1000);
+  const now = new Date();
 
   const startDateVal = document.getElementById('startDate').value;
   const hardStart = startDateVal ? new Date(startDateVal + 'T00:00:00') : null;
