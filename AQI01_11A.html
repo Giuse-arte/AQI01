@@ -979,26 +979,28 @@ function applyKPI(feeds){
   // baseline = media mobile ultime 24h
   const nowVoc = new Date();
   const since24hVoc = new Date(nowVoc.getTime() - 24*60*60*1000);
-  // usa baseline condivisa dal grafico VOC se disponibile
-  const baseline = window.vocBaseline ?? (function(){
-    const valid = feeds.filter(f => !isNaN(Number(f.field4)));
-    if(!valid.length) return null;
-    return valid.reduce((s,f) => s + Number(f.field4), 0) / valid.length;
-  })();
-
-  if(baseline !== null){
-    const delta = vocLast - baseline;
+  // aggiorna delta VOC appena baseline disponibile
+  const vocLast = Number(last.field4);
+  function updateVocDelta(){
+    if(window.vocBaseline == null){
+      setTimeout(updateVocDelta, 100);
+      return;
+    }
+    const delta = vocLast - window.vocBaseline;
     const sign = delta >= 0 ? '+' : '';
     const arrow = delta >= 0 ? ' ↑' : ' ↓';
     const color = delta >= 0 ? '#16a34a' : '#dc2626';
-
     const deltaEl = document.getElementById('vocDelta');
-    deltaEl.textContent = sign + fmt1(delta) + ' kOhm' + arrow;
-    deltaEl.style.color = color;
-    deltaEl.style.fontWeight = '600';
-  } else {
-    document.getElementById('vocDelta').textContent = '';
+    if(deltaEl){
+      deltaEl.textContent = sign + fmt1(delta) + ' kOhm' + arrow;
+      deltaEl.style.color = color;
+      deltaEl.style.fontWeight = '600';
+    }
   }
+  updateVocDelta();
+
+  if(window.vocBaseline !== null){
+     }
 
   // min/max solo in modalità GIORNO
   const isDay = document.getElementById('viewMode').value === 'day';
