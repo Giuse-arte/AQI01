@@ -650,7 +650,7 @@
       <label><input type="checkbox" checked data-id="6"> PM2.5 – PMS5003</label>
       <label><input type="checkbox" checked data-id="7"> PM10 – PMS5003</label>
       <label><input type="checkbox" checked data-id="combo"> PM2.5 + PM10 (24h)</label>
-      <label><input type="checkbox" checked data-id="4"> VOC – BME680</label>
+      <label><input type="checkbox" checked data-id="4"> VOC – BME680 (kOhm + Delta)</label>
 
       <!-- ========================= -->
       <!-- MEMORIZZAZIONE PREFERENZE -->
@@ -1934,6 +1934,140 @@ const startBuffer = new Date(tStart.getTime() - 2 * 60 * 60 * 1000);
 const startStr = formatLocalDateTime(startBuffer);
 const endStr = formatLocalDateTime(tEnd);
 
+if(ch.dataset.id === "4"){
+
+  (async function(){
+    try{
+      const { start: tStart, end: tEnd } = getTimeRange();
+
+      function formatLocalDateTime(d){
+        const pad = n => n.toString().padStart(2,'0');
+        return d.getFullYear() + '-' + pad(d.getMonth()+1) + '-' + pad(d.getDate()) + ' ' +
+               pad(d.getHours()) + ':' + pad(d.getMinutes()) + ':' + pad(d.getSeconds());
+      }
+
+      const startBuffer = new Date(tStart.getTime() - 24*60*60*1000);
+      const startStr = formatLocalDateTime(startBuffer);
+      const endStr = formatLocalDateTime(tEnd);
+
+      const r = await fetch(
+        `https://api.thingspeak.com/channels/${CHANNEL}/feeds.json?start=${startStr}&end=${endStr}&results=8000`
+      );
+      const j = await r.json();
+      const allFeeds = j.feeds || [];
+      if(!allFeeds.length) return;
+
+      allFeeds.sort((a,b) => new Date(a.created_at) - new Date(b.created_at));
+
+      // feeds nel range selezionato
+      const feeds = allFeeds.filter(f => {
+        const d = new Date(f.created_at);
+        return d >= tStart && d <= tEnd;
+      });
+      if(!feeds.length) return;
+
+      // aggregazione in base alla modalita
+      const aggFn = viewMode === 'year' ? aggregateDaily :
+                    isExtended ? aggregateHourly : null;
+
+      const vocRaw = aggFn
+        ? aggFn(feeds, 'field4')
+        : feeds.map(f => ({ x: new Date(f.created_at), y: Number(f.field4) }));
+
+      // baseline 24h su allFeeds
+      const baseline24h = (function(){
+        const valid = allFeeds.filter(f => !isNaN(Number(f.field4)));
+        if(!valid.length) return 0;
+        return valid.reduce((s,f) => s + Number(f.field4), 0) / valid.length;
+      })();
+
+      const labels = vocRaw.map(p => p.x);
+      const dataAbs = vocRaw.map(p => p.y);
+      const dataDelta = vocRaw.map(p => p.y - baseline24h);
+
+      // crea card grafico
+      const d = document.createElement('div');
+      d.className = 'chart';
+      d.innerHTML = `
+        <div style="display:flex;align-items:center;gap:8px;flex-wrap:nowrap;">
+          <span class="chart-title" style="white-space:nowrap;">VOC — kOhm + Delta baseline 24h</span>
+          <span style="display:flex;align-items:center;gap:10px;margin-left:8px;flex-shrink:0;">
+            <span style="display:flex;align-items:center;gap:4px;font-size:.72rem;color:#6b7280;">
+              <span style="width:18px;height:3px;background:#3b82f6;display:inline-block;border-radius:2px;"></span>kOhm
+            </span>
+            <span style="display:flex;align-items:center;gap:4px;font-size:.72rem;color:#6b7280;">
+              <span style="width:18px;height:3px;background:#f97316;display:inline-block;border-radius:2px;"></span>Delta
+            </span>
+          </span>
+        </div>
+        <canvas id="chart_4"></canvas>
+      `;
+      chartsContainer.appendChild(d);
+
+      const ctx = document.getElementById('chart_4').getContext('2d');
+
+      new Chart(ctx, {
+        type: 'line',
+        data: {
+          labels,
+          datasets: [
+            {
+              label: 'VOC (kOhm)',
+              data: dataAbs,
+              tension: 0.3,
+              borderWidth: 2,
+              pointRadius: 1,
+              borderColor: '#3b82f6',
+              backgroundColor: '#3b82f6',
+              yAxisID: 'yAbs'
+            },
+            {
+              label: 'Delta baseline',
+              data: dataDelta,
+              tension: 0.3,
+              borderWidth: 2,
+              pointRadius: 1,
+              borderColor: '#f97316',
+              backgroundColor: '#f97316',
+              yAxisID: 'yDelta'
+            }
+          ]
+        },
+        options: {
+          responsive: true,
+          maintainAspectRatio: false,
+          plugins: { legend: { display: false } },
+          scales: {
+            x: xAxisConfig(),
+            yAbs: {
+              type: 'linear',
+              position: 'left',
+              beginAtZero: false,
+              title: { display: true, text: 'kOhm' },
+              grid: { display: true, color: 'rgba(0,0,0,0.06)', lineWidth: 0.8 }
+            },
+            yDelta: {
+              type: 'linear',
+              position: 'right',
+              beginAtZero: true,
+              title: { display: true, text: 'Delta kOhm' },
+              grid: { display: false }
+            }
+          }
+        }
+      });
+
+      // salva per CSV
+      chartDataStore['VOC (kOhm)'] = { labels, data: dataAbs };
+
+    }catch(e){
+      console.error("VOC error:", e);
+    }
+  })();
+
+  return;
+}
+
 if(ch.dataset.id !== "6"){
 
   (async function(){
@@ -2042,7 +2176,7 @@ else if(ch.dataset.id === "3"){
   }
 }
 
-// VOC ? ultimo
+// VOC ? ultimo (gestito separatamente)
 else if(ch.dataset.id === "4"){
   chartsContainer.appendChild(d);
 }
