@@ -979,12 +979,14 @@ function applyKPI(feeds){
   // baseline = media mobile ultime 24h
   const nowVoc = new Date();
   const since24hVoc = new Date(nowVoc.getTime() - 24*60*60*1000);
-  const feeds24hVoc = feeds.filter(f =>
-    !isNaN(Number(f.field4))
-  );
+  // usa baseline condivisa dal grafico VOC se disponibile
+  const baseline = window.vocBaseline ?? (function(){
+    const valid = feeds.filter(f => !isNaN(Number(f.field4)));
+    if(!valid.length) return null;
+    return valid.reduce((s,f) => s + Number(f.field4), 0) / valid.length;
+  })();
 
-  if(feeds24hVoc.length > 0){
-    const baseline = feeds24hVoc.reduce((s,f) => s + Number(f.field4), 0) / feeds24hVoc.length;
+  if(baseline !== null){
     const delta = vocLast - baseline;
     const sign = delta >= 0 ? '+' : '';
     const arrow = delta >= 0 ? ' ↑' : ' ↓';
@@ -1974,12 +1976,15 @@ if(ch.dataset.id === "4"){
         ? aggFn(feeds, 'field4')
         : feeds.map(f => ({ x: new Date(f.created_at), y: Number(f.field4) }));
 
-      // baseline 24h su allFeeds
+      // baseline 24h su allFeeds — condivisa con card KPI
       const baseline24h = (function(){
         const valid = allFeeds.filter(f => !isNaN(Number(f.field4)));
         if(!valid.length) return 0;
         return valid.reduce((s,f) => s + Number(f.field4), 0) / valid.length;
       })();
+
+      // salva baseline globale per card KPI
+      window.vocBaseline = baseline24h;
 
       const labels = vocRaw.map(p => p.x);
       const dataAbs = vocRaw.map(p => p.y);
