@@ -978,10 +978,10 @@ function applyKPI(feeds){
   voc.textContent = fmt1(vocLast) + ' kOhm';
 
   // baseline = media mobile ultime 24h
-  const now = new Date();
-  const since24h = new Date(now.getTime() - 24*60*60*1000);
+  const nowVoc = new Date();
+  const since24hVoc = new Date(nowVoc.getTime() - 24*60*60*1000);
   const feeds24hVoc = feeds.filter(f =>
-    new Date(f.created_at) >= since24h && !isNaN(Number(f.field4))
+    new Date(f.created_at) >= since24hVoc && !isNaN(Number(f.field4))
   );
 
   if(feeds24hVoc.length > 0){
