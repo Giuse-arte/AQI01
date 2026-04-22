@@ -914,7 +914,21 @@ const r = await fetch(
     const j = await r.json();
 
     /* Applica i KPI reali */
-    applyKPI(j.feeds || []);
+    // fetch separato ultime 24h per VOC card (sempre fisso)
+    const nowKpi = new Date();
+    const since24hKpi = new Date(nowKpi.getTime() - 24*60*60*1000);
+    function formatLDT(d){
+      const pad = n => n.toString().padStart(2,'0');
+      return d.getFullYear()+'-'+pad(d.getMonth()+1)+'-'+pad(d.getDate())+' '+
+             pad(d.getHours())+':'+pad(d.getMinutes())+':'+pad(d.getSeconds());
+    }
+    const rVoc = await fetch(
+      `https://api.thingspeak.com/channels/${CHANNEL}/feeds.json?start=${formatLDT(since24hKpi)}&end=${formatLDT(nowKpi)}&results=8000`
+    );
+    const jVoc = rVoc.ok ? await rVoc.json() : { feeds: [] };
+    const feedsVoc = jVoc.feeds || [];
+
+    applyKPI(j.feeds || [], feedsVoc);
   }catch{
     /* Fallback se fetch fallisce */
     applyDemoKPI();
@@ -954,7 +968,9 @@ function applyDemoKPI(){
 /*
   feeds → array di misurazioni ThingSpeak
 */
-function applyKPI(feeds){
+function applyKPI(feeds, feedsVoc24h){
+  // usa feedsVoc24h per VOC se disponibile, altrimenti usa feeds
+  const vocFeeds = feedsVoc24h && feedsVoc24h.length ? feedsVoc24h : feeds;
   if(!feeds.length) return;
 
   // ultime 24h per media mobile PM2.5 e PM10
@@ -972,24 +988,18 @@ function applyKPI(feeds){
   press.textContent = fmt1(last.field3) + ' hPa';
   pm1.textContent   = fmt0(last.field5) + ' µg/m³';
 
-  // VOC → ultimo valore + delta rispetto a baseline 24h
-  const vocLast = Number(last.field4);
+  // VOC → sempre ultimo valore delle ultime 24h reali
+  const vocLast = Number(vocFeeds.at(-1)?.field4);
   voc.textContent = fmt1(vocLast) + ' kOhm';
 
   // baseline = media mobile ultime 24h
   const nowVoc = new Date();
   const since24hVoc = new Date(nowVoc.getTime() - 24*60*60*1000);
-  // baseline VOC = sempre media ultime 24h reali
-  const nowForVoc = new Date();
-  const cutoff24h = new Date(nowForVoc.getTime() - 24*60*60*1000);
-  const feedsVoc24h = feeds.filter(f =>
-    new Date(f.created_at) >= cutoff24h && !isNaN(Number(f.field4))
-  );
-  const baseline = feedsVoc24h.length
-    ? feedsVoc24h.reduce((s,f) => s + Number(f.field4), 0) / feedsVoc24h.length
-    : feeds.filter(f => !isNaN(Number(f.field4))).length
-      ? feeds.filter(f => !isNaN(Number(f.field4))).reduce((s,f) => s + Number(f.field4), 0) / feeds.filter(f => !isNaN(Number(f.field4))).length
-      : null;
+  // baseline VOC = media delle ultime 24h reali
+  const validVoc = vocFeeds.filter(f => !isNaN(Number(f.field4)));
+  const baseline = validVoc.length
+    ? validVoc.reduce((s,f) => s + Number(f.field4), 0) / validVoc.length
+    : null;
 
   if(baseline !== null){
     const delta = vocLast - baseline;
