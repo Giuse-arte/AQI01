@@ -993,11 +993,11 @@ function applyKPI(feeds, feedsVoc24h){
   if(vocChart){
     const absData = vocChart.data.datasets[0].data;
     const deltaData = vocChart.data.datasets[1].data;
-    const vocLast = absData[absData.length - 1];
+    const vocLastVal = absData[absData.length - 1];
     const vocDeltaLast = deltaData[deltaData.length - 1];
     const vocPrevDelta = deltaData[deltaData.length - 2];
 
-    voc.textContent = fmt1(vocLast) + ' kOhm';
+    voc.textContent = fmt1(vocLastVal) + ' kOhm';
 
     const trend = vocDeltaLast - vocPrevDelta;
     const arrow = trend >= 0 ? ' ↑' : ' ↓';
@@ -1009,13 +1009,11 @@ function applyKPI(feeds, feedsVoc24h){
     deltaEl.style.color = color;
     deltaEl.style.fontWeight = '600';
 
-    return; // card VOC aggiornata dal grafico
+  } else {
+    // fallback se grafico non ancora disponibile
+    const vocLastFb = Number(vocFeeds.at(-1)?.field4);
+    voc.textContent = fmt1(vocLastFb) + ' kOhm';
   }
-
-  // fallback se grafico non ancora disponibile
-  const vocLast = Number(vocFeeds.at(-1)?.field4);
-  const vocPrev = Number(vocFeeds.at(-2)?.field4);
-  voc.textContent = fmt1(vocLast) + ' kOhm';
 
   // baseline = media mobile ultime 24h
   const nowVoc = new Date();
@@ -1042,10 +1040,11 @@ function applyKPI(feeds, feedsVoc24h){
     document.getElementById('vocDelta').textContent = '';
   }
 
-  // min/max solo in modalità GIORNO
-  const isDay = document.getElementById('viewMode').value === 'day';
+  // min/max per tutte le modalità tranne LIVE
+  const vm = document.getElementById('viewMode').value;
+  const showMinMax = vm !== 'live';
 
-  if(isDay){
+  if(showMinMax){
     const minVal = f => Math.min(...feeds.map(x => Number(x[f])).filter(v => !isNaN(v)));
     const maxVal = f => Math.max(...feeds.map(x => Number(x[f])).filter(v => !isNaN(v)));
 
