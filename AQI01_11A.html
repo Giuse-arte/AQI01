@@ -976,37 +976,28 @@ function applyKPI(feeds){
   const vocLast = Number(last.field4);
   voc.textContent = fmt1(vocLast) + ' kOhm';
 
-  // baseline = media delle ultime 24h disponibili nei feed
-  const vm = document.getElementById('viewMode').value;
-  const vocValues = (vm === 'live' || vm === 'day')
-    ? feeds.map(f => Number(f.field4)).filter(v => !isNaN(v))
-    : feeds.map(f => Number(f.field4)).filter(v => !isNaN(v));
+  // baseline = media mobile ultime 24h
+  const nowVoc = new Date();
+  const since24hVoc = new Date(nowVoc.getTime() - 24*60*60*1000);
+  // usa baseline condivisa dal grafico VOC se disponibile
+  const baseline = window.vocBaseline ?? (function(){
+    const valid = feeds.filter(f => !isNaN(Number(f.field4)));
+    if(!valid.length) return null;
+    return valid.reduce((s,f) => s + Number(f.field4), 0) / valid.length;
+  })();
 
-  const vm2 = document.getElementById('viewMode').value;
+  if(baseline !== null){
+    const delta = vocLast - baseline;
+    const sign = delta >= 0 ? '+' : '';
+    const arrow = delta >= 0 ? ' ↑' : ' ↓';
+    const color = delta >= 0 ? '#16a34a' : '#dc2626';
 
-  // baseline = media del periodo selezionato (tutti i feed ricevuti)
-  const vocBaseline = vocValues.length
-    ? vocValues.reduce((s, v) => s + v, 0) / vocValues.length
-    : null;
-
-  const deltaEl = document.getElementById('vocDelta');
-  if(deltaEl && vocBaseline !== null){
-    if(vm2 === 'live'){
-      // Ultime 24h: mostra delta rispetto alla baseline
-      const delta = vocLast - vocBaseline;
-      const sign  = delta >= 0 ? '+' : '';
-      const arrow = delta >= 0 ? ' ↑' : ' ↓';
-      deltaEl.textContent      = sign + fmt1(delta) + ' kOhm' + arrow;
-      deltaEl.style.color      = delta >= 0 ? '#16a34a' : '#dc2626';
-      deltaEl.style.fontWeight = '600';
-    } else {
-      // Giorno / 7gg / Mese: mostra min–max del periodo
-      const vocMin = Math.min(...vocValues);
-      const vocMax = Math.max(...vocValues);
-      deltaEl.textContent      = fmt1(vocMin) + ' — ' + fmt1(vocMax) + ' kOhm';
-      deltaEl.style.color      = '#6b7280';
-      deltaEl.style.fontWeight = '600';
-    }
+    const deltaEl = document.getElementById('vocDelta');
+    deltaEl.textContent = sign + fmt1(delta) + ' kOhm' + arrow;
+    deltaEl.style.color = color;
+    deltaEl.style.fontWeight = '600';
+  } else {
+    document.getElementById('vocDelta').textContent = '';
   }
 
   // min/max solo in modalità GIORNO
@@ -1038,7 +1029,7 @@ function applyKPI(feeds){
   pm10.textContent = fmt0(pm10_24) + ' µg/m³';
 
   computeAQI(pm25_24, pm10_24);
-
+}
 
 /* =========================
    CALCOLO AQI (EEA / EPA)
@@ -1957,7 +1948,7 @@ if(ch.dataset.id === "4"){
                pad(d.getHours()) + ':' + pad(d.getMinutes()) + ':' + pad(d.getSeconds());
       }
 
-      const startBuffer = new Date(tStart.getTime() - 2*60*60*1000);
+      const startBuffer = new Date(tStart.getTime() - 24*60*60*1000);
       const startStr = formatLocalDateTime(startBuffer);
       const endStr = formatLocalDateTime(tEnd);
 
@@ -1985,12 +1976,15 @@ if(ch.dataset.id === "4"){
         ? aggFn(feeds, 'field4')
         : feeds.map(f => ({ x: new Date(f.created_at), y: Number(f.field4) }));
 
-      // baseline 24h → solo ultimi 24h da ora
-      // baseline = media di tutti i feed nel range selezionato
-      const valid24 = feeds.filter(f => !isNaN(Number(f.field4)));
-      const baseline24h = valid24.length
-        ? valid24.reduce((s,f) => s + Number(f.field4), 0) / valid24.length
-        : 0;
+      // baseline 24h su allFeeds — condivisa con card KPI
+      const baseline24h = (function(){
+        const valid = allFeeds.filter(f => !isNaN(Number(f.field4)));
+        if(!valid.length) return 0;
+        return valid.reduce((s,f) => s + Number(f.field4), 0) / valid.length;
+      })();
+
+      // salva baseline globale per card KPI
+      window.vocBaseline = baseline24h;
 
       const labels = vocRaw.map(p => p.x);
       const dataAbs = vocRaw.map(p => p.y);
@@ -2584,8 +2578,6 @@ document.addEventListener('DOMContentLoaded', () => {
   loadKPIs();
   renderCharts();
 });
-
-}
 
 </script>
 
