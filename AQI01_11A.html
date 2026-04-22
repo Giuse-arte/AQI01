@@ -1006,6 +1006,7 @@ function applyKPI(feeds, feedsVoc24h){
     const sign = delta >= 0 ? '+' : '';
     const arrow = delta >= 0 ? ' ↑' : ' ↓';
     const color = delta >= 0 ? '#16a34a' : '#dc2626';
+    // ↑ verde = sale, ↓ rosso = scende
 
     const deltaEl = document.getElementById('vocDelta');
     deltaEl.textContent = sign + fmt1(delta) + ' kOhm' + arrow;
