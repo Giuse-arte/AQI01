@@ -914,7 +914,21 @@ const r = await fetch(
     const j = await r.json();
 
     /* Applica i KPI reali */
-    applyKPI(j.feeds || []);
+    // fetch separato ultime 24h per VOC card (sempre fisso)
+    const nowKpi = new Date();
+    const since24hKpi = new Date(nowKpi.getTime() - 24*60*60*1000);
+    function formatLDT(d){
+      const pad = n => n.toString().padStart(2,'0');
+      return d.getFullYear()+'-'+pad(d.getMonth()+1)+'-'+pad(d.getDate())+' '+
+             pad(d.getHours())+':'+pad(d.getMinutes())+':'+pad(d.getSeconds());
+    }
+    const rVoc = await fetch(
+      `https://api.thingspeak.com/channels/${CHANNEL}/feeds.json?start=${formatLDT(since24hKpi)}&end=${formatLDT(nowKpi)}&results=8000`
+    );
+    const jVoc = rVoc.ok ? await rVoc.json() : { feeds: [] };
+    const feedsVoc = jVoc.feeds || [];
+
+    applyKPI(j.feeds || [], feedsVoc);
   }catch{
     /* Fallback se fetch fallisce */
     applyDemoKPI();
@@ -954,59 +968,28 @@ function applyDemoKPI(){
 /*
   feeds → array di misurazioni ThingSpeak
 */
-function applyKPI(feeds){
+function applyKPI(feeds, feedsVoc24h){
+  const vocFeeds = feedsVoc24h && feedsVoc24h.length ? feedsVoc24h : feeds;
   if(!feeds.length) return;
 
-  // ultime 24h per media mobile PM2.5 e PM10
   const now = new Date();
   const since24h = new Date(now.getTime() - 24*60*60*1000);
   const feeds24h = feeds.filter(f => new Date(f.created_at) >= since24h);
   const feedsForAvg = feeds24h.length ? feeds24h : feeds;
 
-  // ultimo dato disponibile (sempre)
   const last = feeds.at(-1);
 
-  // prime 5 card → sempre ultimo valore
+  // prime 4 card → sempre ultimo valore
   hum.textContent   = fmt1(last.field1) + ' %';
   temp.textContent  = fmt1(last.field2) + ' °C';
   press.textContent = fmt1(last.field3) + ' hPa';
   pm1.textContent   = fmt0(last.field5) + ' µg/m³';
 
-  // VOC → ultimo valore + delta rispetto a baseline 24h
-  const vocLast = Number(last.field4);
-  voc.textContent = fmt1(vocLast) + ' kOhm';
-
-  // baseline = media mobile ultime 24h
-  const nowVoc = new Date();
-  const since24hVoc = new Date(nowVoc.getTime() - 24*60*60*1000);
-  // usa baseline condivisa dal grafico VOC se disponibile
-  const baseline = window.vocBaseline ?? (function(){
-    const valid = feeds.filter(f => !isNaN(Number(f.field4)));
-    if(!valid.length) return null;
-    return valid.reduce((s,f) => s + Number(f.field4), 0) / valid.length;
-  })();
-
-  if(baseline !== null){
-    const delta = vocLast - baseline;
-    const sign = delta >= 0 ? '+' : '';
-    const arrow = delta >= 0 ? ' ↑' : ' ↓';
-    const color = delta >= 0 ? '#16a34a' : '#dc2626';
-
-    const deltaEl = document.getElementById('vocDelta');
-    deltaEl.textContent = sign + fmt1(delta) + ' kOhm' + arrow;
-    deltaEl.style.color = color;
-    deltaEl.style.fontWeight = '600';
-  } else {
-    document.getElementById('vocDelta').textContent = '';
-  }
-
-  // min/max solo in modalità GIORNO
-  const isDay = document.getElementById('viewMode').value === 'day';
-
-  if(isDay){
+  // min/max per tutte le modalità tranne LIVE
+  const vm = document.getElementById('viewMode').value;
+  if(vm !== 'live'){
     const minVal = f => Math.min(...feeds.map(x => Number(x[f])).filter(v => !isNaN(v)));
     const maxVal = f => Math.max(...feeds.map(x => Number(x[f])).filter(v => !isNaN(v)));
-
     humMM.textContent   = fmt1(minVal('field1')) + ' % — ' + fmt1(maxVal('field1')) + ' %';
     tempMM.textContent  = fmt1(minVal('field2')) + ' °C — ' + fmt1(maxVal('field2')) + ' °C';
     pressMM.textContent = fmt1(minVal('field3')) + ' hPa — ' + fmt1(maxVal('field3')) + ' hPa';
@@ -1018,13 +1001,58 @@ function applyKPI(feeds){
     pm1MM.textContent   = '';
   }
 
+  // VOC → legge dal grafico se disponibile, altrimenti da vocFeeds
+  const vocChart = Object.values(Chart.instances).find(c => c.canvas.id === 'chart_4');
+  if(vocChart){
+    const absData = vocChart.data.datasets[0].data;
+    const deltaData = vocChart.data.datasets[1].data;
+    const vocLastVal = absData[absData.length - 1];
+    const vocDeltaLast = deltaData[deltaData.length - 1];
+    const vocPrevDelta = deltaData[deltaData.length - 2];
+
+    voc.textContent = fmt1(vocLastVal) + ' kOhm';
+
+    const trend = vocDeltaLast - vocPrevDelta;
+    const arrow = trend >= 0 ? ' ↑' : ' ↓';
+    const color = trend >= 0 ? '#16a34a' : '#dc2626';
+    const sign = vocDeltaLast >= 0 ? '+' : '';
+
+    const deltaEl = document.getElementById('vocDelta');
+    deltaEl.textContent = sign + fmt1(vocDeltaLast) + ' kOhm' + arrow;
+    deltaEl.style.color = color;
+    deltaEl.style.fontWeight = '600';
+
+  } else {
+    // fallback: usa vocFeeds
+    const vocLastFb = Number(vocFeeds.at(-1)?.field4);
+    const vocPrevFb = Number(vocFeeds.at(-2)?.field4);
+    voc.textContent = fmt1(vocLastFb) + ' kOhm';
+
+    const validVoc = vocFeeds.filter(f => !isNaN(Number(f.field4)));
+    const baseline = validVoc.length
+      ? validVoc.reduce((s,f) => s + Number(f.field4), 0) / validVoc.length
+      : null;
+
+    if(baseline !== null){
+      const delta = vocLastFb - baseline;
+      const trend = vocLastFb - vocPrevFb;
+      const sign = delta >= 0 ? '+' : '';
+      const arrow = trend >= 0 ? ' ↑' : ' ↓';
+      const color = trend >= 0 ? '#16a34a' : '#dc2626';
+      const deltaEl = document.getElementById('vocDelta');
+      deltaEl.textContent = sign + fmt1(delta) + ' kOhm' + arrow;
+      deltaEl.style.color = color;
+      deltaEl.style.fontWeight = '600';
+    } else {
+      document.getElementById('vocDelta').textContent = '';
+    }
+  }
+
   // PM2.5 e PM10 → sempre media mobile ultime 24h
   const avg24 = f =>
     feedsForAvg.reduce((s,x) => s + Number(x[f] || 0), 0) / feedsForAvg.length;
-
   const pm25_24 = avg24('field6');
   const pm10_24 = avg24('field7');
-
   pm25.textContent = fmt0(pm25_24) + ' µg/m³';
   pm10.textContent = fmt0(pm10_24) + ' µg/m³';
 
@@ -1977,9 +2005,18 @@ if(ch.dataset.id === "4"){
         : feeds.map(f => ({ x: new Date(f.created_at), y: Number(f.field4) }));
 
       // baseline 24h su allFeeds — condivisa con card KPI
+     // baseline grafico = media ultime 24h reali su allFeeds
+      const nowForBaseline = new Date();
+      const cutoffBaseline = new Date(nowForBaseline.getTime() - 24*60*60*1000);
       const baseline24h = (function(){
-        const valid = allFeeds.filter(f => !isNaN(Number(f.field4)));
-        if(!valid.length) return 0;
+        const valid = allFeeds.filter(f =>
+          new Date(f.created_at) >= cutoffBaseline && !isNaN(Number(f.field4))
+        );
+        if(!valid.length){
+          const allValid = allFeeds.filter(f => !isNaN(Number(f.field4)));
+          if(!allValid.length) return 0;
+          return allValid.reduce((s,f) => s + Number(f.field4), 0) / allValid.length;
+        }
         return valid.reduce((s,f) => s + Number(f.field4), 0) / valid.length;
       })();
 
