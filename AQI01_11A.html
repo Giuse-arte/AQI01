@@ -988,7 +988,31 @@ function applyKPI(feeds, feedsVoc24h){
   press.textContent = fmt1(last.field3) + ' hPa';
   pm1.textContent   = fmt0(last.field5) + ' µg/m³';
 
-  // VOC → sempre ultimo valore delle ultime 24h reali
+  // VOC → legge direttamente dal grafico se disponibile
+  const vocChart = Object.values(Chart.instances).find(c => c.canvas.id === 'chart_4');
+  if(vocChart){
+    const absData = vocChart.data.datasets[0].data;
+    const deltaData = vocChart.data.datasets[1].data;
+    const vocLast = absData[absData.length - 1];
+    const vocDeltaLast = deltaData[deltaData.length - 1];
+    const vocPrevDelta = deltaData[deltaData.length - 2];
+
+    voc.textContent = fmt1(vocLast) + ' kOhm';
+
+    const trend = vocDeltaLast - vocPrevDelta;
+    const arrow = trend >= 0 ? ' ↑' : ' ↓';
+    const color = trend >= 0 ? '#16a34a' : '#dc2626';
+    const sign = vocDeltaLast >= 0 ? '+' : '';
+
+    const deltaEl = document.getElementById('vocDelta');
+    deltaEl.textContent = sign + fmt1(vocDeltaLast) + ' kOhm' + arrow;
+    deltaEl.style.color = color;
+    deltaEl.style.fontWeight = '600';
+
+    return; // card VOC aggiornata dal grafico
+  }
+
+  // fallback se grafico non ancora disponibile
   const vocLast = Number(vocFeeds.at(-1)?.field4);
   const vocPrev = Number(vocFeeds.at(-2)?.field4);
   voc.textContent = fmt1(vocLast) + ' kOhm';
@@ -1004,12 +1028,11 @@ function applyKPI(feeds, feedsVoc24h){
 
   if(baseline !== null){
     const delta = vocLast - baseline;
+    const vocPrevVal = Number(vocFeeds.at(-2)?.field4);
+    const trend = vocLast - vocPrevVal;
     const sign = delta >= 0 ? '+' : '';
-    // freccia basata sulla pendenza (ultimo vs penultimo)
-    const trend = vocLast - vocPrev;
     const arrow = trend >= 0 ? ' ↑' : ' ↓';
     const color = trend >= 0 ? '#16a34a' : '#dc2626';
-    // ↑ verde = sale, ↓ rosso = scende
 
     const deltaEl = document.getElementById('vocDelta');
     deltaEl.textContent = sign + fmt1(delta) + ' kOhm' + arrow;
