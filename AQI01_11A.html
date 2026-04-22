@@ -979,12 +979,17 @@ function applyKPI(feeds){
   // baseline = media mobile ultime 24h
   const nowVoc = new Date();
   const since24hVoc = new Date(nowVoc.getTime() - 24*60*60*1000);
-  // usa baseline condivisa dal grafico VOC se disponibile
-  const baseline = window.vocBaseline ?? (function(){
-    const valid = feeds.filter(f => !isNaN(Number(f.field4)));
-    if(!valid.length) return null;
-    return valid.reduce((s,f) => s + Number(f.field4), 0) / valid.length;
-  })();
+  // baseline VOC = sempre media ultime 24h reali
+  const nowForVoc = new Date();
+  const cutoff24h = new Date(nowForVoc.getTime() - 24*60*60*1000);
+  const feedsVoc24h = feeds.filter(f =>
+    new Date(f.created_at) >= cutoff24h && !isNaN(Number(f.field4))
+  );
+  const baseline = feedsVoc24h.length
+    ? feedsVoc24h.reduce((s,f) => s + Number(f.field4), 0) / feedsVoc24h.length
+    : feeds.filter(f => !isNaN(Number(f.field4))).length
+      ? feeds.filter(f => !isNaN(Number(f.field4))).reduce((s,f) => s + Number(f.field4), 0) / feeds.filter(f => !isNaN(Number(f.field4))).length
+      : null;
 
   if(baseline !== null){
     const delta = vocLast - baseline;
@@ -1977,9 +1982,18 @@ if(ch.dataset.id === "4"){
         : feeds.map(f => ({ x: new Date(f.created_at), y: Number(f.field4) }));
 
       // baseline 24h su allFeeds — condivisa con card KPI
+     // baseline grafico = media ultime 24h reali su allFeeds
+      const nowForBaseline = new Date();
+      const cutoffBaseline = new Date(nowForBaseline.getTime() - 24*60*60*1000);
       const baseline24h = (function(){
-        const valid = allFeeds.filter(f => !isNaN(Number(f.field4)));
-        if(!valid.length) return 0;
+        const valid = allFeeds.filter(f =>
+          new Date(f.created_at) >= cutoffBaseline && !isNaN(Number(f.field4))
+        );
+        if(!valid.length){
+          const allValid = allFeeds.filter(f => !isNaN(Number(f.field4)));
+          if(!allValid.length) return 0;
+          return allValid.reduce((s,f) => s + Number(f.field4), 0) / allValid.length;
+        }
         return valid.reduce((s,f) => s + Number(f.field4), 0) / valid.length;
       })();
 
