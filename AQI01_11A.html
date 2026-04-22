@@ -990,6 +990,7 @@ function applyKPI(feeds, feedsVoc24h){
 
   // VOC → sempre ultimo valore delle ultime 24h reali
   const vocLast = Number(vocFeeds.at(-1)?.field4);
+  const vocPrev = Number(vocFeeds.at(-2)?.field4);
   voc.textContent = fmt1(vocLast) + ' kOhm';
 
   // baseline = media mobile ultime 24h
@@ -1004,8 +1005,10 @@ function applyKPI(feeds, feedsVoc24h){
   if(baseline !== null){
     const delta = vocLast - baseline;
     const sign = delta >= 0 ? '+' : '';
-    const arrow = delta >= 0 ? ' ↑' : ' ↓';
-    const color = delta >= 0 ? '#16a34a' : '#dc2626';
+    // freccia basata sulla pendenza (ultimo vs penultimo)
+    const trend = vocLast - vocPrev;
+    const arrow = trend >= 0 ? ' ↑' : ' ↓';
+    const color = trend >= 0 ? '#16a34a' : '#dc2626';
     // ↑ verde = sale, ↓ rosso = scende
 
     const deltaEl = document.getElementById('vocDelta');
