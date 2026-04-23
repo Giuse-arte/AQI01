@@ -2013,16 +2013,20 @@ if(ch.dataset.id === "4"){
       chartDataStore['VOC (kOhm)'] = { labels, data: dataDelta };
 
       // aggiorna card KPI VOC direttamente dopo rendering grafico
-      const vocLastVal = dataDelta[dataDelta.length - 1];
-      const vocPrevVal = dataDelta[dataDelta.length - 2];
-      document.getElementById('voc').textContent = fmt1(vocLastVal) + ' kOhm';
+      const vocAbsLast = dataAbs[dataAbs.length - 1];
+      const vocDeltaLast = dataDelta[dataDelta.length - 1];
+      const vocDeltaPrev = dataDelta[dataDelta.length - 2];
 
-      const trend = vocLastVal - vocPrevVal;
+      // valore assoluto
+      document.getElementById('voc').textContent = fmt1(vocAbsLast) + ' kOhm';
+
+      // delta + freccia basata sul trend
+      const trend = vocDeltaLast - vocDeltaPrev;
       const arrow = trend >= 0 ? ' ↑' : ' ↓';
       const color = trend >= 0 ? '#16a34a' : '#dc2626';
-      const sign = vocLastVal >= 0 ? '+' : '';
+      const sign = vocDeltaLast >= 0 ? '+' : '';
       const deltaEl = document.getElementById('vocDelta');
-      deltaEl.textContent = sign + fmt1(vocLastVal) + ' kOhm' + arrow;
+      deltaEl.textContent = sign + fmt1(vocDeltaLast) + ' kOhm' + arrow;
       deltaEl.style.color = color;
       deltaEl.style.fontWeight = '600';
 
