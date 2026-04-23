@@ -2492,8 +2492,9 @@ remember.addEventListener('change', savePreferences);
    ========================= */
 
 /* Aggiorna grafici + KPI */
-update.addEventListener('click', ()=>{
+update.addEventListener('click', async ()=>{
   renderCharts();
+  await new Promise(r => setTimeout(r, 2000));
   loadKPIs();
 });
 
@@ -2552,8 +2553,8 @@ document.addEventListener('DOMContentLoaded', () => {
   }
 
   // 3. Ora che i campi sono pronti, carichiamo i dati
-  loadKPIs();
   renderCharts();
+  setTimeout(loadKPIs, 2000);
 });
 
 </script>
