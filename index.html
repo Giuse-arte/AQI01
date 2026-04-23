@@ -651,7 +651,7 @@
       <label><input type="checkbox" checked data-id="7"> PM10 – PMS5003</label>
       <label><input type="checkbox" checked data-id="combo"> PM2.5 + PM10 (24h)</label>
       <label><input type="checkbox" checked data-id="4"> VOC – BME680 (kOhm + Delta)</label>
-
+            
       <!-- ========================= -->
       <!-- MEMORIZZAZIONE PREFERENZE -->
       <!-- ========================= -->
@@ -914,21 +914,7 @@ const r = await fetch(
     const j = await r.json();
 
     /* Applica i KPI reali */
-    // fetch separato ultime 24h per VOC card (sempre fisso)
-    const nowKpi = new Date();
-    const since24hKpi = new Date(nowKpi.getTime() - 24*60*60*1000);
-    function formatLDT(d){
-      const pad = n => n.toString().padStart(2,'0');
-      return d.getFullYear()+'-'+pad(d.getMonth()+1)+'-'+pad(d.getDate())+' '+
-             pad(d.getHours())+':'+pad(d.getMinutes())+':'+pad(d.getSeconds());
-    }
-    const rVoc = await fetch(
-      `https://api.thingspeak.com/channels/${CHANNEL}/feeds.json?start=${formatLDT(since24hKpi)}&end=${formatLDT(nowKpi)}&results=8000`
-    );
-    const jVoc = rVoc.ok ? await rVoc.json() : { feeds: [] };
-    const feedsVoc = jVoc.feeds || [];
-
-    applyKPI(j.feeds || [], feedsVoc);
+    applyKPI(j.feeds || []);
   }catch{
     /* Fallback se fetch fallisce */
     applyDemoKPI();
@@ -968,8 +954,7 @@ function applyDemoKPI(){
 /*
   feeds → array di misurazioni ThingSpeak
 */
-function applyKPI(feeds, feedsVoc24h){
-  const vocFeeds = feedsVoc24h && feedsVoc24h.length ? feedsVoc24h : feeds;
+function applyKPI(feeds){
   if(!feeds.length) return;
 
   const now = new Date();
@@ -987,66 +972,15 @@ function applyKPI(feeds, feedsVoc24h){
 
   // min/max per tutte le modalità tranne LIVE
   const vm = document.getElementById('viewMode').value;
-  if(vm !== 'live'){
-    const minVal = f => Math.min(...feeds.map(x => Number(x[f])).filter(v => !isNaN(v)));
-    const maxVal = f => Math.max(...feeds.map(x => Number(x[f])).filter(v => !isNaN(v)));
-    humMM.textContent   = fmt1(minVal('field1')) + ' % — ' + fmt1(maxVal('field1')) + ' %';
-    tempMM.textContent  = fmt1(minVal('field2')) + ' °C — ' + fmt1(maxVal('field2')) + ' °C';
-    pressMM.textContent = fmt1(minVal('field3')) + ' hPa — ' + fmt1(maxVal('field3')) + ' hPa';
-    pm1MM.textContent   = fmt0(minVal('field5')) + ' µg/m³ — ' + fmt0(maxVal('field5')) + ' µg/m³';
-  } else {
-    humMM.textContent   = '';
-    tempMM.textContent  = '';
-    pressMM.textContent = '';
-    pm1MM.textContent   = '';
-  }
+  const minVal = f => Math.min(...feeds.map(x => Number(x[f])).filter(v => !isNaN(v)));
+  const maxVal = f => Math.max(...feeds.map(x => Number(x[f])).filter(v => !isNaN(v)));
+  humMM.textContent   = fmt1(minVal('field1')) + ' % — ' + fmt1(maxVal('field1')) + ' %';
+  tempMM.textContent  = fmt1(minVal('field2')) + ' °C — ' + fmt1(maxVal('field2')) + ' °C';
+  pressMM.textContent = fmt1(minVal('field3')) + ' hPa — ' + fmt1(maxVal('field3')) + ' hPa';
+  pm1MM.textContent   = fmt0(minVal('field5')) + ' µg/m³ — ' + fmt0(maxVal('field5')) + ' µg/m³';
 
-  // VOC → legge dal grafico se disponibile, altrimenti da vocFeeds
-  const vocChart = Object.values(Chart.instances).find(c => c.canvas.id === 'chart_4');
-  if(vocChart){
-    const absData = vocChart.data.datasets[0].data;
-    const deltaData = vocChart.data.datasets[1].data;
-    const vocLastVal = absData[absData.length - 1];
-    const vocDeltaLast = deltaData[deltaData.length - 1];
-    const vocPrevDelta = deltaData[deltaData.length - 2];
-
-    voc.textContent = fmt1(vocLastVal) + ' kOhm';
-
-    const trend = vocDeltaLast - vocPrevDelta;
-    const arrow = trend >= 0 ? ' ↑' : ' ↓';
-    const color = trend >= 0 ? '#16a34a' : '#dc2626';
-    const sign = vocDeltaLast >= 0 ? '+' : '';
-
-    const deltaEl = document.getElementById('vocDelta');
-    deltaEl.textContent = sign + fmt1(vocDeltaLast) + ' kOhm' + arrow;
-    deltaEl.style.color = color;
-    deltaEl.style.fontWeight = '600';
-
-  } else {
-    // fallback: usa vocFeeds
-    const vocLastFb = Number(vocFeeds.at(-1)?.field4);
-    const vocPrevFb = Number(vocFeeds.at(-2)?.field4);
-    voc.textContent = fmt1(vocLastFb) + ' kOhm';
-
-    const validVoc = vocFeeds.filter(f => !isNaN(Number(f.field4)));
-    const baseline = validVoc.length
-      ? validVoc.reduce((s,f) => s + Number(f.field4), 0) / validVoc.length
-      : null;
-
-    if(baseline !== null){
-      const delta = vocLastFb - baseline;
-      const trend = vocLastFb - vocPrevFb;
-      const sign = delta >= 0 ? '+' : '';
-      const arrow = trend >= 0 ? ' ↑' : ' ↓';
-      const color = trend >= 0 ? '#16a34a' : '#dc2626';
-      const deltaEl = document.getElementById('vocDelta');
-      deltaEl.textContent = sign + fmt1(delta) + ' kOhm' + arrow;
-      deltaEl.style.color = color;
-      deltaEl.style.fontWeight = '600';
-    } else {
-      document.getElementById('vocDelta').textContent = '';
-    }
-  }
+  // VOC → aggiornato dal grafico tramite callback
+  // il grafico VOC aggiornerà la card dopo il suo rendering
 
   // PM2.5 e PM10 → sempre media mobile ultime 24h
   const avg24 = f =>
@@ -2032,15 +1966,8 @@ if(ch.dataset.id === "4"){
       d.className = 'chart';
       d.innerHTML = `
         <div style="display:flex;align-items:center;gap:8px;flex-wrap:nowrap;">
-          <span class="chart-title" style="white-space:nowrap;">VOC — kOhm + Delta baseline 24h</span>
-          <span style="display:flex;align-items:center;gap:10px;margin-left:8px;flex-shrink:0;">
-            <span style="display:flex;align-items:center;gap:4px;font-size:.72rem;color:#6b7280;">
-              <span style="width:18px;height:3px;background:#3b82f6;display:inline-block;border-radius:2px;"></span>kOhm
-            </span>
-            <span style="display:flex;align-items:center;gap:4px;font-size:.72rem;color:#6b7280;">
-              <span style="width:18px;height:3px;background:#f97316;display:inline-block;border-radius:2px;"></span>Delta
-            </span>
-          </span>
+          <span class="chart-title" style="white-space:nowrap;">VOC — Delta rispetto baseline 24h</span>
+          <span class="chart-sensor">BME680</span>
         </div>
         <canvas id="chart_4"></canvas>
       `;
@@ -2054,23 +1981,13 @@ if(ch.dataset.id === "4"){
           labels,
           datasets: [
             {
-              label: 'VOC (kOhm)',
-              data: dataAbs,
+              label: 'VOC',
+              data: dataDelta,
               tension: 0.3,
               borderWidth: 2,
               pointRadius: 1,
               borderColor: '#3b82f6',
               backgroundColor: '#3b82f6',
-              yAxisID: 'yAbs'
-            },
-            {
-              label: 'Delta baseline',
-              data: dataDelta,
-              tension: 0.3,
-              borderWidth: 2,
-              pointRadius: 1,
-              borderColor: '#f97316',
-              backgroundColor: '#f97316',
               yAxisID: 'yDelta'
             }
           ]
@@ -2079,28 +1996,39 @@ if(ch.dataset.id === "4"){
           responsive: true,
           maintainAspectRatio: false,
           plugins: { legend: { display: false } },
-          scales: {
+         scales: {
             x: xAxisConfig(),
-            yAbs: {
+            yDelta: {
               type: 'linear',
               position: 'left',
               beginAtZero: false,
-              title: { display: true, text: 'kOhm' },
-              grid: { display: true, color: 'rgba(0,0,0,0.06)', lineWidth: 0.8 }
-            },
-            yDelta: {
-              type: 'linear',
-              position: 'right',
-              beginAtZero: true,
               title: { display: true, text: 'Delta kOhm' },
-              grid: { display: false }
+              grid: { display: true, color: 'rgba(0,0,0,0.06)', lineWidth: 0.8 }
             }
           }
         }
       });
 
       // salva per CSV
-      chartDataStore['VOC (kOhm)'] = { labels, data: dataAbs };
+      chartDataStore['VOC (kOhm)'] = { labels, data: dataDelta };
+
+      // aggiorna card KPI VOC direttamente dopo rendering grafico
+      const vocAbsLast = dataAbs[dataAbs.length - 1];
+      const vocDeltaLast = dataDelta[dataDelta.length - 1];
+      const vocDeltaPrev = dataDelta[dataDelta.length - 2];
+
+      // valore assoluto
+      document.getElementById('voc').textContent = fmt1(vocAbsLast) + ' kOhm';
+
+      // delta + freccia basata sul trend
+      const trend = vocDeltaLast - vocDeltaPrev;
+      const arrow = trend >= 0 ? ' ↑' : ' ↓';
+      const color = trend >= 0 ? '#16a34a' : '#dc2626';
+      const sign = vocDeltaLast >= 0 ? '+' : '';
+      const deltaEl = document.getElementById('vocDelta');
+      deltaEl.textContent = sign + fmt1(vocDeltaLast) + ' kOhm' + arrow;
+      deltaEl.style.color = color;
+      deltaEl.style.fontWeight = '600';
 
     }catch(e){
       console.error("VOC error:", e);
@@ -2612,8 +2540,8 @@ document.addEventListener('DOMContentLoaded', () => {
   }
 
   // 3. Ora che i campi sono pronti, carichiamo i dati
-  loadKPIs();
   renderCharts();
+  loadKPIs();
 });
 
 </script>
