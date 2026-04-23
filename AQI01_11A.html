@@ -994,52 +994,9 @@ function applyKPI(feeds, feedsVoc24h){
   pressMM.textContent = fmt1(minVal('field3')) + ' hPa — ' + fmt1(maxVal('field3')) + ' hPa';
   pm1MM.textContent   = fmt0(minVal('field5')) + ' µg/m³ — ' + fmt0(maxVal('field5')) + ' µg/m³';
 
-  // VOC → legge dal grafico se disponibile, altrimenti da vocFeeds
-  const vocChart = Object.values(Chart.instances).find(c => c.canvas.id === 'chart_4');
-  if(vocChart){
-    const absData = vocChart.data.datasets[0].data;
-    const deltaData = vocChart.data.datasets[1].data;
-    const vocLastVal = absData[absData.length - 1];
-    const vocDeltaLast = deltaData[deltaData.length - 1];
-    const vocPrevDelta = deltaData[deltaData.length - 2];
-
-    voc.textContent = fmt1(vocLastVal) + ' kOhm';
-
-    const trend = vocDeltaLast - vocPrevDelta;
-    const arrow = trend >= 0 ? ' ↑' : ' ↓';
-    const color = trend >= 0 ? '#16a34a' : '#dc2626';
-    const sign = vocDeltaLast >= 0 ? '+' : '';
-
-    const deltaEl = document.getElementById('vocDelta');
-    deltaEl.textContent = sign + fmt1(vocDeltaLast) + ' kOhm' + arrow;
-    deltaEl.style.color = color;
-    deltaEl.style.fontWeight = '600';
-
-  } else {
-    // fallback: usa vocFeeds
-    const vocLastFb = Number(vocFeeds.at(-1)?.field4);
-    const vocPrevFb = Number(vocFeeds.at(-2)?.field4);
-    voc.textContent = fmt1(vocLastFb) + ' kOhm';
-
-    const validVoc = vocFeeds.filter(f => !isNaN(Number(f.field4)));
-    const baseline = validVoc.length
-      ? validVoc.reduce((s,f) => s + Number(f.field4), 0) / validVoc.length
-      : null;
-
-    if(baseline !== null){
-      const delta = vocLastFb - baseline;
-      const trend = vocLastFb - vocPrevFb;
-      const sign = delta >= 0 ? '+' : '';
-      const arrow = trend >= 0 ? ' ↑' : ' ↓';
-      const color = trend >= 0 ? '#16a34a' : '#dc2626';
-      const deltaEl = document.getElementById('vocDelta');
-      deltaEl.textContent = sign + fmt1(delta) + ' kOhm' + arrow;
-      deltaEl.style.color = color;
-      deltaEl.style.fontWeight = '600';
-    } else {
-      document.getElementById('vocDelta').textContent = '';
-    }
-  }
+  // VOC → aggiornato direttamente dal grafico dopo rendering
+  document.getElementById('voc').textContent = '— kOhm';
+  document.getElementById('vocDelta').textContent = '';
 
   // PM2.5 e PM10 → sempre media mobile ultime 24h
   const avg24 = f =>
@@ -2069,7 +2026,21 @@ if(ch.dataset.id === "4"){
       });
 
       // salva per CSV
-      chartDataStore['VOC (kOhm)'] = { labels, data: dataAbs };
+      chartDataStore['VOC (kOhm)'] = { labels, data: dataDelta };
+
+      // aggiorna card KPI VOC direttamente dopo rendering grafico
+      const vocLastVal = dataDelta[dataDelta.length - 1];
+      const vocPrevVal = dataDelta[dataDelta.length - 2];
+      document.getElementById('voc').textContent = fmt1(vocLastVal) + ' kOhm';
+
+      const trend = vocLastVal - vocPrevVal;
+      const arrow = trend >= 0 ? ' ↑' : ' ↓';
+      const color = trend >= 0 ? '#16a34a' : '#dc2626';
+      const sign = vocLastVal >= 0 ? '+' : '';
+      const deltaEl = document.getElementById('vocDelta');
+      deltaEl.textContent = sign + fmt1(vocLastVal) + ' kOhm' + arrow;
+      deltaEl.style.color = color;
+      deltaEl.style.fontWeight = '600';
 
     }catch(e){
       console.error("VOC error:", e);
