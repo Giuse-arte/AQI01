@@ -2026,6 +2026,7 @@ if(ch.dataset.id === "4"){
       d.innerHTML = `
         <div style="display:flex;align-items:center;gap:8px;flex-wrap:nowrap;">
           <span class="chart-title" style="white-space:nowrap;">VOC — Delta rispetto baseline 24h</span>
+          <span class="chart-sensor">BME680</span>
           <span style="display:flex;align-items:center;gap:10px;margin-left:8px;flex-shrink:0;">
             <span style="display:flex;align-items:center;gap:4px;font-size:.72rem;color:#6b7280;">
               <span style="width:18px;height:3px;background:#3b82f6;display:inline-block;border-radius:2px;"></span>kOhm
@@ -2052,8 +2053,8 @@ if(ch.dataset.id === "4"){
               tension: 0.3,
               borderWidth: 2,
               pointRadius: 1,
-              borderColor: '#f97316',
-              backgroundColor: '#f97316',
+              borderColor: '#3b82f6',
+              backgroundColor: '#3b82f6',
               yAxisID: 'yDelta'
             }
           ]
