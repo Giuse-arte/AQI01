@@ -987,19 +987,12 @@ function applyKPI(feeds, feedsVoc24h){
 
   // min/max per tutte le modalità tranne LIVE
   const vm = document.getElementById('viewMode').value;
-  if(vm !== 'live'){
-    const minVal = f => Math.min(...feeds.map(x => Number(x[f])).filter(v => !isNaN(v)));
-    const maxVal = f => Math.max(...feeds.map(x => Number(x[f])).filter(v => !isNaN(v)));
-    humMM.textContent   = fmt1(minVal('field1')) + ' % — ' + fmt1(maxVal('field1')) + ' %';
-    tempMM.textContent  = fmt1(minVal('field2')) + ' °C — ' + fmt1(maxVal('field2')) + ' °C';
-    pressMM.textContent = fmt1(minVal('field3')) + ' hPa — ' + fmt1(maxVal('field3')) + ' hPa';
-    pm1MM.textContent   = fmt0(minVal('field5')) + ' µg/m³ — ' + fmt0(maxVal('field5')) + ' µg/m³';
-  } else {
-    humMM.textContent   = '';
-    tempMM.textContent  = '';
-    pressMM.textContent = '';
-    pm1MM.textContent   = '';
-  }
+  const minVal = f => Math.min(...feeds.map(x => Number(x[f])).filter(v => !isNaN(v)));
+  const maxVal = f => Math.max(...feeds.map(x => Number(x[f])).filter(v => !isNaN(v)));
+  humMM.textContent   = fmt1(minVal('field1')) + ' % — ' + fmt1(maxVal('field1')) + ' %';
+  tempMM.textContent  = fmt1(minVal('field2')) + ' °C — ' + fmt1(maxVal('field2')) + ' °C';
+  pressMM.textContent = fmt1(minVal('field3')) + ' hPa — ' + fmt1(maxVal('field3')) + ' hPa';
+  pm1MM.textContent   = fmt0(minVal('field5')) + ' µg/m³ — ' + fmt0(maxVal('field5')) + ' µg/m³';
 
   // VOC → legge dal grafico se disponibile, altrimenti da vocFeeds
   const vocChart = Object.values(Chart.instances).find(c => c.canvas.id === 'chart_4');
@@ -2032,7 +2025,7 @@ if(ch.dataset.id === "4"){
       d.className = 'chart';
       d.innerHTML = `
         <div style="display:flex;align-items:center;gap:8px;flex-wrap:nowrap;">
-          <span class="chart-title" style="white-space:nowrap;">VOC — kOhm + Delta baseline 24h</span>
+          <span class="chart-title" style="white-space:nowrap;">VOC — Delta rispetto baseline 24h</span>
           <span style="display:flex;align-items:center;gap:10px;margin-left:8px;flex-shrink:0;">
             <span style="display:flex;align-items:center;gap:4px;font-size:.72rem;color:#6b7280;">
               <span style="width:18px;height:3px;background:#3b82f6;display:inline-block;border-radius:2px;"></span>kOhm
@@ -2054,17 +2047,7 @@ if(ch.dataset.id === "4"){
           labels,
           datasets: [
             {
-              label: 'VOC (kOhm)',
-              data: dataAbs,
-              tension: 0.3,
-              borderWidth: 2,
-              pointRadius: 1,
-              borderColor: '#3b82f6',
-              backgroundColor: '#3b82f6',
-              yAxisID: 'yAbs'
-            },
-            {
-              label: 'Delta baseline',
+              label: 'Delta VOC (kOhm)',
               data: dataDelta,
               tension: 0.3,
               borderWidth: 2,
@@ -2079,21 +2062,14 @@ if(ch.dataset.id === "4"){
           responsive: true,
           maintainAspectRatio: false,
           plugins: { legend: { display: false } },
-          scales: {
+         scales: {
             x: xAxisConfig(),
-            yAbs: {
+            yDelta: {
               type: 'linear',
               position: 'left',
               beginAtZero: false,
-              title: { display: true, text: 'kOhm' },
-              grid: { display: true, color: 'rgba(0,0,0,0.06)', lineWidth: 0.8 }
-            },
-            yDelta: {
-              type: 'linear',
-              position: 'right',
-              beginAtZero: true,
               title: { display: true, text: 'Delta kOhm' },
-              grid: { display: false }
+              grid: { display: true, color: 'rgba(0,0,0,0.06)', lineWidth: 0.8 }
             }
           }
         }
