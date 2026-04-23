@@ -914,21 +914,7 @@ const r = await fetch(
     const j = await r.json();
 
     /* Applica i KPI reali */
-    // fetch separato ultime 24h per VOC card (sempre fisso)
-    const nowKpi = new Date();
-    const since24hKpi = new Date(nowKpi.getTime() - 24*60*60*1000);
-    function formatLDT(d){
-      const pad = n => n.toString().padStart(2,'0');
-      return d.getFullYear()+'-'+pad(d.getMonth()+1)+'-'+pad(d.getDate())+' '+
-             pad(d.getHours())+':'+pad(d.getMinutes())+':'+pad(d.getSeconds());
-    }
-    const rVoc = await fetch(
-      `https://api.thingspeak.com/channels/${CHANNEL}/feeds.json?start=${formatLDT(since24hKpi)}&end=${formatLDT(nowKpi)}&results=8000`
-    );
-    const jVoc = rVoc.ok ? await rVoc.json() : { feeds: [] };
-    const feedsVoc = jVoc.feeds || [];
-
-    applyKPI(j.feeds || [], feedsVoc);
+    applyKPI(j.feeds || []);
   }catch{
     /* Fallback se fetch fallisce */
     applyDemoKPI();
@@ -968,8 +954,7 @@ function applyDemoKPI(){
 /*
   feeds → array di misurazioni ThingSpeak
 */
-function applyKPI(feeds, feedsVoc24h){
-  const vocFeeds = feedsVoc24h && feedsVoc24h.length ? feedsVoc24h : feeds;
+function applyKPI(feeds){
   if(!feeds.length) return;
 
   const now = new Date();
@@ -994,9 +979,8 @@ function applyKPI(feeds, feedsVoc24h){
   pressMM.textContent = fmt1(minVal('field3')) + ' hPa — ' + fmt1(maxVal('field3')) + ' hPa';
   pm1MM.textContent   = fmt0(minVal('field5')) + ' µg/m³ — ' + fmt0(maxVal('field5')) + ' µg/m³';
 
-  // VOC → aggiornato direttamente dal grafico dopo rendering
-  document.getElementById('voc').textContent = '— kOhm';
-  document.getElementById('vocDelta').textContent = '';
+  // VOC → aggiornato dal grafico tramite callback
+  // il grafico VOC aggiornerà la card dopo il suo rendering
 
   // PM2.5 e PM10 → sempre media mobile ultime 24h
   const avg24 = f =>
@@ -2492,9 +2476,8 @@ remember.addEventListener('change', savePreferences);
    ========================= */
 
 /* Aggiorna grafici + KPI */
-update.addEventListener('click', async ()=>{
+update.addEventListener('click', ()=>{
   renderCharts();
-  await new Promise(r => setTimeout(r, 2000));
   loadKPIs();
 });
 
@@ -2554,7 +2537,7 @@ document.addEventListener('DOMContentLoaded', () => {
 
   // 3. Ora che i campi sono pronti, carichiamo i dati
   renderCharts();
-  setTimeout(loadKPIs, 2000);
+  loadKPIs();
 });
 
 </script>
