@@ -471,7 +471,7 @@
 
 .chart-header .chart-sensor{
   color: rgba(255,255,255,0.75);
-  font-size: .95rem;
+  font-size: .99rem;
   margin-left: 0;
 }
 
@@ -2014,9 +2014,7 @@ if(ch.dataset.id === "4"){
       d.innerHTML = `
         <div class="chart-header">
           <span class="chart-title">VOC — Delta rispetto baseline 24h</span>
-          <div class="chart-legend">
-            <span><span style="width:18px;height:3px;background:#3b82f6;display:inline-block;border-radius:2px;"></span>BME680</span>
-          </div>
+          <span class="chart-sensor">BME680</span>
         </div>
         <canvas id="chart_4"></canvas>
       `;
