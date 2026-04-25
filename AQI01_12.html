@@ -442,11 +442,55 @@
   background:var(--card);
   border-radius:var(--radius);
   box-shadow:var(--shadow);
-  padding:10px 10px 40px 10px;
+  padding:0 0 40px 0;
   height: 500px;
   display: flex;
   flex-direction: column;
-  border: 2px solid #d1d5db;
+  border: 2px solid #1e40af;
+  overflow: hidden;
+}
+
+.chart-header{
+  background: #1e40af;
+  padding: 10px 14px 8px;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 4px;
+}
+
+.chart-header .chart-title{
+  color: #ffffff;
+  font-size: 1rem;
+  font-weight: 700;
+  text-align: center;
+  white-space: nowrap;
+}
+
+.chart-header .chart-sensor{
+  color: rgba(255,255,255,0.75);
+  font-size: .72rem;
+  margin-left: 0;
+}
+
+.chart-header .chart-legend{
+  display: flex;
+  align-items: center;
+  gap: 14px;
+  margin-top: 2px;
+}
+
+.chart-header .chart-legend span{
+  display: flex;
+  align-items: center;
+  gap: 5px;
+  font-size: .72rem;
+  color: rgba(255,255,255,0.85);
+}
+
+.chart canvas{
+  margin-top: 10px;
+  flex: 1;
 }
     .chart-title{
   font-weight:700;
@@ -1820,11 +1864,11 @@ const data = aggFn
       d.className = 'chart';
 
       d.innerHTML = `
-        <div>
+        <div class="chart-header">
           <span class="chart-title">PM2.5</span>
           <span class="chart-sensor">PMS5003</span>
         </div>
-        <canvas id="chart_pm25" style="height:230px;"></canvas>
+        <canvas id="chart_pm25"></canvas>
       `;
 
       const pm1 = chartsContainer.querySelector('#chart_5')?.parentElement;
@@ -1965,9 +2009,11 @@ if(ch.dataset.id === "4"){
       const d = document.createElement('div');
       d.className = 'chart';
       d.innerHTML = `
-        <div style="display:flex;align-items:center;gap:8px;flex-wrap:nowrap;">
-          <span class="chart-title" style="white-space:nowrap;">VOC — Delta rispetto baseline 24h</span>
-          <span class="chart-sensor">BME680</span>
+        <div class="chart-header">
+          <span class="chart-title">VOC — Delta rispetto baseline 24h</span>
+          <div class="chart-legend">
+            <span><span style="width:18px;height:3px;background:#3b82f6;display:inline-block;border-radius:2px;"></span>BME680</span>
+          </div>
         </div>
         <canvas id="chart_4"></canvas>
       `;
@@ -2086,7 +2132,7 @@ const aggFn = viewMode === 'year' ? aggregateDaily :
       d.className = 'chart';
 
       d.innerHTML = `
-        <div>
+        <div class="chart-header">
           <span class="chart-title">${m.t}</span>
           <span class="chart-sensor">${m.s}</span>
         </div>
@@ -2307,21 +2353,15 @@ if(isExtended){
  const standardLabel = document.getElementById('mode').value;
 
 d.innerHTML = `
-  <div style="display:flex;align-items:center;gap:8px;flex-wrap:nowrap;">
-    <span class="chart-title" style="white-space:nowrap;">
-      PM10 / PM2.5 media mobile 24h — Standard ${standardLabel}
-    </span>
-    <span style="display:flex;align-items:center;gap:10px;margin-left:8px;flex-shrink:0;">
-      <span style="display:flex;align-items:center;gap:4px;font-size:.72rem;color:#6b7280;">
-        <span style="width:18px;height:3px;background:#ec4899;display:inline-block;border-radius:2px;"></span>PM2.5
-      </span>
-      <span style="display:flex;align-items:center;gap:4px;font-size:.72rem;color:#6b7280;">
-        <span style="width:18px;height:3px;background:#3b82f6;display:inline-block;border-radius:2px;"></span>PM10
-      </span>
-    </span>
-    <button class="info-btn combo-info-btn" onclick="openInfoPopup()" style="margin-left:auto;flex-shrink:0;">
-      i
-    </button>
+  <div class="chart-header">
+    <div style="display:flex;align-items:center;justify-content:center;gap:10px;width:100%;">
+      <span class="chart-title">PM10 / PM2.5 media mobile 24h — Standard ${standardLabel}</span>
+      <button class="info-btn combo-info-btn" onclick="openInfoPopup()" style="flex-shrink:0;background:rgba(255,255,255,0.2);border:1px solid rgba(255,255,255,0.4);">i</button>
+    </div>
+    <div class="chart-legend">
+      <span><span style="width:18px;height:3px;background:#ec4899;display:inline-block;border-radius:2px;"></span>PM2.5</span>
+      <span><span style="width:18px;height:3px;background:#ffffff;display:inline-block;border-radius:2px;"></span>PM10</span>
+    </div>
   </div>
   <canvas id="pmCombined"></canvas>
 `;
