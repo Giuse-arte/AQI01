@@ -1397,15 +1397,13 @@ function exportCSV(){
     if(isExtendedCsv){
       series[f.field] = csvAggregateHourly(rawFeedsStore, f.field);
     } else {
-      // in live e day usa timestamp grezzi di field6 come riferimento
-      // per garantire allineamento tra tutti i campi
-      const ref = rawFeedsStore.filter(f2 =>
-        !isNaN(Number(f2[f.field])) && !isNaN(Number(f2['field6']))
-      );
-      series[f.field] = ref.map(feed => ({
-        ts: new Date(feed.created_at).getTime(),
-        value: Number(feed[f.field])
-      }));
+      // live e day → tutti i campi usano gli stessi timestamp grezzi
+      series[f.field] = rawFeedsStore
+        .filter(feed => !isNaN(Number(feed[f.field])))
+        .map(feed => ({
+          ts: new Date(feed.created_at).getTime(),
+          value: Number(feed[f.field])
+        }));
     }
   });
 
