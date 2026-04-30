@@ -1394,9 +1394,19 @@ function exportCSV(){
 
   const series = {};
   fields.forEach(f => {
-    series[f.field] = isExtendedCsv
-      ? csvAggregateHourly(rawFeedsStore, f.field)
-      : interpolate(rawFeedsStore, f.field);
+    if(isExtendedCsv){
+      series[f.field] = csvAggregateHourly(rawFeedsStore, f.field);
+    } else {
+      // in live e day usa timestamp grezzi di field6 come riferimento
+      // per garantire allineamento tra tutti i campi
+      const ref = rawFeedsStore.filter(f2 =>
+        !isNaN(Number(f2[f.field])) && !isNaN(Number(f2['field6']))
+      );
+      series[f.field] = ref.map(feed => ({
+        ts: new Date(feed.created_at).getTime(),
+        value: Number(feed[f.field])
+      }));
+    }
   });
 
   // COMBO usa media mobile
