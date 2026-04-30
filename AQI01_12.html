@@ -2070,7 +2070,19 @@ if(ch.dataset.id === "4"){
       });
 
       // salva per CSV
+      // salva per CSV — aggiunge field4 a rawFeedsStore
       chartDataStore['VOC (kOhm)'] = { labels, data: dataDelta };
+
+      // integra field4 in rawFeedsStore per il CSV
+      const vocMap = {};
+      allFeeds.forEach(f => {
+        vocMap[f.created_at] = f.field4;
+      });
+      rawFeedsStore.forEach(f => {
+        if(vocMap[f.created_at] !== undefined){
+          f.field4 = vocMap[f.created_at];
+        }
+      });
 
       // aggiorna card KPI VOC direttamente dopo rendering grafico
       const vocAbsLast = dataAbs[dataAbs.length - 1];
@@ -2356,7 +2368,13 @@ if(isExtended){
     if (!labels.length) {
       console.warn("COMBO: nessun dato nel range");
       return;
-    }  
+    }
+
+    // avvia solo se ci sono almeno 48 acquisizioni (ultime 24h)
+    if(feeds.length < 48){
+      console.warn("COMBO: meno di 48 acquisizioni disponibili");
+      return;
+    }
 
       // =========================
       // CREA GRAFICO
