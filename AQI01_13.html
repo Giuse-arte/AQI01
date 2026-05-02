@@ -1352,10 +1352,28 @@ function exportCSV(){
   ];
 
   // per il COMBO calcola media mobile 24h sui dati grezzi
- function movingAvg24h(interpSeries){
-    // usa i punti già interpolati come base
-    return interpSeries.map((p, i) => {
+ function movingAvg24h(interpSeries, rawFeeds, field){
+    // calcola finestra dinamica basata sui campioni reali in 24h
+    if(!rawFeeds || !rawFeeds.length) return interpSeries.map((p,i) => {
       const slice = interpSeries.slice(Math.max(0, i-47), i+1);
+      const avg = slice.reduce((s,x) => s + x.value, 0) / slice.length;
+      return { ts: p.ts, value: avg };
+    });
+
+    // calcola campioni per ora dai feed grezzi
+    const valid = rawFeeds.filter(f => !isNaN(Number(f[field])));
+    const tFirst = new Date(valid[0].created_at).getTime();
+    const tLast = new Date(valid[valid.length-1].created_at).getTime();
+    const totalHours = (tLast - tFirst) / 3600000;
+    const samplesPerHour = valid.length / totalHours;
+    const window24h = Math.round(samplesPerHour * 24);
+
+    // applica media mobile con finestra corretta
+    // ma i punti sono già aggregati a coppie quindi dimezza la finestra
+    const windowAgg = Math.max(1, Math.round(window24h / 2));
+
+    return interpSeries.map((p, i) => {
+      const slice = interpSeries.slice(Math.max(0, i - windowAgg + 1), i+1);
       const avg = slice.reduce((s,x) => s + x.value, 0) / slice.length;
       return { ts: p.ts, value: avg };
     });
@@ -1408,8 +1426,8 @@ function exportCSV(){
   });
 
   // COMBO usa media mobile
- const combo25 = movingAvg24h(series['field6']);
-  const combo10 = movingAvg24h(series['field7']);
+  const combo25 = movingAvg24h(series['field6'], rawFeedsStore, 'field6');
+  const combo10 = movingAvg24h(series['field7'], rawFeedsStore, 'field7');
 
   // =========================
   // TIMESTAMP UNIFICATO
