@@ -1353,12 +1353,16 @@ function exportCSV(){
 
   // per il COMBO calcola media mobile 24h sui dati grezzi
  function movingAvg24h(interpSeries, rawFeeds, field){
-    // per ogni punto aggregato, calcola la media dei dati grezzi
-    // nelle 24h precedenti al timestamp del punto
     const valid = rawFeeds.filter(f => !isNaN(Number(f[field])));
+    const firstTs = new Date(valid[0].created_at).getTime();
 
-    return interpSeries.map(p => {
+    const points = [];
+    interpSeries.forEach(p => {
       const cutoff = p.ts - 24 * 60 * 60 * 1000;
+
+      // salta se non ci sono ancora 24h di dati
+      if(cutoff < firstTs) return;
+
       const window = valid.filter(f => {
         const t = new Date(f.created_at).getTime();
         return t >= cutoff && t <= p.ts;
@@ -1366,8 +1370,9 @@ function exportCSV(){
       const avg = window.length
         ? window.reduce((s,f) => s + Number(f[field]), 0) / window.length
         : p.value;
-      return { ts: p.ts, value: avg };
+      points.push({ ts: p.ts, value: avg });
     });
+    return points;
   }
 
   // costruisce serie interpolate per tutti i campi
@@ -2370,9 +2375,17 @@ if(isExtended){
   const agg25 = aggFn(feeds, 'field6');
   const agg10 = aggFn(feeds, 'field7');
 
+  // primo timestamp disponibile nei feed
+  const firstFeedTs = new Date(feeds[0].created_at).getTime();
+
   // per ogni punto aggregato calcola media mobile 24h sui dati grezzi
+  // solo se sono passate almeno 24h dal primo dato disponibile
   agg25.forEach(p => {
     const cutoff = p.x.getTime() - 24*60*60*1000;
+    
+    // salta se non ci sono ancora 24h di dati
+    if(cutoff < firstFeedTs) return;
+
     const window = feeds.filter(f => {
       const t = new Date(f.created_at).getTime();
       return t >= cutoff && t <= p.x.getTime() && !isNaN(Number(f.field6));
@@ -2386,6 +2399,10 @@ if(isExtended){
 
   agg10.forEach(p => {
     const cutoff = p.x.getTime() - 24*60*60*1000;
+
+    // salta se non ci sono ancora 24h di dati
+    if(cutoff < firstFeedTs) return;
+
     const window = feeds.filter(f => {
       const t = new Date(f.created_at).getTime();
       return t >= cutoff && t <= p.x.getTime() && !isNaN(Number(f.field7));
