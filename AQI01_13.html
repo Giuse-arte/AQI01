@@ -1497,7 +1497,7 @@ function exportCSV(){
   rows.push('');
 
   // intestazione
-  const header = ['Data', 'Ora', 'Anno', ...columns.map(c => c.label)];
+  const header = ['Data', 'Ora', 'Anno', 'DataOra', ...columns.map(c => c.label)];
   rows.push(header.join(sep));
 
   // dati
@@ -1517,7 +1517,8 @@ function exportCSV(){
       return Number(v).toFixed(2).replace('.',',');
     });
 
-    rows.push([dateStr, timeStr, yearStr, ...vals].join(sep));
+    const dateOraStr = dateStr + ' ' + timeStr + ' ' + yearStr;
+    rows.push([dateStr, timeStr, yearStr, dateOraStr, ...vals].join(sep));
   });
 
   // =========================
@@ -2364,11 +2365,37 @@ const pm25 = [];
 const pm10 = [];
 
 if(isExtended){
+  // aggrega in ore (coppie consecutive)
   const aggFn = viewMode === 'year' ? aggregateDaily : aggregateHourly;
   const agg25 = aggFn(feeds, 'field6');
   const agg10 = aggFn(feeds, 'field7');
-  agg25.forEach(p => { labels.push(p.x); pm25.push(p.y); });
-  agg10.forEach(p => { pm10.push(p.y); });
+
+  // per ogni punto aggregato calcola media mobile 24h sui dati grezzi
+  agg25.forEach(p => {
+    const cutoff = p.x.getTime() - 24*60*60*1000;
+    const window = feeds.filter(f => {
+      const t = new Date(f.created_at).getTime();
+      return t >= cutoff && t <= p.x.getTime() && !isNaN(Number(f.field6));
+    });
+    const avg = window.length
+      ? window.reduce((s,f) => s + Number(f.field6), 0) / window.length
+      : p.y;
+    labels.push(p.x);
+    pm25.push(avg);
+  });
+
+  agg10.forEach(p => {
+    const cutoff = p.x.getTime() - 24*60*60*1000;
+    const window = feeds.filter(f => {
+      const t = new Date(f.created_at).getTime();
+      return t >= cutoff && t <= p.x.getTime() && !isNaN(Number(f.field7));
+    });
+    const avg = window.length
+      ? window.reduce((s,f) => s + Number(f.field7), 0) / window.length
+      : p.y;
+    pm10.push(avg);
+  });
+
 } else {
   const fullPM25 = avgSeries('field6');
   const fullPM10 = avgSeries('field7');
