@@ -2432,9 +2432,21 @@ if(isExtended){
       return;
     }
 
-    // avvia solo se ci sono almeno 48 acquisizioni (ultime 24h)
+   // avvia solo se ci sono almeno 48 acquisizioni (ultime 24h)
+   // per avere una media mobile significativa
     if(feeds.length < 48){
       console.warn("COMBO: meno di 48 acquisizioni disponibili");
+      // mostra messaggio nel grafico
+      const d = document.createElement('div');
+      d.className = 'chart';
+      d.innerHTML = `
+        <div class="chart-header">
+          <span class="chart-title">PM10 / PM2.5 media mobile 24h — Standard ${document.getElementById('mode').value}</span>
+          <span class="chart-sensor">Dati insufficienti — servono almeno 24h di acquisizioni</span>
+        </div>
+      `;
+      chartsContainer.appendChild(d);
+      setTimeout(reorderCharts, 50);
       return;
     }
 
