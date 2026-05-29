@@ -10,7 +10,7 @@
   <meta name="viewport" content="width=device-width, initial-scale=1" />
 
   <!-- Titolo della pagina (compare nel tab del browser) -->
-  <title>Pagina AQI – Versione Professionale (v6.8.4)</title>
+  <title>Pagina AQI – Versione Professionale (v02.00)</title>
 
   <style>
     /* =========================
@@ -51,8 +51,9 @@
     .line-orange{ color:#f97316; font-weight:600; }
 
     .kpi{
-      position:relative; /* 🔥 necessario */
-    }
+  position:relative;
+  border:2px solid #1e40af;
+}
 
     .kpi .info-btn{
       position:absolute;
@@ -144,7 +145,7 @@
        ========================= */
     
     .kpi-section{
-      border:2px solid #d1d5db;
+      border:2px solid #1e40af;
       border-radius:12px;
       padding:12px;
       margin-bottom:26px
@@ -228,7 +229,7 @@
     /* Pannello Controlla Grafici */
     .panel{
     background: var(--card);
-    border: 2px solid #d1d5db;
+    border: 2px solid #1e40af;
     border-radius: 12px;
     box-shadow: var(--shadow);
     padding: 14px;
@@ -236,7 +237,7 @@
     display: flex;
     flex-direction: column;
     gap: 8px;
-    align-self:flex-start; /* ← BLOCCA L'ALLUNGAMENTO */
+    align-self:flex-start;
     }
 
     @media(max-width:900px){
@@ -256,7 +257,7 @@
     /* Contenitore dei grafici */
  .charts-wrapper{
  background: transparent;
- border: 2px solid #d1d5db;
+ border: 2px solid #1e40af;
  border-radius: 12px;
  box-shadow: none;
  padding: 14px 14px 18px;
@@ -306,9 +307,21 @@
 
 /* 🔥 HOVER */
 .info-btn:hover{
-  border-radius:4px;          /* da cerchio → quadrato */
-  background:#16a34a;         /* opzionale: cambia colore */
-  transform:scale(1.1);       /* piccolo zoom */
+  border-radius:4px;
+  background:#16a34a;
+  transform:scale(1.1);
+}
+
+.info-btn-light{
+  background:#3b82f6;
+  border:1px solid #ffffff;
+}
+
+.info-btn-light:hover{
+  border-radius:4px;
+  /* background:#3b82f6; // con questa riga il tasto rimane blu chiaro */
+  border:3px solid #ffffff;
+  transform:scale(1.1);
 }
 
 /* =========================
@@ -442,11 +455,58 @@
   background:var(--card);
   border-radius:var(--radius);
   box-shadow:var(--shadow);
-  padding:10px 10px 40px 10px;
+  padding:0 0 80px 0;
   height: 500px;
   display: flex;
   flex-direction: column;
-  border: 2px solid #d1d5db;
+  border: 2px solid #1e40af;
+  overflow: visible;
+}
+
+.chart-header{
+  background: #1e40af;
+  padding: 14px 14px 14px;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: 4px;
+  min-height: 80px;
+}
+
+.chart-header .chart-title{
+  color: #ffffff;
+  font-size: 1.2rem;
+  font-weight: 700;
+  text-align: center;
+  white-space: nowrap;
+}
+
+.chart-header .chart-sensor{
+  color: rgba(255,255,255,0.75);
+  font-size: .99rem;
+  margin-left: 0;
+}
+
+.chart-header .chart-legend{
+  display: flex;
+  align-items: center;
+  gap: 14px;
+  margin-top: 2px;
+}
+
+.chart-header .chart-legend span{
+  display: flex;
+  align-items: center;
+  gap: 5px;
+  font-size: .72rem;
+  color: rgba(255,255,255,0.85);
+}
+
+.chart canvas{
+  margin-top: 10px;
+  flex: 1;
+  padding: 0 10px;
 }
     .chart-title{
   font-weight:700;
@@ -607,7 +667,7 @@
       <!-- KPI: AQI -->
       <!-- Titolo e contenuto cambiano in base allo standard (EEA / EPA) -->
       <div class="kpi">
-      <button class="info-btn aqi-info-btn" onclick="openAQIInfo(document.getElementById('mode').value)" style="position:absolute;top:8px;right:8px;">i</button>
+      <button class="info-btn info-btn-light aqi-info-btn" onclick="openAQIInfo(document.getElementById('mode').value)" style="position:absolute;top:8px;right:8px;border:1px solid #000000;">i</button>
       <div class="title" id="aqiTitle">AQI (EEA 24h)</div>
         <div class="sensor">PM2.5 / PM10</div>
 
@@ -650,7 +710,7 @@
       <label><input type="checkbox" checked data-id="6"> PM2.5 – PMS5003</label>
       <label><input type="checkbox" checked data-id="7"> PM10 – PMS5003</label>
       <label><input type="checkbox" checked data-id="combo"> PM2.5 + PM10 (24h)</label>
-      <label><input type="checkbox" checked data-id="4"> VOC – BME680 (kOhm + Delta)</label>
+      <label><input type="checkbox" checked data-id="4"> VOC Delta – BME680</label>
             
       <!-- ========================= -->
       <!-- MEMORIZZAZIONE PREFERENZE -->
@@ -684,7 +744,7 @@
   <!-- ========================= -->
   <!-- FOOTER -->
   <!-- ========================= -->
-  <footer>Versione 01.00 — Dashboard AQI </footer>
+  <footer>Versione 02.00 — Dashboard AQI </footer>
 
 </main>
 
@@ -1292,13 +1352,27 @@ function exportCSV(){
   ];
 
   // per il COMBO calcola media mobile 24h sui dati grezzi
- function movingAvg24h(interpSeries){
-    // usa i punti già interpolati come base
-    return interpSeries.map((p, i) => {
-      const slice = interpSeries.slice(Math.max(0, i-47), i+1);
-      const avg = slice.reduce((s,x) => s + x.value, 0) / slice.length;
-      return { ts: p.ts, value: avg };
+ function movingAvg24h(interpSeries, rawFeeds, field){
+    const valid = rawFeeds.filter(f => !isNaN(Number(f[field])));
+    const firstTs = new Date(valid[0].created_at).getTime();
+
+    const points = [];
+    interpSeries.forEach(p => {
+      const cutoff = p.ts - 24 * 60 * 60 * 1000;
+
+      // salta se non ci sono ancora 24h di dati
+      if(cutoff < firstTs) return;
+
+      const window = valid.filter(f => {
+        const t = new Date(f.created_at).getTime();
+        return t >= cutoff && t <= p.ts;
+      });
+      const avg = window.length
+        ? window.reduce((s,f) => s + Number(f[field]), 0) / window.length
+        : p.value;
+      points.push({ ts: p.ts, value: avg });
     });
+    return points;
   }
 
   // costruisce serie interpolate per tutti i campi
@@ -1334,14 +1408,22 @@ function exportCSV(){
 
   const series = {};
   fields.forEach(f => {
-    series[f.field] = isExtendedCsv
-      ? csvAggregateHourly(rawFeedsStore, f.field)
-      : interpolate(rawFeedsStore, f.field);
+    if(isExtendedCsv){
+      series[f.field] = csvAggregateHourly(rawFeedsStore, f.field);
+    } else {
+      // live e day → tutti i campi usano gli stessi timestamp grezzi
+      series[f.field] = rawFeedsStore
+        .filter(feed => !isNaN(Number(feed[f.field])))
+        .map(feed => ({
+          ts: new Date(feed.created_at).getTime(),
+          value: Number(feed[f.field])
+        }));
+    }
   });
 
   // COMBO usa media mobile
- const combo25 = movingAvg24h(series['field6']);
-  const combo10 = movingAvg24h(series['field7']);
+  const combo25 = movingAvg24h(series['field6'], rawFeedsStore, 'field6');
+  const combo10 = movingAvg24h(series['field7'], rawFeedsStore, 'field7');
 
   // =========================
   // TIMESTAMP UNIFICATO
@@ -1368,6 +1450,7 @@ function exportCSV(){
     field5:  buildIndex(series['field5']),
     field6:  buildIndex(series['field6']),
     field7:  buildIndex(series['field7']),
+    field4:  buildIndex(series['field4']),
     field1:  buildIndex(series['field1']),
     field2:  buildIndex(series['field2']),
     field3:  buildIndex(series['field3']),
@@ -1419,7 +1502,7 @@ function exportCSV(){
   rows.push('');
 
   // intestazione
-  const header = ['Data', 'Ora', 'Anno', ...columns.map(c => c.label)];
+  const header = ['Data', 'Ora', 'Anno', 'DataOra', ...columns.map(c => c.label)];
   rows.push(header.join(sep));
 
   // dati
@@ -1439,7 +1522,8 @@ function exportCSV(){
       return Number(v).toFixed(2).replace('.',',');
     });
 
-    rows.push([dateStr, timeStr, yearStr, ...vals].join(sep));
+    const dateOraStr = dateStr + ' ' + timeStr + ' ' + yearStr;
+    rows.push([dateStr, timeStr, yearStr, dateOraStr, ...vals].join(sep));
   });
 
   // =========================
@@ -1820,11 +1904,11 @@ const data = aggFn
       d.className = 'chart';
 
       d.innerHTML = `
-        <div>
+        <div class="chart-header">
           <span class="chart-title">PM2.5</span>
           <span class="chart-sensor">PMS5003</span>
         </div>
-        <canvas id="chart_pm25" style="height:230px;"></canvas>
+        <canvas id="chart_pm25"></canvas>
       `;
 
       const pm1 = chartsContainer.querySelector('#chart_5')?.parentElement;
@@ -1965,8 +2049,8 @@ if(ch.dataset.id === "4"){
       const d = document.createElement('div');
       d.className = 'chart';
       d.innerHTML = `
-        <div style="display:flex;align-items:center;gap:8px;flex-wrap:nowrap;">
-          <span class="chart-title" style="white-space:nowrap;">VOC — Delta rispetto baseline 24h</span>
+        <div class="chart-header">
+          <span class="chart-title">VOC — Delta rispetto baseline 24h</span>
           <span class="chart-sensor">BME680</span>
         </div>
         <canvas id="chart_4"></canvas>
@@ -2010,7 +2094,19 @@ if(ch.dataset.id === "4"){
       });
 
       // salva per CSV
+      // salva per CSV — aggiunge field4 a rawFeedsStore
       chartDataStore['VOC (kOhm)'] = { labels, data: dataDelta };
+
+      // integra field4 in rawFeedsStore per il CSV
+      const vocMap = {};
+      allFeeds.forEach(f => {
+        vocMap[f.created_at] = f.field4;
+      });
+      rawFeedsStore.forEach(f => {
+        if(vocMap[f.created_at] !== undefined){
+          f.field4 = vocMap[f.created_at];
+        }
+      });
 
       // aggiorna card KPI VOC direttamente dopo rendering grafico
       const vocAbsLast = dataAbs[dataAbs.length - 1];
@@ -2086,7 +2182,7 @@ const aggFn = viewMode === 'year' ? aggregateDaily :
       d.className = 'chart';
 
       d.innerHTML = `
-        <div>
+        <div class="chart-header">
           <span class="chart-title">${m.t}</span>
           <span class="chart-sensor">${m.s}</span>
         </div>
@@ -2274,11 +2370,49 @@ const pm25 = [];
 const pm10 = [];
 
 if(isExtended){
+  // aggrega in ore (coppie consecutive)
   const aggFn = viewMode === 'year' ? aggregateDaily : aggregateHourly;
   const agg25 = aggFn(feeds, 'field6');
   const agg10 = aggFn(feeds, 'field7');
-  agg25.forEach(p => { labels.push(p.x); pm25.push(p.y); });
-  agg10.forEach(p => { pm10.push(p.y); });
+
+  // primo timestamp disponibile nei feed
+  const firstFeedTs = new Date(feeds[0].created_at).getTime();
+
+  // per ogni punto aggregato calcola media mobile 24h sui dati grezzi
+  // solo se sono passate almeno 24h dal primo dato disponibile
+  agg25.forEach(p => {
+    const cutoff = p.x.getTime() - 24*60*60*1000;
+    
+    // salta se non ci sono ancora 24h di dati
+    if(cutoff < firstFeedTs) return;
+
+    const window = feeds.filter(f => {
+      const t = new Date(f.created_at).getTime();
+      return t >= cutoff && t <= p.x.getTime() && !isNaN(Number(f.field6));
+    });
+    const avg = window.length
+      ? window.reduce((s,f) => s + Number(f.field6), 0) / window.length
+      : p.y;
+    labels.push(p.x);
+    pm25.push(avg);
+  });
+
+  agg10.forEach(p => {
+    const cutoff = p.x.getTime() - 24*60*60*1000;
+
+    // salta se non ci sono ancora 24h di dati
+    if(cutoff < firstFeedTs) return;
+
+    const window = feeds.filter(f => {
+      const t = new Date(f.created_at).getTime();
+      return t >= cutoff && t <= p.x.getTime() && !isNaN(Number(f.field7));
+    });
+    const avg = window.length
+      ? window.reduce((s,f) => s + Number(f.field7), 0) / window.length
+      : p.y;
+    pm10.push(avg);
+  });
+
 } else {
   const fullPM25 = avgSeries('field6');
   const fullPM10 = avgSeries('field7');
@@ -2296,7 +2430,25 @@ if(isExtended){
     if (!labels.length) {
       console.warn("COMBO: nessun dato nel range");
       return;
-    }  
+    }
+
+   // avvia solo se ci sono almeno 48 acquisizioni (ultime 24h)
+   // per avere una media mobile significativa
+    if(feeds.length < 48){
+      console.warn("COMBO: meno di 48 acquisizioni disponibili");
+      // mostra messaggio nel grafico
+      const d = document.createElement('div');
+      d.className = 'chart';
+      d.innerHTML = `
+        <div class="chart-header">
+          <span class="chart-title">PM10 / PM2.5 media mobile 24h — Standard ${document.getElementById('mode').value}</span>
+          <span class="chart-sensor">Dati insufficienti — servono almeno 24h di acquisizioni</span>
+        </div>
+      `;
+      chartsContainer.appendChild(d);
+      setTimeout(reorderCharts, 50);
+      return;
+    }
 
       // =========================
       // CREA GRAFICO
@@ -2307,21 +2459,15 @@ if(isExtended){
  const standardLabel = document.getElementById('mode').value;
 
 d.innerHTML = `
-  <div style="display:flex;align-items:center;gap:8px;flex-wrap:nowrap;">
-    <span class="chart-title" style="white-space:nowrap;">
-      PM10 / PM2.5 media mobile 24h — Standard ${standardLabel}
-    </span>
-    <span style="display:flex;align-items:center;gap:10px;margin-left:8px;flex-shrink:0;">
-      <span style="display:flex;align-items:center;gap:4px;font-size:.72rem;color:#6b7280;">
-        <span style="width:18px;height:3px;background:#ec4899;display:inline-block;border-radius:2px;"></span>PM2.5
-      </span>
-      <span style="display:flex;align-items:center;gap:4px;font-size:.72rem;color:#6b7280;">
-        <span style="width:18px;height:3px;background:#3b82f6;display:inline-block;border-radius:2px;"></span>PM10
-      </span>
-    </span>
-    <button class="info-btn combo-info-btn" onclick="openInfoPopup()" style="margin-left:auto;flex-shrink:0;">
-      i
-    </button>
+  <div class="chart-header">
+    <div style="display:flex;align-items:center;justify-content:center;gap:10px;width:100%;">
+      <span class="chart-title">PM10 / PM2.5 media mobile 24h — Standard ${standardLabel}</span>
+      <button class="info-btn info-btn-light combo-info-btn" onclick="openInfoPopup()" style="flex-shrink:0;">i</button>
+    </div>
+    <div class="chart-legend">
+      <span><span style="width:18px;height:3px;background:#ec4899;display:inline-block;border-radius:2px;"></span>PM2.5</span>
+      <span><span style="width:18px;height:3px;background:#16a34a;display:inline-block;border-radius:2px;"></span>PM10</span>
+    </div>
   </div>
   <canvas id="pmCombined"></canvas>
 `;
@@ -2368,8 +2514,8 @@ datasets: (function(){
   tension: 0.3,
   borderWidth: 2,
   pointRadius: 2,
-  borderColor: '#3b82f6',   // 🔥 blu
-  backgroundColor: '#3b82f6'
+  borderColor: '#16a34a',   // verde
+  backgroundColor: '#16a34a'
 }
   ];
 
