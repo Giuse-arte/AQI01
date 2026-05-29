@@ -216,7 +216,7 @@
        ========================= */
    .layout{
   display:grid;
-  grid-template-columns:280px 1fr;
+  grid-template-columns:1fr;
   gap:20px;
   width:100%
 }
@@ -587,6 +587,45 @@
     <!-- Pulsante aggiornamento -->
     <button id="update">Aggiorna</button>
     <button id="exportCsv" style="background:#16a34a;">Estrai CSV</button>
+    <div style="position:relative;display:inline-block;">
+      <button id="togglePanel" style="background:#1e40af;">Controllo schede grafici</button>
+      <div id="panelDropdown" style="
+        display:none;
+        position:absolute;
+        top:100%;
+        right:0;
+        margin-top:6px;
+        background:#ffffff;
+        border:2px solid #1e40af;
+        border-radius:12px;
+        box-shadow:0 6px 18px rgba(0,0,0,.15);
+        padding:14px;
+        font-size:.8rem;
+        min-width:220px;
+        z-index:999;
+        display:none;
+        flex-direction:column;
+        gap:8px;
+      ">
+        <strong style="color:#0b3c5d;">Controlla grafici</strong>
+        <button onclick="selectAll(true)" style="background:#0b3c5d;color:#fff;border:none;padding:6px 10px;border-radius:8px;cursor:pointer;">Seleziona tutti</button>
+        <button onclick="selectAll(false)" style="background:#0b3c5d;color:#fff;border:none;padding:6px 10px;border-radius:8px;cursor:pointer;">Deseleziona tutti</button>
+        <hr style="border-color:#d1d5db;margin:4px 0;">
+        <label><input type="checkbox" checked data-id="1"> Umidità – BME680</label>
+        <label><input type="checkbox" checked data-id="2"> Temperatura – BME680</label>
+        <label><input type="checkbox" checked data-id="3"> Pressione – BME680</label>
+        <label><input type="checkbox" checked data-id="5"> PM1 – PMS5003</label>
+        <label><input type="checkbox" checked data-id="6"> PM2.5 – PMS5003</label>
+        <label><input type="checkbox" checked data-id="7"> PM10 – PMS5003</label>
+        <label><input type="checkbox" checked data-id="combo"> PM2.5 + PM10 (24h)</label>
+        <label><input type="checkbox" checked data-id="4"> VOC – BME680</label>
+        <hr style="border-color:#d1d5db;margin:4px 0;">
+        <label style="display:flex;align-items:center;gap:6px;">
+          <input type="checkbox" id="remember"> Ricorda preferenze
+        </label>
+        <small style="color:#6b7280;">Le preferenze sono salvate nel tuo browser se attivi "Ricorda preferenze".</small>
+      </div>
+    </div>
   </div>
 </header>
 
@@ -686,47 +725,8 @@
   <!-- SINISTRA: CONTROLLO GRAFICI -->
   <!-- DESTRA: GRAFICI -->
   <!-- ========================= -->
+  
   <section class="layout">
-
-    <!-- ========================= -->
-    <!-- PANNELLO DI CONTROLLO GRAFICI -->
-    <!-- ========================= -->
-    <aside class="panel">
-
-      <h3>Controlla grafici</h3>
-
-      <!-- Pulsanti per selezione rapida -->
-      <button onclick="selectAll(true)">Seleziona tutti</button>
-      <button onclick="selectAll(false)">Deseleziona tutti</button>
-
-      <hr>
-
-      <!-- Checkbox collegate agli ID dei campi ThingSpeak -->
-      <!-- data-id corrisponde al field number -->
-      <label><input type="checkbox" checked data-id="1"> Umidità – BME680</label>
-      <label><input type="checkbox" checked data-id="2"> Temperatura – BME680</label>
-      <label><input type="checkbox" checked data-id="3"> Pressione – BME680</label>
-      <label><input type="checkbox" checked data-id="5"> PM1 – PMS5003</label>
-      <label><input type="checkbox" checked data-id="6"> PM2.5 – PMS5003</label>
-      <label><input type="checkbox" checked data-id="7"> PM10 – PMS5003</label>
-      <label><input type="checkbox" checked data-id="combo"> PM2.5 + PM10 (24h)</label>
-      <label><input type="checkbox" checked data-id="4"> VOC Delta – BME680</label>
-            
-      <!-- ========================= -->
-      <!-- MEMORIZZAZIONE PREFERENZE -->
-      <!-- ========================= -->
-      <label style="display:flex;align-items:center;gap:6px;margin-top:6px">
-        <!-- Checkbox usata per attivare/disattivare localStorage -->
-        <input type="checkbox" id="remember"> Ricorda preferenze
-      </label>
-
-      <!-- Testo informativo -->
-      <small>
-        Puoi mostrare/nascondere singoli grafici, impostare intervallo e tema.<br>
-        Le preferenze sono salvate nel tuo browser se attivi "Ricorda preferenze".
-      </small>
-
-    </aside>
 
     <!-- ========================= -->
     <!-- AREA GRAFICI -->
@@ -886,7 +886,7 @@ function savePreferences(){
   }
 
   // raccoglie ID dei grafici selezionati
-  const selectedCharts = [...document.querySelectorAll('aside input[data-id]:checked')]
+  const selectedCharts = [...document.querySelectorAll('input[data-id]:checked')]
     .map(c => c.dataset.id);
 
   // oggetto preferenze completo
@@ -1550,7 +1550,7 @@ function exportCSV(){
 */
 function selectAll(v){
   document
-    .querySelectorAll('aside input[data-id]')
+    .querySelectorAll('input[data-id]')
     .forEach(c => c.checked = v);
 
   renderCharts();
@@ -1849,7 +1849,7 @@ function xAxisConfig(){
   // =========================
   // GRAFICI NORMALI (iframe)
   // =========================
-  document.querySelectorAll('aside input[data-id]:checked').forEach(ch => {
+  document.querySelectorAll('input[data-id]:checked').forEach(ch => {
 
 // =========================
 // PM2.5 con Chart.js (FIX)
@@ -2606,7 +2606,7 @@ setTimeout(reorderCharts, 100);
    ========================= */
 
 // checkbox singoli grafici
-document.querySelectorAll('aside input[data-id]').forEach(cb=>{
+document.querySelectorAll('input[data-id]').forEach(cb=>{
   cb.addEventListener('change', savePreferences);
 });
 
@@ -2632,6 +2632,24 @@ update.addEventListener('click', ()=>{
 });
 
 document.getElementById('exportCsv').addEventListener('click', exportCSV);
+
+// dropdown Controllo schede grafici
+const togglePanel = document.getElementById('togglePanel');
+const panelDropdown = document.getElementById('panelDropdown');
+
+togglePanel.addEventListener('click', (e)=>{
+  e.stopPropagation();
+  const isOpen = panelDropdown.style.display === 'flex';
+  panelDropdown.style.display = isOpen ? 'none' : 'flex';
+});
+
+document.addEventListener('click', ()=>{
+  panelDropdown.style.display = 'none';
+});
+
+panelDropdown.addEventListener('click', (e)=>{
+  e.stopPropagation();
+});
 
 /* Cambio standard AQI */
 mode.addEventListener('change', renderCharts);
@@ -2674,7 +2692,7 @@ document.addEventListener('DOMContentLoaded', () => {
 
     // Ripristiniamo i grafici selezionati
     if (Array.isArray(prefs.charts)) {
-      document.querySelectorAll('aside input[data-id]').forEach(cb => {
+      document.querySelectorAll('input[data-id]').forEach(cb => {
         cb.checked = prefs.charts.includes(cb.dataset.id);
       });
     }
