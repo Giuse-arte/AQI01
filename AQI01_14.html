@@ -2474,8 +2474,9 @@ d.innerHTML = `
       //=============================
       // inserisci COMBO dopo PM10
       //=============================
-      if(pm10){
-        chartsContainer.insertBefore(d, pm10.nextSibling);
+      const pm10ref = chartsContainer.querySelector('#chart_7')?.parentElement;
+      if(pm10ref){
+        chartsContainer.insertBefore(d, pm10ref.nextSibling);
       } else {
         chartsContainer.appendChild(d);
       }
