@@ -974,7 +974,10 @@ const r = await fetch(
     const j = await r.json();
 
     /* Applica i KPI reali */
-    applyKPI(j.feeds || []);
+   const feedsKpi = j.feeds || [];
+    // popola rawFeedsStore anche se COMBO non parte
+    if(feedsKpi.length) rawFeedsStore = feedsKpi;
+    applyKPI(feedsKpi);
   }catch{
     /* Fallback se fetch fallisce */
     applyDemoKPI();
