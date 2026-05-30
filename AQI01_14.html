@@ -1027,8 +1027,11 @@ function applyKPI(feeds){
 
   const last = feeds.at(-1);
 
-  // aggiorna data ultima rilevazione
-  const lastDate = new Date(last.created_at);
+ // aggiorna data ultima rilevazione — sempre l'ultimo feed reale disponibile
+  const lastRealFeed = rawFeedsStore.length
+    ? rawFeedsStore.at(-1)
+    : last;
+  const lastDate = new Date(lastRealFeed.created_at);
   const lastUpdateEl = document.getElementById('lastUpdate');
   if(lastUpdateEl){
     lastUpdateEl.textContent = 'Ultima rilevazione: ' + lastDate.toLocaleDateString('it-IT',{
