@@ -1043,8 +1043,10 @@ function applyKPI(feeds){
   const feeds24h = feeds.filter(f => new Date(f.created_at) >= since24h);
   const feedsForAvg = feeds24h.length ? feeds24h : feeds;
 
-  // usa sempre l'ultimo feed reale delle ultime 24h
+ // usa sempre l'ultimo feed reale delle ultime 24h
+  console.log("applyKPI chiamata con feeds:", feeds.length, "liveFeeds24h:", liveFeeds24h.length);
   const last = liveFeeds24h.length ? liveFeeds24h.at(-1) : feeds.at(-1);
+  console.log("last used:", last?.created_at, "field1:", last?.field1);
 
  // aggiorna data ultima rilevazione — sempre l'ultimo feed reale disponibile
   const lastRealFeed = rawFeedsStore.length
