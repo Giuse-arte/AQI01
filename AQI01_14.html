@@ -1,4 +1,3 @@
-
 <!DOCTYPE html>
 
 <html lang="it">
@@ -1048,9 +1047,9 @@ function applyKPI(feeds){
   const last = liveFeeds24h.length ? liveFeeds24h.at(-1) : feeds.at(-1);
   console.log("last used:", last?.created_at, "field1:", last?.field1);
 
- // aggiorna data ultima rilevazione — sempre l'ultimo feed reale disponibile
-  const lastRealFeed = rawFeedsStore.length
-    ? rawFeedsStore.at(-1)
+// aggiorna data ultima rilevazione — sempre da liveFeeds24h
+  const lastRealFeed = liveFeeds24h.length
+    ? liveFeeds24h.at(-1)
     : last;
   const lastDate = new Date(lastRealFeed.created_at);
   const lastUpdateEl = document.getElementById('lastUpdate');
@@ -2146,21 +2145,33 @@ if(ch.dataset.id === "4"){
         }
       });
 
-      // aggiorna card KPI VOC direttamente dopo rendering grafico
+      // aggiorna card KPI VOC sempre con ultimo valore reale delle ultime 24h
+      // indipendentemente dalla modalita selezionata
       const vocAbsLast = dataAbs[dataAbs.length - 1];
       const vocDeltaLast = dataDelta[dataDelta.length - 1];
       const vocDeltaPrev = dataDelta[dataDelta.length - 2];
 
-      // valore assoluto
-      document.getElementById('voc').textContent = fmt1(vocAbsLast) + ' kOhm';
+      // aggiorna solo se in modalita LIVE (ultime 24h reali)
+      if(viewMode === 'live'){
+        document.getElementById('voc').textContent = fmt1(vocAbsLast) + ' kOhm';
+        window.vocAbsLast = vocAbsLast;
+        window.vocDeltaLast = vocDeltaLast;
+        window.vocDeltaPrev = vocDeltaPrev;
+      }
 
-      // delta + freccia basata sul trend
-      const trend = vocDeltaLast - vocDeltaPrev;
+      // usa sempre i valori LIVE salvati
+      const vocVal = window.vocAbsLast ?? vocAbsLast;
+      const vocDelta = window.vocDeltaLast ?? vocDeltaLast;
+      const vocPrev = window.vocDeltaPrev ?? vocDeltaPrev;
+
+      document.getElementById('voc').textContent = fmt1(vocVal) + ' kOhm';
+
+      const trend = vocDelta - vocPrev;
       const arrow = trend >= 0 ? ' ↑' : ' ↓';
       const color = trend >= 0 ? '#16a34a' : '#dc2626';
-      const sign = vocDeltaLast >= 0 ? '+' : '';
+      const sign = vocDelta >= 0 ? '+' : '';
       const deltaEl = document.getElementById('vocDelta');
-      deltaEl.textContent = sign + fmt1(vocDeltaLast) + ' kOhm' + arrow;
+      deltaEl.textContent = sign + fmt1(vocDelta) + ' kOhm' + arrow;
       deltaEl.style.color = color;
       deltaEl.style.fontWeight = '600';
 
