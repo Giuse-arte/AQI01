@@ -640,7 +640,7 @@
   <section class="kpi-section">
 
     <!-- Titolo della sezione KPI -->
-    <h2 class="kpi-title">Key Performance Indicator Cards</h2>
+    <h2 class="kpi-title">Key Performance Indicator Cards — <span id="lastUpdate" style="font-weight:400;font-size:.9rem;color:var(--muted);">Ultima rilevazione: —</span></h2>
 
     <!-- Griglia contenente tutte le KPI card -->
     <section class="kpi-row">
@@ -1026,6 +1026,17 @@ function applyKPI(feeds){
   const feedsForAvg = feeds24h.length ? feeds24h : feeds;
 
   const last = feeds.at(-1);
+
+  // aggiorna data ultima rilevazione
+  const lastDate = new Date(last.created_at);
+  const lastUpdateEl = document.getElementById('lastUpdate');
+  if(lastUpdateEl){
+    lastUpdateEl.textContent = 'Ultima rilevazione: ' + lastDate.toLocaleDateString('it-IT',{
+      day:'2-digit', month:'2-digit', year:'numeric'
+    }) + ' ' + lastDate.toLocaleTimeString('it-IT',{
+      hour:'2-digit', minute:'2-digit', second:'2-digit'
+    });
+  }
 
   // prime 4 card → sempre ultimo valore
   hum.textContent   = fmt1(last.field1) + ' %';
