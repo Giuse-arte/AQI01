@@ -2358,14 +2358,19 @@ if (!feeds.length) return;
 // =========================
 // MEDIA MOBILE 24h
 // =========================
+
 const avgSeries = (field) => {
-  const out = [];
-  for (let i = 0; i < feeds.length; i++) {
-    const slice = feeds.slice(Math.max(0, i - 47), i + 1);
-    const avg = slice.reduce((s, x) => s + Number(x[field] || 0), 0) / slice.length;
-    out.push(avg);
-  }
-  return out;
+  return feeds.map((f, i) => {
+    const ts = new Date(f.created_at).getTime();
+    const cutoff = ts - 24*60*60*1000;
+    const window = feeds.filter(x => {
+      const t = new Date(x.created_at).getTime();
+      return t >= cutoff && t <= ts && !isNaN(Number(x[field]));
+    });
+    return window.length
+      ? window.reduce((s,x) => s + Number(x[field]), 0) / window.length
+      : Number(f[field]);
+  });
 };
 
 const labels = [];
