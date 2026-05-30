@@ -975,9 +975,24 @@ const r = await fetch(
 
     /* Applica i KPI reali */
    const feedsKpi = j.feeds || [];
-    // popola rawFeedsStore anche se COMBO non parte
     if(feedsKpi.length) rawFeedsStore = feedsKpi;
-    applyKPI(feedsKpi);
+
+    // fetch separato sempre sulle ultime 24h reali per card KPI
+    const nowKpi = new Date();
+    const since24hKpi = new Date(nowKpi.getTime() - 24*60*60*1000);
+    function formatLDT(d){
+      const pad = n => n.toString().padStart(2,'0');
+      return d.getFullYear()+'-'+pad(d.getMonth()+1)+'-'+pad(d.getDate())+' '+
+             pad(d.getHours())+':'+pad(d.getMinutes())+':'+pad(d.getSeconds());
+    }
+    const rLive = await fetch(
+      `https://api.thingspeak.com/channels/${CHANNEL}/feeds.json?start=${formatLDT(since24hKpi)}&end=${formatLDT(nowKpi)}&results=8000`
+    );
+    const jLive = rLive.ok ? await rLive.json() : { feeds: [] };
+    const feedsLive = jLive.feeds || [];
+
+    // usa feedsLive per card KPI — sempre ultime 24h reali
+    applyKPI(feedsLive.length ? feedsLive : feedsKpi);
   }catch{
     /* Fallback se fetch fallisce */
     applyDemoKPI();
