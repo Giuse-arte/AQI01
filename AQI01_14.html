@@ -1942,10 +1942,10 @@ const aggFn = viewMode === 'year' ? aggregateDaily :
 
       d.innerHTML = `
         <div class="chart-header">
-          <span class="chart-title">${m.t}</span>
-          <span class="chart-sensor">${m.s}</span>
+          <span class="chart-title">PM2.5</span>
+          <span class="chart-sensor">PMS5003</span>
         </div>
-        <canvas id="chart_${ch.dataset.id}"></canvas>
+        <canvas id="chart_pm25"></canvas>
       `;
 
       const pm1 = chartsContainer.querySelector('#chart_5')?.parentElement;
