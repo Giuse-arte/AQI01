@@ -757,7 +757,8 @@
 /* ID del canale ThingSpeak da cui leggere i dati */
 const CHANNEL = 2789658;
 const chartDataStore = {};
-let rawFeedsStore = []; // dati grezzi ThingSpeak per CSV
+let rawFeedsStore = [];
+let liveFeeds24h = []; // sempre ultime 24h reali per card KPI
 
 Chart.register({
   id: 'hourGrid',
@@ -990,9 +991,11 @@ const r = await fetch(
     );
     const jLive = rLive.ok ? await rLive.json() : { feeds: [] };
     const feedsLive = jLive.feeds || [];
+    // salva globalmente le ultime 24h reali
+    if(feedsLive.length) liveFeeds24h = feedsLive;
 
-    // usa feedsLive per card KPI — sempre ultime 24h reali
-    applyKPI(feedsLive.length ? feedsLive : feedsKpi);
+    // usa sempre liveFeeds24h per card KPI
+    applyKPI(liveFeeds24h.length ? liveFeeds24h : feedsKpi);
   }catch{
     /* Fallback se fetch fallisce */
     applyDemoKPI();
@@ -1040,7 +1043,8 @@ function applyKPI(feeds){
   const feeds24h = feeds.filter(f => new Date(f.created_at) >= since24h);
   const feedsForAvg = feeds24h.length ? feeds24h : feeds;
 
-  const last = feeds.at(-1);
+  // usa sempre l'ultimo feed reale delle ultime 24h
+  const last = liveFeeds24h.length ? liveFeeds24h.at(-1) : feeds.at(-1);
 
  // aggiorna data ultima rilevazione — sempre l'ultimo feed reale disponibile
   const lastRealFeed = rawFeedsStore.length
