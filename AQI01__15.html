@@ -1630,27 +1630,7 @@ const order = [
 
   const viewMode = document.getElementById('viewMode').value;
   const isExtended = ['week','month','year'].includes(viewMode);
-
-function aggregateWithMinMax(feeds, field, mode){
-    const map = {};
-    feeds.forEach(f => {
-      const d = new Date(f.created_at);
-      const key = mode === 'week'
-        ? d.toISOString().slice(0,13)
-        : d.toISOString().slice(0,10);
-      if(!map[key]) map[key] = [];
-      const val = Number(f[field]);
-      if(!isNaN(val)) map[key].push(val);
-    });
-
-    return Object.entries(map).sort().map(([key, vals]) => ({
-      x: new Date(mode === 'week' ? key + ':30:00Z' : key + 'T12:00:00'),
-      avg: vals.reduce((s,v) => s+v, 0) / vals.length,
-      min: Math.min(...vals),
-      max: Math.max(...vals)
-    }));
-  }
-  
+   
 function aggregateDaily(feeds, field){
     const map = {};
     feeds.forEach(f => {
@@ -2237,39 +2217,23 @@ const endStr = formatLocalDateTime(tEnd);
 
       const field = "field" + ch.dataset.id;
 
-const showMinMax = (viewMode === 'week' || viewMode === 'month') &&
-                   (ch.dataset.id === '1' || ch.dataset.id === '2');
-
-      const aggFn = viewMode === 'year' ? aggregateDaily :
+const aggFn = viewMode === 'year' ? aggregateDaily :
                     isExtended ? aggregateHourly : null;
 
-      let labels, data, dataMin, dataMax;
-
-      if(showMinMax){
-        const agg = aggregateWithMinMax(feeds, field, viewMode);
-        labels  = agg.map(p => p.x);
-        data    = agg.map(p => p.avg);
-        dataMin = agg.map(p => p.min);
-        dataMax = agg.map(p => p.max);
-      } else {
-        labels  = aggFn ? aggFn(feeds, field).map(p => p.x) : feeds.map(f => new Date(f.created_at));
-        data    = aggFn ? aggFn(feeds, field).map(p => p.y) : feeds.map(f => Number(f[field]));
-      }
+      const labels = aggFn
+        ? aggFn(feeds, field).map(p => p.x)
+        : feeds.map(f => new Date(f.created_at));
+      const data = aggFn
+        ? aggFn(feeds, field).map(p => p.y)
+        : feeds.map(f => Number(f[field]));
 
       const d = document.createElement('div');
       d.className = 'chart';
 
-      const legendHTML = showMinMax ? `
-        <div class="chart-legend">
-          <span><span style="width:18px;height:3px;background:#ffffff;display:inline-block;border-radius:2px;"></span>Media</span>
-          <span><span style="width:18px;height:3px;background:#ec4899;display:inline-block;border-radius:2px;"></span>Max</span>
-          <span><span style="width:18px;height:3px;background:#93c5fd;display:inline-block;border-radius:2px;"></span>Min</span>
-        </div>` : `<span class="chart-sensor">${m.s}</span>`;
-
       d.innerHTML = `
         <div class="chart-header">
           <span class="chart-title">${m.t}</span>
-          ${legendHTML}
+          <span class="chart-sensor">${m.s}</span>
         </div>
         <canvas id="chart_${ch.dataset.id}"></canvas>
       `;
@@ -2343,45 +2307,16 @@ else{
 
       const ctx = document.getElementById(`chart_${ch.dataset.id}`);
 
-      const datasets = [{
-        label: m.t,
-        data: data,
-        tension: 0.3,
-        borderWidth: showMinMax ? 3 : 2,
-        pointRadius: 1,
-        borderColor: showMinMax ? '#ffffff' : undefined,
-        backgroundColor: showMinMax ? '#ffffff' : undefined,
-        order: 1
-      }];
-
-      if(showMinMax){
-        datasets.push({
-          label: 'Max',
-          data: dataMax,
-          tension: 0.3,
-          borderWidth: 1.5,
-          pointRadius: 0,
-          borderColor: '#ec4899',
-          backgroundColor: '#ec4899',
-          order: 2
-        });
-        datasets.push({
-          label: 'Min',
-          data: dataMin,
-          tension: 0.3,
-          borderWidth: 1.5,
-          pointRadius: 0,
-          borderColor: '#93c5fd',
-          backgroundColor: '#93c5fd',
-          order: 3
-        });
-      }
-
       new Chart(ctx,{
         type:'line',
         data:{
           labels,
-          datasets
+          datasets:[{
+            data:data,
+            tension:0.3,
+            borderWidth:2,
+            pointRadius:1
+          }]
         },
         options:{
           responsive:true,
