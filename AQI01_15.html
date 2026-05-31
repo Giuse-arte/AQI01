@@ -583,8 +583,6 @@
       <option value="EPA">EPA (USA)</option>
     </select>
 
-    <!-- Pulsante aggiornamento -->
-    <button id="update">Aggiorna</button>
     <button id="exportCsv" style="background:#16a34a;">Estrai CSV</button>
     <div style="position:relative;display:inline-block;">
       <button id="togglePanel" style="background:#1e40af;">Contr. grafici</button>
@@ -2668,12 +2666,6 @@ remember.addEventListener('change', savePreferences);
 /* =========================
    EVENT LISTENER
    ========================= */
-
-/* Aggiorna grafici + KPI */
-update.addEventListener('click', ()=>{
-  renderCharts();
-  loadKPIs();
-});
 
 document.getElementById('exportCsv').addEventListener('click', exportCSV);
 
