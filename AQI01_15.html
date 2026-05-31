@@ -2691,9 +2691,13 @@ panelDropdown.addEventListener('click', (e)=>{
 });
 
 /* Aggiornamento automatico al cambio di qualsiasi parametro */
+let refreshTimer = null;
 function refreshDashboard(){
-  renderCharts();
-  loadKPIs();
+  if(refreshTimer) clearTimeout(refreshTimer);
+  refreshTimer = setTimeout(()=>{
+    renderCharts();
+    loadKPIs();
+  }, 300);
 }
 
 mode.addEventListener('change', refreshDashboard);
