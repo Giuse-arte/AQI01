@@ -2237,15 +2237,24 @@ const endStr = formatLocalDateTime(tEnd);
 
       const field = "field" + ch.dataset.id;
 
-const aggFn = viewMode === 'year' ? aggregateDaily :
+const showMinMax = (viewMode === 'week' || viewMode === 'month') &&
+                   (ch.dataset.id === '1' || ch.dataset.id === '2');
+
+      const aggFn = viewMode === 'year' ? aggregateDaily :
                     isExtended ? aggregateHourly : null;
 
-      const labels = aggFn
-        ? aggFn(feeds, field).map(p => p.x)
-        : feeds.map(f => new Date(f.created_at));
-      const data = aggFn
-        ? aggFn(feeds, field).map(p => p.y)
-        : feeds.map(f => Number(f[field]));
+      let labels, data, dataMin, dataMax;
+
+      if(showMinMax){
+        const agg = aggregateWithMinMax(feeds, field, viewMode);
+        labels  = agg.map(p => p.x);
+        data    = agg.map(p => p.avg);
+        dataMin = agg.map(p => p.min);
+        dataMax = agg.map(p => p.max);
+      } else {
+        labels  = aggFn ? aggFn(feeds, field).map(p => p.x) : feeds.map(f => new Date(f.created_at));
+        data    = aggFn ? aggFn(feeds, field).map(p => p.y) : feeds.map(f => Number(f[field]));
+      }
 
       const d = document.createElement('div');
       d.className = 'chart';
