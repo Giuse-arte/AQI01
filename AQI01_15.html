@@ -2715,9 +2715,7 @@ document.getElementById('viewMode').addEventListener('change', ()=>{
   }
   refreshDashboard();
 });
-
-document.getElementById('viewMode').dispatchEvent(new Event('change'));
-  
+ 
 /* =========================
    INIZIALIZZAZIONE
    ========================= */
@@ -2755,6 +2753,15 @@ document.addEventListener('DOMContentLoaded', () => {
   }
 
   // 3. Ora che i campi sono pronti, carichiamo i dati
+  // gestisce visibilità campo giorno
+  const vm = document.getElementById('viewMode').value;
+  if(vm === "day"){
+    day.style.display = "inline-block";
+    dayLabel.style.display = "inline-block";
+  } else {
+    day.style.display = "none";
+    dayLabel.style.display = "none";
+  }
   renderCharts();
   loadKPIs();
 });
