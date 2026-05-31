@@ -2695,9 +2695,16 @@ panelDropdown.addEventListener('click', (e)=>{
   e.stopPropagation();
 });
 
-/* Cambio standard AQI */
-mode.addEventListener('change', renderCharts);
+/* Aggiornamento automatico al cambio di qualsiasi parametro */
+function refreshDashboard(){
+  renderCharts();
+  loadKPIs();
+}
 
+mode.addEventListener('change', refreshDashboard);
+
+document.getElementById('day').addEventListener('change', refreshDashboard);
+document.getElementById('startDate').addEventListener('change', refreshDashboard);
 document.getElementById('viewMode').addEventListener('change', ()=>{
   const vm = document.getElementById('viewMode').value;
   if(vm === "day"){
@@ -2707,6 +2714,7 @@ document.getElementById('viewMode').addEventListener('change', ()=>{
     day.style.display = "none";
     dayLabel.style.display = "none";
   }
+  refreshDashboard();
 });
 
 document.getElementById('viewMode').dispatchEvent(new Event('change'));
