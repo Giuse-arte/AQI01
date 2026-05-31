@@ -1622,8 +1622,11 @@ const order = [
 
 /* Svuota area grafici */
 
- // distrugge tutti i grafici Chart.js esistenti prima di ridisegnarli
-  Object.values(Chart.instances).forEach(c => c.destroy());
+// distrugge tutti i grafici Chart.js esistenti prima di ridisegnarli
+  const existingCharts = Object.values(Chart.instances);
+  existingCharts.forEach(c => c.destroy());
+  if(window.pmChart){ window.pmChart.destroy(); window.pmChart = null; }
+  
  /* Svuota area grafici e dati CSV */
   const chartsContainer = document.getElementById('charts');
   chartsContainer.innerHTML = '';
