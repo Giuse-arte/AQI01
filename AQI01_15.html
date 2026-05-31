@@ -1621,7 +1621,10 @@ const order = [
 }
 
 /* Svuota area grafici */
-/* Svuota area grafici e dati CSV */
+
+ // distrugge tutti i grafici Chart.js esistenti prima di ridisegnarli
+  Object.values(Chart.instances).forEach(c => c.destroy());
+ /* Svuota area grafici e dati CSV */
   const chartsContainer = document.getElementById('charts');
   chartsContainer.innerHTML = '';
   Object.keys(chartDataStore).forEach(k => delete chartDataStore[k]);
