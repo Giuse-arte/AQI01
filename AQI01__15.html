@@ -1988,7 +1988,7 @@ const aggFn = viewMode === 'year' ? aggregateDaily :
 
       const ctx = document.getElementById('chart_pm25').getContext('2d');
 
-     new Chart(ctx,{
+     
         type:'line',
         data:{
           labels,
@@ -2343,16 +2343,45 @@ else{
 
       const ctx = document.getElementById(`chart_${ch.dataset.id}`);
 
+      const datasets = [{
+        label: m.t,
+        data: data,
+        tension: 0.3,
+        borderWidth: showMinMax ? 3 : 2,
+        pointRadius: 1,
+        borderColor: showMinMax ? '#ffffff' : undefined,
+        backgroundColor: showMinMax ? '#ffffff' : undefined,
+        order: 1
+      }];
+
+      if(showMinMax){
+        datasets.push({
+          label: 'Max',
+          data: dataMax,
+          tension: 0.3,
+          borderWidth: 1.5,
+          pointRadius: 0,
+          borderColor: '#ec4899',
+          backgroundColor: '#ec4899',
+          order: 2
+        });
+        datasets.push({
+          label: 'Min',
+          data: dataMin,
+          tension: 0.3,
+          borderWidth: 1.5,
+          pointRadius: 0,
+          borderColor: '#93c5fd',
+          backgroundColor: '#93c5fd',
+          order: 3
+        });
+      }
+
       new Chart(ctx,{
         type:'line',
         data:{
           labels,
-          datasets:[{
-            data:data,
-            tension:0.3,
-            borderWidth:2,
-            pointRadius:1
-          }]
+          datasets
         },
         options:{
           responsive:true,
