@@ -1960,12 +1960,19 @@ const aggFn = viewMode === 'year' ? aggregateDaily :
       const d = document.createElement('div');
       d.className = 'chart';
 
+      const legendHTML = showMinMax ? `
+        <div class="chart-legend">
+          <span><span style="width:18px;height:3px;background:#ffffff;display:inline-block;border-radius:2px;"></span>Media</span>
+          <span><span style="width:18px;height:3px;background:#ec4899;display:inline-block;border-radius:2px;"></span>Max</span>
+          <span><span style="width:18px;height:3px;background:#93c5fd;display:inline-block;border-radius:2px;"></span>Min</span>
+        </div>` : `<span class="chart-sensor">${m.s}</span>`;
+
       d.innerHTML = `
         <div class="chart-header">
-          <span class="chart-title">PM2.5</span>
-          <span class="chart-sensor">PMS5003</span>
+          <span class="chart-title">${m.t}</span>
+          ${legendHTML}
         </div>
-        <canvas id="chart_pm25"></canvas>
+        <canvas id="chart_${ch.dataset.id}"></canvas>
       `;
 
       const pm1 = chartsContainer.querySelector('#chart_5')?.parentElement;
