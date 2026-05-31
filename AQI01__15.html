@@ -1630,7 +1630,27 @@ const order = [
 
   const viewMode = document.getElementById('viewMode').value;
   const isExtended = ['week','month','year'].includes(viewMode);
-   
+
+function aggregateWithMinMax(feeds, field, mode){
+    const map = {};
+    feeds.forEach(f => {
+      const d = new Date(f.created_at);
+      const key = mode === 'week'
+        ? d.toISOString().slice(0,13)
+        : d.toISOString().slice(0,10);
+      if(!map[key]) map[key] = [];
+      const val = Number(f[field]);
+      if(!isNaN(val)) map[key].push(val);
+    });
+
+    return Object.entries(map).sort().map(([key, vals]) => ({
+      x: new Date(mode === 'week' ? key + ':30:00Z' : key + 'T12:00:00'),
+      avg: vals.reduce((s,v) => s+v, 0) / vals.length,
+      min: Math.min(...vals),
+      max: Math.max(...vals)
+    }));
+  }
+  
 function aggregateDaily(feeds, field){
     const map = {};
     feeds.forEach(f => {
