@@ -1,4 +1,3 @@
-
 <!DOCTYPE html>
 
 <html lang="it">
@@ -216,7 +215,7 @@
        ========================= */
    .layout{
   display:grid;
-  grid-template-columns:280px 1fr;
+  grid-template-columns:1fr;
   gap:20px;
   width:100%
 }
@@ -584,9 +583,46 @@
       <option value="EPA">EPA (USA)</option>
     </select>
 
-    <!-- Pulsante aggiornamento -->
-    <button id="update">Aggiorna</button>
     <button id="exportCsv" style="background:#16a34a;">Estrai CSV</button>
+    <div style="position:relative;display:inline-block;">
+      <button id="togglePanel" style="background:#1e40af;">Contr. grafici</button>
+      <div id="panelDropdown" style="
+        display:none;
+        position:absolute;
+        top:100%;
+        right:0;
+        margin-top:6px;
+        background:#ffffff;
+        border:2px solid #1e40af;
+        border-radius:12px;
+        box-shadow:0 6px 18px rgba(0,0,0,.15);
+        padding:14px;
+        font-size:.8rem;
+        min-width:220px;
+        z-index:999;
+        display:none;
+        flex-direction:column;
+        gap:8px;
+      ">
+        <strong style="color:#0b3c5d;">Controlla grafici</strong>
+        <button onclick="selectAll(true)" style="background:#0b3c5d;color:#fff;border:none;padding:6px 10px;border-radius:8px;cursor:pointer;">Seleziona tutti</button>
+        <button onclick="selectAll(false)" style="background:#0b3c5d;color:#fff;border:none;padding:6px 10px;border-radius:8px;cursor:pointer;">Deseleziona tutti</button>
+        <hr style="border-color:#d1d5db;margin:4px 0;">
+        <label><input type="checkbox" checked data-id="1"> Umidità – BME680</label>
+        <label><input type="checkbox" checked data-id="2"> Temperatura – BME680</label>
+        <label><input type="checkbox" checked data-id="3"> Pressione – BME680</label>
+        <label><input type="checkbox" checked data-id="5"> PM1 – PMS5003</label>
+        <label><input type="checkbox" checked data-id="6"> PM2.5 – PMS5003</label>
+        <label><input type="checkbox" checked data-id="7"> PM10 – PMS5003</label>
+        <label><input type="checkbox" checked data-id="combo"> PM2.5 + PM10 (24h)</label>
+        <label><input type="checkbox" checked data-id="4"> VOC – BME680</label>
+        <hr style="border-color:#d1d5db;margin:4px 0;">
+        <label style="display:flex;align-items:center;gap:6px;">
+          <input type="checkbox" id="remember"> Ricorda preferenze
+        </label>
+        <small style="color:#6b7280;">Le preferenze sono salvate nel tuo browser se attivi "Ricorda preferenze".</small>
+      </div>
+    </div>
   </div>
 </header>
 
@@ -601,7 +637,7 @@
   <section class="kpi-section">
 
     <!-- Titolo della sezione KPI -->
-    <h2 class="kpi-title">Key Performance Indicator Cards</h2>
+    <h2 class="kpi-title">Key Performance Indicator Cards — <span id="lastUpdate" style="font-weight:400;font-size:.9rem;color:var(--muted);">Ultima rilevazione: —</span></h2>
 
     <!-- Griglia contenente tutte le KPI card -->
     <section class="kpi-row">
@@ -686,47 +722,8 @@
   <!-- SINISTRA: CONTROLLO GRAFICI -->
   <!-- DESTRA: GRAFICI -->
   <!-- ========================= -->
+  
   <section class="layout">
-
-    <!-- ========================= -->
-    <!-- PANNELLO DI CONTROLLO GRAFICI -->
-    <!-- ========================= -->
-    <aside class="panel">
-
-      <h3>Controlla grafici</h3>
-
-      <!-- Pulsanti per selezione rapida -->
-      <button onclick="selectAll(true)">Seleziona tutti</button>
-      <button onclick="selectAll(false)">Deseleziona tutti</button>
-
-      <hr>
-
-      <!-- Checkbox collegate agli ID dei campi ThingSpeak -->
-      <!-- data-id corrisponde al field number -->
-      <label><input type="checkbox" checked data-id="1"> Umidità – BME680</label>
-      <label><input type="checkbox" checked data-id="2"> Temperatura – BME680</label>
-      <label><input type="checkbox" checked data-id="3"> Pressione – BME680</label>
-      <label><input type="checkbox" checked data-id="5"> PM1 – PMS5003</label>
-      <label><input type="checkbox" checked data-id="6"> PM2.5 – PMS5003</label>
-      <label><input type="checkbox" checked data-id="7"> PM10 – PMS5003</label>
-      <label><input type="checkbox" checked data-id="combo"> PM2.5 + PM10 (24h)</label>
-      <label><input type="checkbox" checked data-id="4"> VOC Delta – BME680</label>
-            
-      <!-- ========================= -->
-      <!-- MEMORIZZAZIONE PREFERENZE -->
-      <!-- ========================= -->
-      <label style="display:flex;align-items:center;gap:6px;margin-top:6px">
-        <!-- Checkbox usata per attivare/disattivare localStorage -->
-        <input type="checkbox" id="remember"> Ricorda preferenze
-      </label>
-
-      <!-- Testo informativo -->
-      <small>
-        Puoi mostrare/nascondere singoli grafici, impostare intervallo e tema.<br>
-        Le preferenze sono salvate nel tuo browser se attivi "Ricorda preferenze".
-      </small>
-
-    </aside>
 
     <!-- ========================= -->
     <!-- AREA GRAFICI -->
@@ -756,8 +753,48 @@
 
 /* ID del canale ThingSpeak da cui leggere i dati */
 const CHANNEL = 2789658;
+
+// configurazione tooltip globale per tutti i grafici
+const tooltipConfig = {
+  enabled: true,
+  backgroundColor: '#1e40af',
+  titleColor: '#ffffff',
+  bodyColor: '#ffffff',
+  borderColor: 'rgba(255,255,255,0.3)',
+  borderWidth: 1,
+  padding: 10,
+  cornerRadius: 8,
+  intersect: false,
+  mode: 'nearest',
+  titleFont: { size: 12, weight: 'bold', family: 'Segoe UI' },
+  bodyFont: { size: 12, family: 'Segoe UI' },
+  callbacks: {
+    title: function(items){
+      if(!items.length) return '';
+      const date = new Date(items[0].parsed.x);
+      return 'Data e Ora: ' + date.toLocaleDateString('it-IT',{
+        day:'2-digit', month:'2-digit', year:'numeric'
+      }) + ' ' + date.toLocaleTimeString('it-IT',{
+        hour:'2-digit', minute:'2-digit'
+      });
+    },
+    label: function(item){
+      const label = item.dataset.label || '';
+      const value = item.parsed.y;
+      if(value == null || isNaN(value)) return '';
+      if(label.includes('Limite')) return '';
+      // usa il titolo del grafico se il label del dataset è vuoto
+      const chartTitle = item.chart.canvas.closest('.chart')
+        ?.querySelector('.chart-title')?.textContent?.trim() || label;
+      const displayLabel = label || chartTitle;
+      return ' ' + (displayLabel ? displayLabel + ': ' : '') + Number(value).toFixed(2);
+    }
+  }
+};
+
 const chartDataStore = {};
-let rawFeedsStore = []; // dati grezzi ThingSpeak per CSV
+let rawFeedsStore = [];
+let liveFeeds24h = []; // sempre ultime 24h reali per card KPI
 
 Chart.register({
   id: 'hourGrid',
@@ -886,7 +923,7 @@ function savePreferences(){
   }
 
   // raccoglie ID dei grafici selezionati
-  const selectedCharts = [...document.querySelectorAll('aside input[data-id]:checked')]
+  const selectedCharts = [...document.querySelectorAll('input[data-id]:checked')]
     .map(c => c.dataset.id);
 
   // oggetto preferenze completo
@@ -974,7 +1011,27 @@ const r = await fetch(
     const j = await r.json();
 
     /* Applica i KPI reali */
-    applyKPI(j.feeds || []);
+   const feedsKpi = j.feeds || [];
+    if(feedsKpi.length) rawFeedsStore = feedsKpi;
+
+    // fetch separato sempre sulle ultime 24h reali per card KPI
+    const nowKpi = new Date();
+    const since24hKpi = new Date(nowKpi.getTime() - 24*60*60*1000);
+    function formatLDT(d){
+      const pad = n => n.toString().padStart(2,'0');
+      return d.getFullYear()+'-'+pad(d.getMonth()+1)+'-'+pad(d.getDate())+' '+
+             pad(d.getHours())+':'+pad(d.getMinutes())+':'+pad(d.getSeconds());
+    }
+    const rLive = await fetch(
+      `https://api.thingspeak.com/channels/${CHANNEL}/feeds.json?start=${formatLDT(since24hKpi)}&end=${formatLDT(nowKpi)}&results=8000`
+    );
+    const jLive = rLive.ok ? await rLive.json() : { feeds: [] };
+    const feedsLive = jLive.feeds || [];
+    // salva globalmente le ultime 24h reali
+    if(feedsLive.length) liveFeeds24h = feedsLive;
+
+    // usa sempre liveFeeds24h per card KPI
+    applyKPI(liveFeeds24h.length ? liveFeeds24h : feedsKpi);
   }catch{
     /* Fallback se fetch fallisce */
     applyDemoKPI();
@@ -1022,7 +1079,24 @@ function applyKPI(feeds){
   const feeds24h = feeds.filter(f => new Date(f.created_at) >= since24h);
   const feedsForAvg = feeds24h.length ? feeds24h : feeds;
 
-  const last = feeds.at(-1);
+ // usa sempre l'ultimo feed reale delle ultime 24h
+  console.log("applyKPI chiamata con feeds:", feeds.length, "liveFeeds24h:", liveFeeds24h.length);
+  const last = liveFeeds24h.length ? liveFeeds24h.at(-1) : feeds.at(-1);
+  console.log("last used:", last?.created_at, "field1:", last?.field1);
+
+// aggiorna data ultima rilevazione — sempre da liveFeeds24h
+  const lastRealFeed = liveFeeds24h.length
+    ? liveFeeds24h.at(-1)
+    : last;
+  const lastDate = new Date(lastRealFeed.created_at);
+  const lastUpdateEl = document.getElementById('lastUpdate');
+  if(lastUpdateEl){
+    lastUpdateEl.textContent = 'Ultima rilevazione: ' + lastDate.toLocaleDateString('it-IT',{
+      day:'2-digit', month:'2-digit', year:'numeric'
+    }) + ' ' + lastDate.toLocaleTimeString('it-IT',{
+      hour:'2-digit', minute:'2-digit', second:'2-digit'
+    });
+  }
 
   // prime 4 card → sempre ultimo valore
   hum.textContent   = fmt1(last.field1) + ' %';
@@ -1550,7 +1624,7 @@ function exportCSV(){
 */
 function selectAll(v){
   document
-    .querySelectorAll('aside input[data-id]')
+    .querySelectorAll('input[data-id]')
     .forEach(c => c.checked = v);
 
   renderCharts();
@@ -1586,14 +1660,17 @@ const order = [
 }
 
 /* Svuota area grafici */
-/* Svuota area grafici e dati CSV */
+
+if(window.pmChart){ window.pmChart.destroy(); window.pmChart = null; }
+  
+ /* Svuota area grafici e dati CSV */
   const chartsContainer = document.getElementById('charts');
   chartsContainer.innerHTML = '';
   Object.keys(chartDataStore).forEach(k => delete chartDataStore[k]);
 
   const viewMode = document.getElementById('viewMode').value;
   const isExtended = ['week','month','year'].includes(viewMode);
-
+   
 function aggregateDaily(feeds, field){
     const map = {};
     feeds.forEach(f => {
@@ -1849,7 +1926,7 @@ function xAxisConfig(){
   // =========================
   // GRAFICI NORMALI (iframe)
   // =========================
-  document.querySelectorAll('aside input[data-id]:checked').forEach(ch => {
+  document.querySelectorAll('input[data-id]:checked').forEach(ch => {
 
 // =========================
 // PM2.5 con Chart.js (FIX)
@@ -1887,15 +1964,15 @@ const endStr = formatLocalDateTime(tEnd);
 
       if(!feeds.length) return;
 
-const aggFn = viewMode === 'year' ? aggregateDaily : 
-              isExtended ? aggregateHourly : null;
+const aggFn = viewMode === 'year' ? aggregateDaily :
+                    isExtended ? aggregateHourly : null;
 
-const labels = aggFn
-  ? aggFn(feeds, 'field6').map(p => p.x)
-  : feeds.map(f => new Date(f.created_at));
-const data = aggFn
-  ? aggFn(feeds, 'field6').map(p => p.y)
-  : feeds.map(f => Number(f.field6));
+      const labels = aggFn
+        ? aggFn(feeds, 'field6').map(p => p.x)
+        : feeds.map(f => new Date(f.created_at));
+      const data = aggFn
+        ? aggFn(feeds, 'field6').map(p => p.y)
+        : feeds.map(f => Number(f.field6));
 
       const startDate = labels[0];
       const endDate = labels[labels.length - 1];
@@ -1924,23 +2001,24 @@ const data = aggFn
 
       const ctx = document.getElementById('chart_pm25').getContext('2d');
 
-      new Chart(ctx,{
+     new Chart(ctx,{
         type:'line',
         data:{
           labels,
- datasets:[{
-    data: data,
-    tension: 0.3,
-    borderWidth: 2,
-    pointRadius: 1,
-  }]
+          datasets:[{
+            data:data,
+            tension:0.3,
+            borderWidth:2,
+            pointRadius:1
+          }]
         },
         options:{
           responsive:true,
           maintainAspectRatio:false,
 
           plugins:{
-            legend:{ display:false }
+            legend:{ display:false },
+            tooltip: tooltipConfig
           },
 
 scales:{
@@ -2079,7 +2157,7 @@ if(ch.dataset.id === "4"){
         options: {
           responsive: true,
           maintainAspectRatio: false,
-          plugins: { legend: { display: false } },
+          plugins: { legend: { display: false }, tooltip: tooltipConfig },
          scales: {
             x: xAxisConfig(),
             yDelta: {
@@ -2108,21 +2186,33 @@ if(ch.dataset.id === "4"){
         }
       });
 
-      // aggiorna card KPI VOC direttamente dopo rendering grafico
+      // aggiorna card KPI VOC sempre con ultimo valore reale delle ultime 24h
+      // indipendentemente dalla modalita selezionata
       const vocAbsLast = dataAbs[dataAbs.length - 1];
       const vocDeltaLast = dataDelta[dataDelta.length - 1];
       const vocDeltaPrev = dataDelta[dataDelta.length - 2];
 
-      // valore assoluto
-      document.getElementById('voc').textContent = fmt1(vocAbsLast) + ' kOhm';
+      // aggiorna solo se in modalita LIVE (ultime 24h reali)
+      if(viewMode === 'live'){
+        document.getElementById('voc').textContent = fmt1(vocAbsLast) + ' kOhm';
+        window.vocAbsLast = vocAbsLast;
+        window.vocDeltaLast = vocDeltaLast;
+        window.vocDeltaPrev = vocDeltaPrev;
+      }
 
-      // delta + freccia basata sul trend
-      const trend = vocDeltaLast - vocDeltaPrev;
+      // usa sempre i valori LIVE salvati
+      const vocVal = window.vocAbsLast ?? vocAbsLast;
+      const vocDelta = window.vocDeltaLast ?? vocDeltaLast;
+      const vocPrev = window.vocDeltaPrev ?? vocDeltaPrev;
+
+      document.getElementById('voc').textContent = fmt1(vocVal) + ' kOhm';
+
+      const trend = vocDelta - vocPrev;
       const arrow = trend >= 0 ? ' ↑' : ' ↓';
       const color = trend >= 0 ? '#16a34a' : '#dc2626';
-      const sign = vocDeltaLast >= 0 ? '+' : '';
+      const sign = vocDelta >= 0 ? '+' : '';
       const deltaEl = document.getElementById('vocDelta');
-      deltaEl.textContent = sign + fmt1(vocDeltaLast) + ' kOhm' + arrow;
+      deltaEl.textContent = sign + fmt1(vocDelta) + ' kOhm' + arrow;
       deltaEl.style.color = color;
       deltaEl.style.fontWeight = '600';
 
@@ -2272,7 +2362,7 @@ else{
         options:{
           responsive:true,
           maintainAspectRatio:false,
-          plugins:{ legend:{ display:false } },
+          plugins:{ legend:{ display:false }, tooltip: tooltipConfig },
 
 scales:{
   x: xAxisConfig(),
@@ -2299,7 +2389,7 @@ scales:{
 // GRAFICO COMBINATO (STABILE + PULITO)
 // =========================
 
-const comboCheckbox = document.querySelector('aside input[data-id="combo"]');
+const comboCheckbox = document.querySelector('input[data-id="combo"]');
 
 if (comboCheckbox && comboCheckbox.checked) {
 
@@ -2355,14 +2445,19 @@ if (!feeds.length) return;
 // =========================
 // MEDIA MOBILE 24h
 // =========================
+
 const avgSeries = (field) => {
-  const out = [];
-  for (let i = 0; i < feeds.length; i++) {
-    const slice = feeds.slice(Math.max(0, i - 47), i + 1);
-    const avg = slice.reduce((s, x) => s + Number(x[field] || 0), 0) / slice.length;
-    out.push(avg);
-  }
-  return out;
+  return feeds.map((f, i) => {
+    const ts = new Date(f.created_at).getTime();
+    const cutoff = ts - 24*60*60*1000;
+    const window = feeds.filter(x => {
+      const t = new Date(x.created_at).getTime();
+      return t >= cutoff && t <= ts && !isNaN(Number(x[field]));
+    });
+    return window.length
+      ? window.reduce((s,x) => s + Number(x[field]), 0) / window.length
+      : Number(f[field]);
+  });
 };
 
 const labels = [];
@@ -2432,23 +2527,12 @@ if(isExtended){
       return;
     }
 
-   // avvia solo se ci sono almeno 48 acquisizioni (ultime 24h)
-   // per avere una media mobile significativa
-    if(feeds.length < 48){
-      console.warn("COMBO: meno di 48 acquisizioni disponibili");
-      // mostra messaggio nel grafico
-      const d = document.createElement('div');
-      d.className = 'chart';
-      d.innerHTML = `
-        <div class="chart-header">
-          <span class="chart-title">PM10 / PM2.5 media mobile 24h — Standard ${document.getElementById('mode').value}</span>
-          <span class="chart-sensor">Dati insufficienti — servono almeno 24h di acquisizioni</span>
-        </div>
-      `;
-      chartsContainer.appendChild(d);
-      setTimeout(reorderCharts, 50);
+   // avvia solo se ci sono almeno 2 acquisizioni
+    if(feeds.length < 2){
+      console.warn("COMBO: nessun dato disponibile");
       return;
     }
+    console.log("COMBO: feeds ok:", feeds.length, "labels:", labels.length);
 
       // =========================
       // CREA GRAFICO
@@ -2474,8 +2558,9 @@ d.innerHTML = `
       //=============================
       // inserisci COMBO dopo PM10
       //=============================
-      if(pm10){
-        chartsContainer.insertBefore(d, pm10.nextSibling);
+      const pm10ref = chartsContainer.querySelector('#chart_7')?.parentElement;
+      if(pm10ref){
+        chartsContainer.insertBefore(d, pm10ref.nextSibling);
       } else {
         chartsContainer.appendChild(d);
       }
@@ -2574,10 +2659,9 @@ options:{
   responsive:true,
   maintainAspectRatio:false,
 
-  plugins:{
-legend:{
-  display:false
-}
+ plugins:{
+    legend:{ display:false },
+    tooltip: tooltipConfig
   },
 
 scales:{
@@ -2606,7 +2690,7 @@ setTimeout(reorderCharts, 100);
    ========================= */
 
 // checkbox singoli grafici
-document.querySelectorAll('aside input[data-id]').forEach(cb=>{
+document.querySelectorAll('input[data-id]').forEach(cb=>{
   cb.addEventListener('change', savePreferences);
 });
 
@@ -2625,17 +2709,40 @@ remember.addEventListener('change', savePreferences);
    EVENT LISTENER
    ========================= */
 
-/* Aggiorna grafici + KPI */
-update.addEventListener('click', ()=>{
-  renderCharts();
-  loadKPIs();
-});
-
 document.getElementById('exportCsv').addEventListener('click', exportCSV);
 
-/* Cambio standard AQI */
-mode.addEventListener('change', renderCharts);
+// dropdown Controllo schede grafici
+const togglePanel = document.getElementById('togglePanel');
+const panelDropdown = document.getElementById('panelDropdown');
 
+togglePanel.addEventListener('click', (e)=>{
+  e.stopPropagation();
+  const isOpen = panelDropdown.style.display === 'flex';
+  panelDropdown.style.display = isOpen ? 'none' : 'flex';
+});
+
+document.addEventListener('click', ()=>{
+  panelDropdown.style.display = 'none';
+});
+
+panelDropdown.addEventListener('click', (e)=>{
+  e.stopPropagation();
+});
+
+/* Aggiornamento automatico al cambio di qualsiasi parametro */
+let refreshTimer = null;
+function refreshDashboard(){
+  if(refreshTimer) clearTimeout(refreshTimer);
+  refreshTimer = setTimeout(()=>{
+    renderCharts();
+    loadKPIs();
+  }, 300);
+}
+
+mode.addEventListener('change', refreshDashboard);
+
+document.getElementById('day').addEventListener('change', refreshDashboard);
+document.getElementById('startDate').addEventListener('change', refreshDashboard);
 document.getElementById('viewMode').addEventListener('change', ()=>{
   const vm = document.getElementById('viewMode').value;
   if(vm === "day"){
@@ -2645,10 +2752,9 @@ document.getElementById('viewMode').addEventListener('change', ()=>{
     day.style.display = "none";
     dayLabel.style.display = "none";
   }
+  refreshDashboard();
 });
-
-document.getElementById('viewMode').dispatchEvent(new Event('change'));
-  
+ 
 /* =========================
    INIZIALIZZAZIONE
    ========================= */
@@ -2674,7 +2780,7 @@ document.addEventListener('DOMContentLoaded', () => {
 
     // Ripristiniamo i grafici selezionati
     if (Array.isArray(prefs.charts)) {
-      document.querySelectorAll('aside input[data-id]').forEach(cb => {
+      document.querySelectorAll('input[data-id]').forEach(cb => {
         cb.checked = prefs.charts.includes(cb.dataset.id);
       });
     }
@@ -2686,6 +2792,15 @@ document.addEventListener('DOMContentLoaded', () => {
   }
 
   // 3. Ora che i campi sono pronti, carichiamo i dati
+  // gestisce visibilità campo giorno
+  const vm = document.getElementById('viewMode').value;
+  if(vm === "day"){
+    day.style.display = "inline-block";
+    dayLabel.style.display = "inline-block";
+  } else {
+    day.style.display = "none";
+    dayLabel.style.display = "none";
+  }
   renderCharts();
   loadKPIs();
 });
