@@ -783,7 +783,11 @@ const tooltipConfig = {
       const value = item.parsed.y;
       if(value == null || isNaN(value)) return '';
       if(label.includes('Limite')) return '';
-      return ' ' + (label ? label + ': ' : '') + Number(value).toFixed(2);
+      // usa il titolo del grafico se il label del dataset è vuoto
+      const chartTitle = item.chart.canvas.closest('.chart')
+        ?.querySelector('.chart-title')?.textContent?.trim() || label;
+      const displayLabel = label || chartTitle;
+      return ' ' + (displayLabel ? displayLabel + ': ' : '') + Number(value).toFixed(2);
     }
   }
 };
