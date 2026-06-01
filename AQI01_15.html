@@ -764,13 +764,15 @@ const tooltipConfig = {
   borderWidth: 1,
   padding: 10,
   cornerRadius: 8,
+  intersect: false,
+  mode: 'index',
   titleFont: { size: 12, weight: 'bold', family: 'Segoe UI' },
   bodyFont: { size: 12, family: 'Segoe UI' },
   callbacks: {
     title: function(items){
       if(!items.length) return '';
       const date = new Date(items[0].parsed.x);
-      return date.toLocaleDateString('it-IT',{
+      return 'Data e Ora: ' + date.toLocaleDateString('it-IT',{
         day:'2-digit', month:'2-digit', year:'numeric'
       }) + ' ' + date.toLocaleTimeString('it-IT',{
         hour:'2-digit', minute:'2-digit'
@@ -780,7 +782,6 @@ const tooltipConfig = {
       const label = item.dataset.label || '';
       const value = item.parsed.y;
       if(value == null || isNaN(value)) return '';
-      // nascondi linee limite dal tooltip
       if(label.includes('Limite')) return '';
       return ' ' + (label ? label + ': ' : '') + Number(value).toFixed(2);
     }
