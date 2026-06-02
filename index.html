@@ -2547,7 +2547,9 @@ if(isExtended){
 d.innerHTML = `
   <div class="chart-header">
     <div style="display:flex;align-items:center;justify-content:center;gap:10px;width:100%;">
-      <span class="chart-title">PM10 / PM2.5 media mobile 24h — Standard ${standardLabel}</span>
+      <span class="chart-title" style="white-space:normal;text-align:center;">
+        PM10 / PM2.5 media mobile 24h<br>Standard ${standardLabel}
+      </span>
       <button class="info-btn info-btn-light combo-info-btn" onclick="openInfoPopup()" style="flex-shrink:0;">i</button>
     </div>
     <div class="chart-legend">
