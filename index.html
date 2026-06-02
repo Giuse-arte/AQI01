@@ -2545,14 +2545,12 @@ if(isExtended){
  const standardLabel = document.getElementById('mode').value;
 
 d.innerHTML = `
-  <div class="chart-header">
-    <div style="display:flex;align-items:center;justify-content:center;gap:10px;width:100%;">
-      <span class="chart-title" style="white-space:normal;text-align:center;">
-        PM10 / PM2.5 media mobile 24h<br>Standard ${standardLabel}
-      </span>
-      <button class="info-btn info-btn-light combo-info-btn" onclick="openInfoPopup()" style="flex-shrink:0;">i</button>
-    </div>
-    <div class="chart-legend">
+  <div class="chart-header" style="position:relative;">
+    <button class="info-btn info-btn-light combo-info-btn" onclick="openInfoPopup()" style="position:absolute;top:8px;right:8px;flex-shrink:0;">i</button>
+    <span class="chart-title" style="white-space:normal;text-align:center;">
+      PM10 / PM2.5 media mobile 24h<br>Standard ${standardLabel}
+    </span>
+    <div class="chart-legend" style="justify-content:center;">
       <span><span style="width:18px;height:3px;background:#ec4899;display:inline-block;border-radius:2px;"></span>PM2.5</span>
       <span><span style="width:18px;height:3px;background:#16a34a;display:inline-block;border-radius:2px;"></span>PM10</span>
     </div>
