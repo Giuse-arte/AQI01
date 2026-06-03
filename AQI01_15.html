@@ -2700,7 +2700,7 @@ scales:{
         });
         if(dataMin !== Infinity){
           const padding = (dataMax - dataMin) * 0.1;
-          axis.min = dataMin - padding;
+          axis.min = Math.max(0, dataMin - padding);
           axis.max = dataMax + padding;
         }
       }
