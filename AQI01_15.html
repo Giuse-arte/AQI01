@@ -687,19 +687,20 @@
         <div class="minmax" id="pm1MM"></div>
       </div>
 
-      <!-- KPI: PM2.5 (MEDIA MOBILE 24h) -->
-      <!-- Calcolata sui 48 campioni ThingSpeak -->
+      <!-- KPI: PM2.5 -->
       <div class="kpi">
-        <div class="title">PM2.5 (24h)</div>
+        <div class="title">PM2.5</div>
         <div class="sensor">PMS5003</div>
         <div class="value" id="pm25">— µg/m³</div>
+        <div class="minmax" id="pm25avg"></div>
       </div>
 
-      <!-- KPI: PM10 (MEDIA MOBILE 24h) -->
+      <!-- KPI: PM10 -->
       <div class="kpi">
-        <div class="title">PM10 (24h)</div>
+        <div class="title">PM10</div>
         <div class="sensor">PMS5003</div>
         <div class="value" id="pm10">— µg/m³</div>
+        <div class="minmax" id="pm10avg"></div>
       </div>
 
       <!-- KPI: AQI -->
@@ -1061,6 +1062,10 @@ function applyDemoKPI(){
   pm1.textContent  = fmt0(d.pm1)  + ' µg/m³';
   pm25.textContent = fmt0(d.pm25) + ' µg/m³';
   pm10.textContent = fmt0(d.pm10) + ' µg/m³';
+  const pm25avgEl = document.getElementById('pm25avg');
+  const pm10avgEl = document.getElementById('pm10avg');
+  if(pm25avgEl) pm25avgEl.textContent = 'media 24h: ' + fmt0(d.pm25) + ' µg/m³';
+  if(pm10avgEl) pm10avgEl.textContent = 'media 24h: ' + fmt0(d.pm10) + ' µg/m³';
 
   /* Calcolo AQI su dati demo */
   computeAQI(d.pm25, d.pm10);
@@ -1118,13 +1123,21 @@ function applyKPI(feeds){
   // VOC → aggiornato dal grafico tramite callback
   // il grafico VOC aggiornerà la card dopo il suo rendering
 
-  // PM2.5 e PM10 → sempre media mobile ultime 24h
+  // PM2.5 e PM10 → ultimo valore + media mobile 24h sotto
   const avg24 = f =>
     feedsForAvg.reduce((s,x) => s + Number(x[f] || 0), 0) / feedsForAvg.length;
   const pm25_24 = avg24('field6');
   const pm10_24 = avg24('field7');
-  pm25.textContent = fmt0(pm25_24) + ' µg/m³';
-  pm10.textContent = fmt0(pm10_24) + ' µg/m³';
+
+  // ultimo valore istantaneo
+  pm25.textContent = fmt0(last.field6) + ' µg/m³';
+  pm10.textContent = fmt0(last.field7) + ' µg/m³';
+
+  // media mobile 24h sotto
+  const pm25avgEl = document.getElementById('pm25avg');
+  const pm10avgEl = document.getElementById('pm10avg');
+  if(pm25avgEl) pm25avgEl.textContent = 'media 24h: ' + fmt0(pm25_24) + ' µg/m³';
+  if(pm10avgEl) pm10avgEl.textContent = 'media 24h: ' + fmt0(pm10_24) + ' µg/m³';
 
   computeAQI(pm25_24, pm10_24);
 }
