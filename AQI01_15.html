@@ -2039,10 +2039,29 @@ const aggFn = viewMode === 'year' ? aggregateDaily :
 scales:{
   x: xAxisConfig(),
   y:{
-    beginAtZero:false,
-    title:{ display:true, text:'µg/m³' },
-    grid:{ display:true, color:'rgba(0,0,0,0.06)', lineWidth:0.8 }
-  }
+      beginAtZero:false,
+      title:{ display:true, text:'µg/m³' },
+      grid:{ display:true, color:'rgba(0,0,0,0.06)', lineWidth:0.8 },
+      afterDataLimits: function(axis){
+        // esclude i valori delle linee limite dal calcolo del range
+        const chart = axis.chart;
+        let dataMin = Infinity;
+        let dataMax = -Infinity;
+        chart.data.datasets.forEach(ds => {
+          if(ds.label && ds.label.includes('Limite')) return;
+          ds.data.forEach(v => {
+            if(v == null || isNaN(v)) return;
+            if(v < dataMin) dataMin = v;
+            if(v > dataMax) dataMax = v;
+          });
+        });
+        if(dataMin !== Infinity){
+          const padding = (dataMax - dataMin) * 0.1;
+          axis.min = dataMin - padding;
+          axis.max = dataMax + padding;
+        }
+      }
+    }
 }
         }
       });
