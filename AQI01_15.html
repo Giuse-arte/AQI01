@@ -1591,7 +1591,7 @@ function exportCSV(){
   rows.push('');
 
   // intestazione
-  const header = ['Data', 'Ora', 'Anno', 'DataOra', ...columns.map(c => c.label)];
+  const header = ['date', 'time', 'year', 'month', 'temp', 'hum', 'pres', 'voc', 'PM1', 'PM2_5', 'PM2_5_mavg', 'PM10', 'PM10_mavg'];
   rows.push(header.join(sep));
 
   // dati
@@ -1611,8 +1611,40 @@ function exportCSV(){
       return Number(v).toFixed(2).replace('.',',');
     });
 
-    const dateOraStr = dateStr + ' ' + timeStr + ' ' + yearStr;
-    rows.push([dateStr, timeStr, yearStr, dateOraStr, ...vals].join(sep));
+   const dateFormatted = date.toLocaleDateString('it-IT',{
+      day:'2-digit', month:'2-digit', year:'numeric'
+    });
+    const timeFormatted = date.toLocaleTimeString('it-IT',{
+      hour:'2-digit', minute:'2-digit', second:'2-digit'
+    });
+    const monthStr = (date.getMonth() + 1).toString();
+
+    // mappa valori per colonne fisse
+    const getVal = (key) => {
+      const col = columns.find(c => c.key === key);
+      if(!col) return '';
+      const v = idx[col.key]?.[ts];
+      if(v == null || isNaN(v)) return '';
+      return Number(v).toFixed(2).replace('.',',');
+    };
+
+    const rowVals = [
+      dateFormatted,
+      timeFormatted,
+      yearStr,
+      monthStr,
+      getVal('field2'),   // temp
+      getVal('field1'),   // hum
+      getVal('field3'),   // pres
+      getVal('field4'),   // voc
+      getVal('field5'),   // PM1
+      getVal('field6'),   // PM2.5
+      getVal('combo25'),  // PM2.5 mavg
+      getVal('field7'),   // PM10
+      getVal('combo10'),  // PM10 mavg
+    ];
+
+    rows.push(rowVals.join(sep));
   });
 
   // =========================
