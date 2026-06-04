@@ -1605,13 +1605,7 @@ function exportCSV(){
     });
     const yearStr = date.getFullYear().toString();
 
-    const vals = columns.map(c => {
-      const v = idx[c.key]?.[ts];
-      if(v == null || isNaN(v)) return '';
-      return Number(v).toFixed(2).replace('.',',');
-    });
-
-   const dateFormatted = date.toLocaleDateString('it-IT',{
+    const dateFormatted = date.toLocaleDateString('it-IT',{
       day:'2-digit', month:'2-digit', year:'numeric'
     });
     const timeFormatted = date.toLocaleTimeString('it-IT',{
@@ -1619,11 +1613,9 @@ function exportCSV(){
     });
     const monthStr = (date.getMonth() + 1).toString();
 
-    // mappa valori per colonne fisse
+    // mappa valori per colonne fisse — usa idx direttamente
     const getVal = (key) => {
-      const col = columns.find(c => c.key === key);
-      if(!col) return '';
-      const v = idx[col.key]?.[ts];
+      const v = idx[key]?.[ts];
       if(v == null || isNaN(v)) return '';
       return Number(v).toFixed(2).replace('.',',');
     };
