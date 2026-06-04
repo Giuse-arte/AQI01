@@ -1476,8 +1476,11 @@ function exportCSV(){
       const tB = new Date(valid[i+1].created_at).getTime();
       const vA = Number(valid[i][field]);
       const vB = Number(valid[i+1][field]);
+      // arrotonda il timestamp all'ora esatta più vicina
+      const tsMid = Math.round((tA + tB) / 2);
+      const tsRounded = Math.round(tsMid / 3600000) * 3600000;
       points.push({
-        ts: Math.round((tA + tB) / 2),
+        ts: tsRounded,
         value: (vA + vB) / 2
       });
     }
