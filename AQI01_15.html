@@ -1534,7 +1534,10 @@ function exportCSV(){
   // indice rapido: ts → value per ogni serie
   function buildIndex(pts){
     const idx = {};
-    pts.forEach(p => { idx[p.ts] = p.value; });
+    pts.forEach(p => {
+      const tsR = Math.round(p.ts / 3600000) * 3600000;
+      idx[tsR] = p.value;
+    });
     return idx;
   }
 
