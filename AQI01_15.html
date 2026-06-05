@@ -1612,8 +1612,8 @@ function exportCSV(){
       day:'2-digit', month:'2-digit', year:'numeric'
     });
     const timeFormatted = date.toLocaleTimeString('it-IT',{
-      hour:'2-digit', minute:'2-digit', second:'2-digit'
-    });
+      hour:'2-digit', minute:'2-digit'
+    }) + ':00';
     const monthStr = (date.getMonth() + 1).toString();
 
     // mappa valori per colonne fisse — usa idx direttamente
