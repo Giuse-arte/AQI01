@@ -1444,27 +1444,20 @@ function exportCSV(){
   ];
 
   // per il COMBO calcola media mobile 24h sui dati grezzi
- function movingAvg24h(interpSeries, rawFeeds, field){
-    const valid = rawFeeds.filter(f => !isNaN(Number(f[field])));
-    const firstTs = new Date(valid[0].created_at).getTime();
+ function movingAvg24h(interpSeries){
+    if(!interpSeries.length) return [];
+    const firstTs = interpSeries[interpSeries.length - 1].ts;
 
-    const points = [];
-    interpSeries.forEach(p => {
+    return interpSeries.map((p, i) => {
       const cutoff = p.ts - 24 * 60 * 60 * 1000;
+      if(cutoff < firstTs) return null;
 
-      // salta se non ci sono ancora 24h di dati
-      if(cutoff < firstTs) return;
-
-      const window = valid.filter(f => {
-        const t = new Date(f.created_at).getTime();
-        return t >= cutoff && t <= p.ts;
-      });
+      const window = interpSeries.filter(x => x.ts >= cutoff && x.ts <= p.ts);
       const avg = window.length
-        ? window.reduce((s,f) => s + Number(f[field]), 0) / window.length
+        ? window.reduce((s,x) => s + x.value, 0) / window.length
         : p.value;
-      points.push({ ts: p.ts, value: avg });
-    });
-    return points;
+      return { ts: p.ts, value: avg };
+    }).filter(p => p !== null);
   }
 
   // costruisce serie interpolate per tutti i campi
@@ -1514,20 +1507,8 @@ function exportCSV(){
   });
 
   // per live e day usa rawFeedsStore direttamente per la media mobile
-  const combo25 = movingAvg24h(
-    rawFeedsStore.filter(f => !isNaN(Number(f.field6))).map(f => ({
-      ts: Math.round(new Date(f.created_at).getTime() / 3600000) * 3600000,
-      value: Number(f.field6)
-    })),
-    rawFeedsStore, 'field6'
-  );
-  const combo10 = movingAvg24h(
-    rawFeedsStore.filter(f => !isNaN(Number(f.field7))).map(f => ({
-      ts: Math.round(new Date(f.created_at).getTime() / 3600000) * 3600000,
-      value: Number(f.field7)
-    })),
-    rawFeedsStore, 'field7'
-  );
+  const combo25 = movingAvg24h(series['field6']);
+  const combo10 = movingAvg24h(series['field7']);
 
   // =========================
   // TIMESTAMP UNIFICATO
