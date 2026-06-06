@@ -1513,9 +1513,21 @@ function exportCSV(){
     }
   });
 
-  // COMBO usa media mobile
-  const combo25 = movingAvg24h(series['field6'], rawFeedsStore, 'field6');
-  const combo10 = movingAvg24h(series['field7'], rawFeedsStore, 'field7');
+  // per live e day usa rawFeedsStore direttamente per la media mobile
+  const combo25 = movingAvg24h(
+    rawFeedsStore.filter(f => !isNaN(Number(f.field6))).map(f => ({
+      ts: Math.round(new Date(f.created_at).getTime() / 3600000) * 3600000,
+      value: Number(f.field6)
+    })),
+    rawFeedsStore, 'field6'
+  );
+  const combo10 = movingAvg24h(
+    rawFeedsStore.filter(f => !isNaN(Number(f.field7))).map(f => ({
+      ts: Math.round(new Date(f.created_at).getTime() / 3600000) * 3600000,
+      value: Number(f.field7)
+    })),
+    rawFeedsStore, 'field7'
+  );
 
   // =========================
   // TIMESTAMP UNIFICATO
