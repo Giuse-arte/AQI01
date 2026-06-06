@@ -1397,10 +1397,13 @@ function exportCSV(){
         const tB = new Date(valid[i+1].created_at).getTime();
         const vA = Number(valid[i][field]);
         const vB = Number(valid[i+1][field]);
-        points.push({
-          ts: Math.round((tA + tB) / 2),
-          value: (vA + vB) / 2
-        });
+        // arrotonda il timestamp all'ora esatta più vicina
+      const tsMid = Math.round((tA + tB) / 2);
+      const tsRounded = Math.round(tsMid / 3600000) * 3600000;
+      points.push({
+        ts: tsRounded,
+        value: (vA + vB) / 2
+      });
       }
 
       // se numero dispari aggiunge l'ultimo da solo
@@ -1531,7 +1534,10 @@ function exportCSV(){
   // indice rapido: ts → value per ogni serie
   function buildIndex(pts){
     const idx = {};
-    pts.forEach(p => { idx[p.ts] = p.value; });
+    pts.forEach(p => {
+      const tsR = Math.round(p.ts / 3600000) * 3600000;
+      idx[tsR] = p.value;
+    });
     return idx;
   }
 
@@ -1552,7 +1558,9 @@ function exportCSV(){
   [...Object.values(series), combo25, combo10].forEach(pts => {
     pts.forEach(p => allTs.add(p.ts));
   });
-  const sortedTs = [...allTs].sort((a,b) => b-a);
+  const sortedTs = [...new Set([...allTs].map(ts => 
+    Math.round(ts / 3600000) * 3600000
+  ))].sort((a,b) => b-a);
 
   // =========================
   // COLONNE ATTIVE
@@ -1591,7 +1599,7 @@ function exportCSV(){
   rows.push('');
 
   // intestazione
-  const header = ['Data', 'Ora', 'Anno', 'DataOra', ...columns.map(c => c.label)];
+  const header = ['date', 'time', 'year', 'month', 'temp', 'hum', 'pres', 'voc', 'PM1', 'PM2_5', 'PM2_5_mavg', 'PM10', 'PM10_mavg'];
   rows.push(header.join(sep));
 
   // dati
@@ -1605,14 +1613,38 @@ function exportCSV(){
     });
     const yearStr = date.getFullYear().toString();
 
-    const vals = columns.map(c => {
-      const v = idx[c.key]?.[ts];
+    const dateFormatted = date.toLocaleDateString('it-IT',{
+      day:'2-digit', month:'2-digit', year:'numeric'
+    });
+    const timeFormatted = date.toLocaleTimeString('it-IT',{
+      hour:'2-digit', minute:'2-digit'
+    }) + ':00';
+    const monthStr = (date.getMonth() + 1).toString();
+
+    // mappa valori per colonne fisse — usa idx direttamente
+    const getVal = (key) => {
+      const v = idx[key]?.[ts];
       if(v == null || isNaN(v)) return '';
       return Number(v).toFixed(2).replace('.',',');
-    });
+    };
 
-    const dateOraStr = dateStr + ' ' + timeStr + ' ' + yearStr;
-    rows.push([dateStr, timeStr, yearStr, dateOraStr, ...vals].join(sep));
+    const rowVals = [
+      dateFormatted,
+      timeFormatted,
+      yearStr,
+      monthStr,
+      getVal('field2'),   // temp
+      getVal('field1'),   // hum
+      getVal('field3'),   // pres
+      getVal('field4'),   // voc
+      getVal('field5'),   // PM1
+      getVal('field6'),   // PM2.5
+      getVal('combo25'),  // PM2.5 mavg
+      getVal('field7'),   // PM10
+      getVal('combo10'),  // PM10 mavg
+    ];
+
+    rows.push(rowVals.join(sep));
   });
 
   // =========================
