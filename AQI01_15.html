@@ -1501,10 +1501,27 @@ function exportCSV(){
     }
   });
 
-  // per live e day usa rawFeedsStore direttamente per la media mobile
-  const combo25 = movingAvg24h(series['field6']);
-  const combo10 = movingAvg24h(series['field7']);
+  // calcola media mobile 24h direttamente su dati aggregati per ora
+  const aggField6 = csvAggregateHourly(rawFeedsStore, 'field6');
+  const aggField7 = csvAggregateHourly(rawFeedsStore, 'field7');
 
+  const combo25 = aggField6.map((p, i) => {
+    const cutoff = p.ts - 24*60*60*1000;
+    const minTs = aggField6[aggField6.length-1].ts;
+    if(cutoff < minTs) return null;
+    const window = aggField6.filter(x => x.ts >= cutoff && x.ts <= p.ts);
+    const avg = window.length ? window.reduce((s,x) => s+x.value,0)/window.length : p.value;
+    return { ts: p.ts, value: avg };
+  }).filter(p => p !== null);
+
+  const combo10 = aggField7.map((p, i) => {
+    const cutoff = p.ts - 24*60*60*1000;
+    const minTs = aggField7[aggField7.length-1].ts;
+    if(cutoff < minTs) return null;
+    const window = aggField7.filter(x => x.ts >= cutoff && x.ts <= p.ts);
+    const avg = window.length ? window.reduce((s,x) => s+x.value,0)/window.length : p.value;
+    return { ts: p.ts, value: avg };
+  }).filter(p => p !== null);
   // =========================
   // TIMESTAMP UNIFICATO
   // =========================
