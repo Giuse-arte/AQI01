@@ -1446,8 +1446,8 @@ function exportCSV(){
   // per il COMBO calcola media mobile 24h sui dati grezzi
  function movingAvg24h(interpSeries){
     if(!interpSeries.length) return [];
-    const firstTs = interpSeries[interpSeries.length - 1].ts;
-
+    const firstTs = interpSeries[0].ts;
+   
     return interpSeries.map((p, i) => {
       const cutoff = p.ts - 24 * 60 * 60 * 1000;
       if(cutoff < firstTs) return null;
