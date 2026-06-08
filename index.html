@@ -1444,56 +1444,44 @@ function exportCSV(){
   ];
 
   // per il COMBO calcola media mobile 24h sui dati grezzi
- function movingAvg24h(interpSeries, rawFeeds, field){
-    const valid = rawFeeds.filter(f => !isNaN(Number(f[field])));
-    const firstTs = new Date(valid[0].created_at).getTime();
-
-    const points = [];
-    interpSeries.forEach(p => {
+ function movingAvg24h(interpSeries){
+    if(!interpSeries.length) return [];
+    const firstTs = Math.min(...interpSeries.map(p => p.ts));
+   
+    return interpSeries.map((p, i) => {
       const cutoff = p.ts - 24 * 60 * 60 * 1000;
+      if(cutoff < firstTs) return null;
 
-      // salta se non ci sono ancora 24h di dati
-      if(cutoff < firstTs) return;
-
-      const window = valid.filter(f => {
-        const t = new Date(f.created_at).getTime();
-        return t >= cutoff && t <= p.ts;
-      });
+      const window = interpSeries.filter(x => x.ts >= cutoff && x.ts <= p.ts);
       const avg = window.length
-        ? window.reduce((s,f) => s + Number(f[field]), 0) / window.length
+        ? window.reduce((s,x) => s + x.value, 0) / window.length
         : p.value;
-      points.push({ ts: p.ts, value: avg });
-    });
-    return points;
+      return { ts: p.ts, value: avg };
+    }).filter(p => p !== null);
   }
 
   // costruisce serie interpolate per tutti i campi
-  function csvAggregateHourly(feeds, field){
+ function csvAggregateHourly(feeds, field){
     const valid = feeds.filter(f => !isNaN(Number(f[field])));
     if(!valid.length) return [];
 
-    const points = [];
+    // raggruppa per ora di calendario
+    const map = {};
+    valid.forEach(f => {
+      const d = new Date(f.created_at);
+      // chiave = ora esatta arrotondata per difetto
+      const hourTs = Math.floor(d.getTime() / 3600000) * 3600000;
+      if(!map[hourTs]) map[hourTs] = [];
+      map[hourTs].push(Number(f[field]));
+    });
 
-    for(let i = 0; i < valid.length - 1; i += 2){
-      const tA = new Date(valid[i].created_at).getTime();
-      const tB = new Date(valid[i+1].created_at).getTime();
-      const vA = Number(valid[i][field]);
-      const vB = Number(valid[i+1][field]);
-      points.push({
-        ts: Math.round((tA + tB) / 2),
-        value: (vA + vB) / 2
-      });
-    }
-
-    if(valid.length % 2 !== 0){
-      const last = valid[valid.length - 1];
-      points.push({
-        ts: new Date(last.created_at).getTime(),
-        value: Number(last[field])
-      });
-    }
-
-    return points.reverse();
+    // per ogni ora calcola la media e assegna timestamp ora esatta
+    return Object.entries(map)
+      .sort((a,b) => b[0] - a[0]) // ordine decrescente
+      .map(([hourTs, vals]) => ({
+        ts: Number(hourTs),
+        value: vals.reduce((s,v) => s+v, 0) / vals.length
+      }));
   }
 
   const isExtendedCsv = ['week','month'].includes(vm);
@@ -1513,10 +1501,42 @@ function exportCSV(){
     }
   });
 
-  // COMBO usa media mobile
-  const combo25 = movingAvg24h(series['field6'], rawFeedsStore, 'field6');
-  const combo10 = movingAvg24h(series['field7'], rawFeedsStore, 'field7');
+  // calcola media mobile 24h direttamente su dati aggregati per ora
+  // 🔥 FIX BUG 2: in live/day usa i dati grezzi per la media mobile 24h
+  const isLiveOrDay = ['live','day'].includes(vm);
 
+  const rawField6 = rawFeedsStore
+    .filter(f => !isNaN(Number(f.field6)))
+    .map(f => ({ ts: new Date(f.created_at).getTime(), value: Number(f.field6) }))
+    .sort((a,b) => a.ts - b.ts);
+
+  const rawField7 = rawFeedsStore
+    .filter(f => !isNaN(Number(f.field7)))
+    .map(f => ({ ts: new Date(f.created_at).getTime(), value: Number(f.field7) }))
+    .sort((a,b) => a.ts - b.ts);
+
+  const aggField6 = isLiveOrDay ? rawField6 : csvAggregateHourly(rawFeedsStore, 'field6');
+  const aggField7 = isLiveOrDay ? rawField7 : csvAggregateHourly(rawFeedsStore, 'field7');
+
+  const firstTs6 = rawField6.length ? rawField6[0].ts : 0;
+  const firstTs7 = rawField7.length ? rawField7[0].ts : 0;
+
+ const combo25 = aggField6.map((p) => {
+    const cutoff = p.ts - 24*60*60*1000;
+    if(!isLiveOrDay && cutoff < firstTs6) return null;
+    const window = aggField6.filter(x => x.ts >= cutoff && x.ts <= p.ts);
+    const avg = window.length ? window.reduce((s,x) => s+x.value,0)/window.length : p.value;
+    return { ts: p.ts, value: avg };
+  }).filter(p => p !== null);
+
+  const combo10 = aggField7.map((p) => {
+    const cutoff = p.ts - 24*60*60*1000;
+    if(!isLiveOrDay && cutoff < firstTs7) return null;
+    const window = aggField7.filter(x => x.ts >= cutoff && x.ts <= p.ts);
+    const avg = window.length ? window.reduce((s,x) => s+x.value,0)/window.length : p.value;
+    return { ts: p.ts, value: avg };
+  }).filter(p => p !== null);
+  
   // =========================
   // TIMESTAMP UNIFICATO
   // =========================
@@ -2818,7 +2838,14 @@ document.getElementById('viewMode').addEventListener('change', ()=>{
     day.style.display = "none";
     dayLabel.style.display = "none";
   }
+  localStorage.setItem('aqi_viewMode', vm);
+  localStorage.setItem('aqi_day', document.getElementById('day').value);
   refreshDashboard();
+});
+
+// 🔥 FIX BUG 1: salva il giorno ogni volta che cambia
+document.getElementById('day').addEventListener('change', ()=>{
+  localStorage.setItem('aqi_day', document.getElementById('day').value);
 });
  
 /* =========================
@@ -2858,6 +2885,16 @@ document.addEventListener('DOMContentLoaded', () => {
   }
 
   // 3. Ora che i campi sono pronti, carichiamo i dati
+  // ripristina modalità e giorno salvati
+  const savedVm = localStorage.getItem('aqi_viewMode');
+  if(savedVm){
+    document.getElementById('viewMode').value = savedVm;
+  }
+  const savedDay = localStorage.getItem('aqi_day');
+  if(savedDay){
+    document.getElementById('day').value = savedDay;
+  }
+
   // gestisce visibilità campo giorno
   const vm = document.getElementById('viewMode').value;
   if(vm === "day"){
@@ -2867,6 +2904,17 @@ document.addEventListener('DOMContentLoaded', () => {
     day.style.display = "none";
     dayLabel.style.display = "none";
   }
+
+  // 🔥 FIX BUG 1: se modalità day ma nessun giorno salvato → usa oggi
+  if(vm === "day" && !document.getElementById('day').value){
+    document.getElementById('day').value = new Date().toISOString().slice(0,10);
+  }
+
+  // 🔥 FIX BUG 1: salva il giorno ogni volta che cambia
+  document.getElementById('day').addEventListener('change', ()=>{
+    localStorage.setItem('aqi_day', document.getElementById('day').value);
+  });
+
   renderCharts();
   loadKPIs();
 });
