@@ -1502,22 +1502,41 @@ function exportCSV(){
   });
 
   // calcola media mobile 24h direttamente su dati aggregati per ora
-  const aggField6 = csvAggregateHourly(rawFeedsStore, 'field6');
-  const aggField7 = csvAggregateHourly(rawFeedsStore, 'field7');
+  // 🔥 FIX BUG 2: in live/day usa i dati grezzi per la media mobile 24h
+  const isLiveOrDay = ['live','day'].includes(vm);
+
+  const rawField6 = rawFeedsStore
+    .filter(f => !isNaN(Number(f.field6)))
+    .map(f => ({ ts: new Date(f.created_at).getTime(), value: Number(f.field6) }))
+    .sort((a,b) => a.ts - b.ts);
+
+  const rawField7 = rawFeedsStore
+    .filter(f => !isNaN(Number(f.field7)))
+    .map(f => ({ ts: new Date(f.created_at).getTime(), value: Number(f.field7) }))
+    .sort((a,b) => a.ts - b.ts);
+
+  const aggField6 = isLiveOrDay ? rawField6 : csvAggregateHourly(rawFeedsStore, 'field6');
+  const aggField7 = isLiveOrDay ? rawField7 : csvAggregateHourly(rawFeedsStore, 'field7');
+
+  const firstTs6 = aggField6.length ? aggField6[0].ts : 0;
+  const firstTs7 = aggField7.length ? aggField7[0].ts : 0;
 
   const combo25 = aggField6.map((p) => {
     const cutoff = p.ts - 24*60*60*1000;
+    if(cutoff < firstTs6) return null;
     const window = aggField6.filter(x => x.ts >= cutoff && x.ts <= p.ts);
     const avg = window.length ? window.reduce((s,x) => s+x.value,0)/window.length : p.value;
     return { ts: p.ts, value: avg };
-  });
+  }).filter(p => p !== null);
 
   const combo10 = aggField7.map((p) => {
     const cutoff = p.ts - 24*60*60*1000;
+    if(cutoff < firstTs7) return null;
     const window = aggField7.filter(x => x.ts >= cutoff && x.ts <= p.ts);
     const avg = window.length ? window.reduce((s,x) => s+x.value,0)/window.length : p.value;
     return { ts: p.ts, value: avg };
-  });
+  }).filter(p => p !== null);
+  
   // =========================
   // TIMESTAMP UNIFICATO
   // =========================
