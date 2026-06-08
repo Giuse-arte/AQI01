@@ -2823,10 +2823,14 @@ document.getElementById('viewMode').addEventListener('change', ()=>{
     day.style.display = "none";
     dayLabel.style.display = "none";
   }
-  // salva modalità e giorno nel localStorage
   localStorage.setItem('aqi_viewMode', vm);
   localStorage.setItem('aqi_day', document.getElementById('day').value);
   refreshDashboard();
+});
+
+// 🔥 FIX BUG 1: salva il giorno ogni volta che cambia
+document.getElementById('day').addEventListener('change', ()=>{
+  localStorage.setItem('aqi_day', document.getElementById('day').value);
 });
  
 /* =========================
