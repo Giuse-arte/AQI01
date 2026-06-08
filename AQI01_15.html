@@ -1518,8 +1518,8 @@ function exportCSV(){
   const aggField6 = isLiveOrDay ? rawField6 : csvAggregateHourly(rawFeedsStore, 'field6');
   const aggField7 = isLiveOrDay ? rawField7 : csvAggregateHourly(rawFeedsStore, 'field7');
 
-  const firstTs6 = aggField6.length ? aggField6[0].ts : 0;
-  const firstTs7 = aggField7.length ? aggField7[0].ts : 0;
+  const firstTs6 = rawField6.length ? rawField6[0].ts : 0;
+  const firstTs7 = rawField7.length ? rawField7[0].ts : 0;
 
  const combo25 = aggField6.map((p) => {
     const cutoff = p.ts - 24*60*60*1000;
