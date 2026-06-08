@@ -2889,6 +2889,17 @@ document.addEventListener('DOMContentLoaded', () => {
     day.style.display = "none";
     dayLabel.style.display = "none";
   }
+
+  // 🔥 FIX BUG 1: se modalità day ma nessun giorno salvato → usa oggi
+  if(vm === "day" && !document.getElementById('day').value){
+    document.getElementById('day').value = new Date().toISOString().slice(0,10);
+  }
+
+  // 🔥 FIX BUG 1: salva il giorno ogni volta che cambia
+  document.getElementById('day').addEventListener('change', ()=>{
+    localStorage.setItem('aqi_day', document.getElementById('day').value);
+  });
+
   renderCharts();
   loadKPIs();
 });
