@@ -1521,9 +1521,9 @@ function exportCSV(){
   const firstTs6 = aggField6.length ? aggField6[0].ts : 0;
   const firstTs7 = aggField7.length ? aggField7[0].ts : 0;
 
-  const combo25 = aggField6.map((p) => {
+ const combo25 = aggField6.map((p) => {
     const cutoff = p.ts - 24*60*60*1000;
-    if(cutoff < firstTs6) return null;
+    if(!isLiveOrDay && cutoff < firstTs6) return null;
     const window = aggField6.filter(x => x.ts >= cutoff && x.ts <= p.ts);
     const avg = window.length ? window.reduce((s,x) => s+x.value,0)/window.length : p.value;
     return { ts: p.ts, value: avg };
@@ -1531,7 +1531,7 @@ function exportCSV(){
 
   const combo10 = aggField7.map((p) => {
     const cutoff = p.ts - 24*60*60*1000;
-    if(cutoff < firstTs7) return null;
+    if(!isLiveOrDay && cutoff < firstTs7) return null;
     const window = aggField7.filter(x => x.ts >= cutoff && x.ts <= p.ts);
     const avg = window.length ? window.reduce((s,x) => s+x.value,0)/window.length : p.value;
     return { ts: p.ts, value: avg };
