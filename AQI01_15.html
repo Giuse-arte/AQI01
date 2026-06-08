@@ -2823,8 +2823,9 @@ document.getElementById('viewMode').addEventListener('change', ()=>{
     day.style.display = "none";
     dayLabel.style.display = "none";
   }
-  // salva modalità nel localStorage
+  // salva modalità e giorno nel localStorage
   localStorage.setItem('aqi_viewMode', vm);
+  localStorage.setItem('aqi_day', document.getElementById('day').value);
   refreshDashboard();
 });
  
@@ -2865,10 +2866,14 @@ document.addEventListener('DOMContentLoaded', () => {
   }
 
   // 3. Ora che i campi sono pronti, carichiamo i dati
-  // ripristina modalità salvata
+  // ripristina modalità e giorno salvati
   const savedVm = localStorage.getItem('aqi_viewMode');
   if(savedVm){
     document.getElementById('viewMode').value = savedVm;
+  }
+  const savedDay = localStorage.getItem('aqi_day');
+  if(savedDay){
+    document.getElementById('day').value = savedDay;
   }
 
   // gestisce visibilità campo giorno
