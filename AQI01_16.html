@@ -1165,87 +1165,84 @@ function applyDemoKPI(){
   feeds → array di misurazioni ThingSpeak
 */
 function applyKPI(feeds){
-  if(!feeds.length) return;
+if(!feeds.length) return;
 
-  const now = new Date();
-  const since24h = new Date(now.getTime() - 24*60*60*1000);
-  const feeds24h = feeds.filter(f => new Date(f.created_at) >= since24h);
-  const feedsForAvg = feeds24h.length ? feeds24h : feeds;
+const now = new Date();
+const since24h = new Date(now.getTime() - 24*60*60*1000);
 
- // usa sempre l'ultimo feed reale delle ultime 24h
-  console.log("applyKPI chiamata con feeds:", feeds.length, "liveFeeds24h:", liveFeeds24h.length);
-  const last = liveFeeds24h.length
-  ? liveFeeds24h[liveFeeds24h.length - 1]
-  : feeds[feeds.length - 1];
+const feeds24h = feeds.filter(f => new Date(f.created_at) >= since24h);
+const feedsForAvg = feeds24h.length ? feeds24h : feeds;
 
-  updateGeoInfo(last.field8);
+const last = liveFeeds24h.length
+? liveFeeds24h[liveFeeds24h.length - 1]
+: feeds[feeds.length - 1];
 
-  console.log("FIELD8:", last.field8);
-  console.log("last used:", last?.created_at, "field1:", last?.field1);
+updateGeoInfo(last.field8);
 
-// aggiorna data ultima rilevazione — sempre da liveFeeds24h
-  const lastRealFeed = liveFeeds24h.length
-  ? liveFeeds24h[liveFeeds24h.length - 1]
-  : feeds[feeds.length - 1];
-  
-  const lastDate = new Date(lastRealFeed.created_at);
+const lastRealFeed = liveFeeds24h.length
+? liveFeeds24h[liveFeeds24h.length - 1]
+: feeds[feeds.length - 1];
 
+const lastDate = new Date(lastRealFeed.created_at);
 const lastUpdateEl = document.getElementById('lastUpdate');
 
 if(lastUpdateEl && !isNaN(lastDate.getTime())){
+const dateStr = lastDate.toLocaleDateString('it-IT',{
+day:'2-digit',
+month:'2-digit',
+year:'numeric'
+});
 
-  const dateStr = lastDate.toLocaleDateString('it-IT',{
-    day:'2-digit',
-    month:'2-digit',
-    year:'numeric'
-  });
+```
+const timeStr = lastDate.toLocaleTimeString('it-IT',{
+  hour:'2-digit',
+  minute:'2-digit'
+});
 
-  const timeStr = lastDate.toLocaleTimeString('it-IT',{
-    hour:'2-digit',
-    minute:'2-digit'
-  });
-
-  lastUpdateEl.textContent =
-    `Ultima rilevazione: ${dateStr} ${timeStr}`;
+lastUpdateEl.textContent =
+  `Ultima rilevazione: ${dateStr} ${timeStr}`;
 }
-  }
 
-  // prime 4 card → sempre ultimo valore
-  hum.textContent   = fmt1(last.field1) + ' %';
-  temp.textContent  = fmt1(last.field2) + ' °C';
-  press.textContent = fmt1(last.field3) + ' hPa';
-  pm1.textContent   = fmt0(last.field5) + ' µg/m³';
+// prime 4 card → sempre ultimo valore
+hum.textContent   = fmt1(last.field1) + ' %';
+temp.textContent  = fmt1(last.field2) + ' °C';
+press.textContent = fmt1(last.field3) + ' hPa';
+pm1.textContent   = fmt0(last.field5) + ' µg/m³';
 
-  // min/max per tutte le modalità tranne LIVE
-  const vm = document.getElementById('viewMode').value;
-  const minVal = f => Math.min(...feeds.map(x => Number(x[f])).filter(v => !isNaN(v)));
-  const maxVal = f => Math.max(...feeds.map(x => Number(x[f])).filter(v => !isNaN(v)));
-  humMM.textContent   = fmt1(minVal('field1')) + ' % — ' + fmt1(maxVal('field1')) + ' %';
-  tempMM.textContent  = fmt1(minVal('field2')) + ' °C — ' + fmt1(maxVal('field2')) + ' °C';
-  pressMM.textContent = fmt1(minVal('field3')) + ' hPa — ' + fmt1(maxVal('field3')) + ' hPa';
-  pm1MM.textContent   = fmt0(minVal('field5')) + ' µg/m³ — ' + fmt0(maxVal('field5')) + ' µg/m³';
+const vm = document.getElementById('viewMode').value;
 
-  // VOC → aggiornato dal grafico tramite callback
-  // il grafico VOC aggiornerà la card dopo il suo rendering
+const minVal = f =>
+Math.min(...feeds.map(x => Number(x[f])).filter(v => !isNaN(v)));
 
-  // PM2.5 e PM10 → ultimo valore + media mobile 24h sotto
-  const avg24 = f =>
-    feedsForAvg.reduce((s,x) => s + Number(x[f] || 0), 0) / feedsForAvg.length;
-  const pm25_24 = avg24('field6');
-  const pm10_24 = avg24('field7');
+const maxVal = f =>
+Math.max(...feeds.map(x => Number(x[f])).filter(v => !isNaN(v)));
 
-  // ultimo valore istantaneo
-  pm25.textContent = fmt0(last.field6) + ' µg/m³';
-  pm10.textContent = fmt0(last.field7) + ' µg/m³';
+humMM.textContent   = fmt1(minVal('field1')) + ' % — ' + fmt1(maxVal('field1')) + ' %';
+tempMM.textContent  = fmt1(minVal('field2')) + ' °C — ' + fmt1(maxVal('field2')) + ' °C';
+pressMM.textContent = fmt1(minVal('field3')) + ' hPa — ' + fmt1(maxVal('field3')) + ' hPa';
+pm1MM.textContent   = fmt0(minVal('field5')) + ' µg/m³ — ' + fmt0(maxVal('field5')) + ' µg/m³';
 
-  // media mobile 24h sotto
-  const pm25avgEl = document.getElementById('pm25avg');
-  const pm10avgEl = document.getElementById('pm10avg');
-  if(pm25avgEl) pm25avgEl.textContent = 'media 24h: ' + fmt0(pm25_24) + ' µg/m³';
-  if(pm10avgEl) pm10avgEl.textContent = 'media 24h: ' + fmt0(pm10_24) + ' µg/m³';
+const avg24 = f =>
+feedsForAvg.reduce((s,x) => s + Number(x[f] || 0), 0) / feedsForAvg.length;
 
-  computeAQI(pm25_24, pm10_24);
+const pm25_24 = avg24('field6');
+const pm10_24 = avg24('field7');
+
+pm25.textContent = fmt0(last.field6) + ' µg/m³';
+pm10.textContent = fmt0(last.field7) + ' µg/m³';
+
+const pm25avgEl = document.getElementById('pm25avg');
+const pm10avgEl = document.getElementById('pm10avg');
+
+if(pm25avgEl)
+pm25avgEl.textContent = 'media 24h: ' + fmt0(pm25_24) + ' µg/m³';
+
+if(pm10avgEl)
+pm10avgEl.textContent = 'media 24h: ' + fmt0(pm10_24) + ' µg/m³';
+
+computeAQI(pm25_24, pm10_24);
 }
+
 
 /* =========================
    CALCOLO AQI (EEA / EPA)
