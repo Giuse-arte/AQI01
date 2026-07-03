@@ -554,6 +554,10 @@
     <h1>Air Quality Index Device — AQI_01</h1>
     <!-- Qui viene aggiornato dinamicamente l'intervallo date -->
     <p id="subtitle">Inizio rilevamento dati: — | Fine: —</p>
+    <p id="geoInfo" style="margin:6px 0 0;font-size:.9rem;color:#374151;">
+      GeoLocation: — | RSSI: —
+    </p>
+    
   </div>
 
   <!-- Filtri temporali e standard AQI -->
@@ -919,6 +923,20 @@ const fmt1 = v => v == null || isNaN(v) ? '—' : Number(v).toFixed(1);
   - Usato per PM e valori medi
 */
 const fmt0 = v => v == null || isNaN(v) ? '—' : Math.round(Number(v));
+function parseField8(raw){
+
+  if(!raw) return null;
+
+  const parts = raw.split(',');
+
+  if(parts.length < 3) return null;
+
+  return {
+    rssi: parts[0].trim(),
+    lat: parts[1].trim(),
+    lon: parts[2].trim()
+  };
+}
 
 /* =========================
    DATI DI DEMO (FALLBACK)
@@ -929,6 +947,22 @@ const fmt0 = v => v == null || isNaN(v) ? '—' : Math.round(Number(v));
   Viene usato SOLO se la chiamata API fallisce
   (offline, rate limit, errore di rete, ecc.)
 */
+function updateGeoInfo(field8Value){
+
+  const geoEl = document.getElementById('geoInfo');
+  if(!geoEl) return;
+
+  const parsed = parseField8(field8Value);
+
+  if(!parsed){
+    geoEl.textContent = 'GeoLocation: — | RSSI: —';
+    return;
+  }
+
+  geoEl.textContent =
+    `GeoLocation: lat=${parsed.lat} lon=${parsed.lon} | RSSI: ${parsed.rssi} (dBm)`;
+}
+  
 function demoData(){
   return {
     hum:55.4,
@@ -1108,6 +1142,7 @@ function applyDemoKPI(){
 
   /* Calcolo AQI su dati demo */
   computeAQI(d.pm25, d.pm10);
+  updateGeoInfo(null);
 }
 
 /* =========================
@@ -1128,6 +1163,10 @@ function applyKPI(feeds){
  // usa sempre l'ultimo feed reale delle ultime 24h
   console.log("applyKPI chiamata con feeds:", feeds.length, "liveFeeds24h:", liveFeeds24h.length);
   const last = liveFeeds24h.length ? liveFeeds24h.at(-1) : feeds.at(-1);
+
+  updateGeoInfo(last.field8);
+
+  updateGeoInfo(last.field8);
   console.log("last used:", last?.created_at, "field1:", last?.field1);
 
 // aggiorna data ultima rilevazione — sempre da liveFeeds24h
