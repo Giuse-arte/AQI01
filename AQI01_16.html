@@ -551,7 +551,7 @@
 <!-- HEADER CON TITOLO E FILTRI -->
 <header>
   <div>
-    <h1>Air Quality Index Device — AQI_01</h1>
+    <h1 id="dashboardTitle">Air Quality Index Device — AQI_01</h1>
     <!-- Qui viene aggiornato dinamicamente l'intervallo date -->
     <p id="subtitle">Inizio rilevamento dati: — | Fine: —</p>
     <p id="geoInfo" style="margin:6px 0 0;font-size:.9rem;color:#374151;">
@@ -623,8 +623,8 @@
   border:1px solid #d1d5db;
   font-size:.8rem;
 ">
-  <option value="1">Centralina #1</option>
-  <option value="2">Centralina #2</option>
+  <option value="1">AQI_01</option>
+<option value="2">AQI_02</option>
 </select>
 
 <hr style="border-color:#d1d5db;margin:4px 0;">
@@ -779,12 +779,12 @@
 /* ID del canale ThingSpeak da cui leggere i dati */
 const STATIONS = {
   1: {
-    name: "Centralina #1",
+    name: "AQI_01",
     channel: 2789658,
     apiKey: "4IMIXLC0RWW9K4PA"
   },
   2: {
-    name: "Centralina #2",
+    name: "AQI_02",
     channel: 3412629,
     apiKey: "HP8HM37WZ9BAVB4A"
   }
@@ -799,7 +799,13 @@ function getCurrentChannel(){
 function getCurrentApiKey(){
   return STATIONS[currentStation].apiKey;
 }
+function updateDashboardTitle(){
+  const titleEl = document.getElementById('dashboardTitle');
+  if(!titleEl) return;
 
+  titleEl.textContent =
+    `Air Quality Index Device — ${STATIONS[currentStation].name}`;
+}
 // configurazione tooltip globale per tutti i grafici
 const tooltipConfig = {
   enabled: true,
@@ -925,17 +931,23 @@ const fmt1 = v => v == null || isNaN(v) ? '—' : Number(v).toFixed(1);
 const fmt0 = v => v == null || isNaN(v) ? '—' : Math.round(Number(v));
 function parseField8(raw){
 
-  if(!raw) return null;
+  if(!raw || typeof raw !== 'string') return null;
 
-  const parts = raw.split(',');
+  const cleaned = raw.trim();
 
-  if(parts.length < 3) return null;
+  if(cleaned === '') return null;
 
-  return {
-    rssi: parts[0].trim(),
-    lat: parts[1].trim(),
-    lon: parts[2].trim()
-  };
+  const parts = cleaned.split(',');
+
+  if(parts.length !== 3) return null;
+
+  const rssi = parts[0].trim();
+  const lat  = parts[1].trim();
+  const lon  = parts[2].trim();
+
+  if(!rssi || !lat || !lon) return null;
+
+  return { rssi, lat, lon };
 }
 
 /* =========================
@@ -1162,25 +1174,40 @@ function applyKPI(feeds){
 
  // usa sempre l'ultimo feed reale delle ultime 24h
   console.log("applyKPI chiamata con feeds:", feeds.length, "liveFeeds24h:", liveFeeds24h.length);
-  const last = liveFeeds24h.length ? liveFeeds24h.at(-1) : feeds.at(-1);
+  const last = liveFeeds24h.length
+  ? liveFeeds24h[liveFeeds24h.length - 1]
+  : feeds[feeds.length - 1];
 
   updateGeoInfo(last.field8);
 
-  updateGeoInfo(last.field8);
+  console.log("FIELD8:", last.field8);
   console.log("last used:", last?.created_at, "field1:", last?.field1);
 
 // aggiorna data ultima rilevazione — sempre da liveFeeds24h
   const lastRealFeed = liveFeeds24h.length
-    ? liveFeeds24h.at(-1)
-    : last;
+  ? liveFeeds24h[liveFeeds24h.length - 1]
+  : feeds[feeds.length - 1];
+  
   const lastDate = new Date(lastRealFeed.created_at);
-  const lastUpdateEl = document.getElementById('lastUpdate');
-  if(lastUpdateEl){
-    lastUpdateEl.textContent = 'Ultima rilevazione: ' + lastDate.toLocaleDateString('it-IT',{
-      day:'2-digit', month:'2-digit', year:'numeric'
-    }) + ' ' + lastDate.toLocaleTimeString('it-IT',{
-      hour:'2-digit', minute:'2-digit', second:'2-digit'
-    });
+
+const lastUpdateEl = document.getElementById('lastUpdate');
+
+if(lastUpdateEl && !isNaN(lastDate.getTime())){
+
+  const dateStr = lastDate.toLocaleDateString('it-IT',{
+    day:'2-digit',
+    month:'2-digit',
+    year:'numeric'
+  });
+
+  const timeStr = lastDate.toLocaleTimeString('it-IT',{
+    hour:'2-digit',
+    minute:'2-digit'
+  });
+
+  lastUpdateEl.textContent =
+    `Ultima rilevazione: ${dateStr} ${timeStr}`;
+}
   }
 
   // prime 4 card → sempre ultimo valore
@@ -2928,6 +2955,8 @@ document.getElementById('day').addEventListener('change', ()=>{
 
 document.getElementById('stationSelect').addEventListener('change', async function () {
   currentStation = this.value;
+
+  updateDashboardTitle();
 
   rawFeedsStore = [];
   liveFeeds24h = [];
