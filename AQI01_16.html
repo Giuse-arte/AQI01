@@ -607,6 +607,24 @@
         gap:8px;
       ">
         <strong style="color:#0b3c5d;">Controlla grafici</strong>
+        <hr style="border-color:#d1d5db;margin:4px 0;">
+
+<label for="stationSelect" style="font-weight:600;">
+  Seleziona centralina
+</label>
+
+<select id="stationSelect" style="
+  padding:7px 10px;
+  border-radius:8px;
+  border:1px solid #d1d5db;
+  font-size:.8rem;
+">
+  <option value="1">Centralina #1</option>
+  <option value="2">Centralina #2</option>
+</select>
+
+<hr style="border-color:#d1d5db;margin:4px 0;">
+        
         <button onclick="selectAll(true)" style="background:#0b3c5d;color:#fff;border:none;padding:6px 10px;border-radius:8px;cursor:pointer;">Seleziona tutti</button>
         <button onclick="selectAll(false)" style="background:#0b3c5d;color:#fff;border:none;padding:6px 10px;border-radius:8px;cursor:pointer;">Deseleziona tutti</button>
         <hr style="border-color:#d1d5db;margin:4px 0;">
@@ -755,7 +773,28 @@
    ========================= */
 
 /* ID del canale ThingSpeak da cui leggere i dati */
-const CHANNEL = 2789658;
+const STATIONS = {
+  1: {
+    name: "Centralina #1",
+    channel: 2789658,
+    apiKey: "4IMIXLC0RWW9K4PA"
+  },
+  2: {
+    name: "Centralina #2",
+    channel: 3412629,
+    apiKey: "HP8HM37WZ9BAVB4A"
+  }
+};
+
+let currentStation = "1";
+
+function getCurrentChannel(){
+  return STATIONS[currentStation].channel;
+}
+
+function getCurrentApiKey(){
+  return STATIONS[currentStation].apiKey;
+}
 
 // configurazione tooltip globale per tutti i grafici
 const tooltipConfig = {
