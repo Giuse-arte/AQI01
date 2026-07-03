@@ -1043,7 +1043,7 @@ const startStr = formatLocalDateTime(startBuffer);
 const endStr = formatLocalDateTime(tEnd);
 
 const r = await fetch(
-  `https://api.thingspeak.com/channels/${CHANNEL}/feeds.json?start=${startStr}&end=${endStr}&results=8000`
+  `https://api.thingspeak.com/channels/${getCurrentChannel()}/feeds.json?api_key=${getCurrentApiKey()}&start=${startStr}&end=${endStr}&results=8000`
 );
 
     /* Se risposta HTTP non OK → errore */
@@ -2060,8 +2060,8 @@ const startStr = formatLocalDateTime(startBuffer);
 const endStr = formatLocalDateTime(tEnd);
 
       const r = await fetch(
-        `https://api.thingspeak.com/channels/${CHANNEL}/feeds.json?start=${startStr}&end=${endStr}&results=8000`
-      );
+  `https://api.thingspeak.com/channels/${getCurrentChannel()}/feeds.json?api_key=${getCurrentApiKey()}&start=${startStr}&end=${endStr}&results=8000`
+);
 
       if(!r.ok) throw new Error();
 
@@ -2183,8 +2183,8 @@ if(ch.dataset.id === "4"){
       const endStr = formatLocalDateTime(tEnd);
 
       const r = await fetch(
-        `https://api.thingspeak.com/channels/${CHANNEL}/feeds.json?start=${startStr}&end=${endStr}&results=8000`
-      );
+  `https://api.thingspeak.com/channels/${getCurrentChannel()}/feeds.json?api_key=${getCurrentApiKey()}&start=${startStr}&end=${endStr}&results=8000`
+);
       const j = await r.json();
       const allFeeds = j.feeds || [];
       if(!allFeeds.length) return;
@@ -2354,8 +2354,8 @@ const startStr = formatLocalDateTime(startBuffer);
 const endStr = formatLocalDateTime(tEnd);
 
       const r = await fetch(
-        `https://api.thingspeak.com/channels/${CHANNEL}/feeds.json?start=${startStr}&end=${endStr}&results=8000`
-      );
+  `https://api.thingspeak.com/channels/${getCurrentChannel()}/feeds.json?api_key=${getCurrentApiKey()}&start=${startStr}&end=${endStr}&results=8000`
+);
 
       const j = await r.json();
       const feeds = j.feeds || [];
@@ -2522,7 +2522,7 @@ const startStr = formatLocalDateTime(startBuffer);
 const endStr = formatLocalDateTime(tEnd);
 
 const r = await fetch(
-  `https://api.thingspeak.com/channels/${CHANNEL}/feeds.json?start=${startStr}&end=${endStr}&results=8000`
+  `https://api.thingspeak.com/channels/${getCurrentChannel()}/feeds.json?api_key=${getCurrentApiKey()}&start=${startStr}&end=${endStr}&results=8000`
 );
 
       if (!r.ok) throw new Error();
@@ -2885,6 +2885,16 @@ document.getElementById('viewMode').addEventListener('change', ()=>{
 // 🔥 FIX BUG 1: salva il giorno ogni volta che cambia
 document.getElementById('day').addEventListener('change', ()=>{
   localStorage.setItem('aqi_day', document.getElementById('day').value);
+});
+
+document.getElementById('stationSelect').addEventListener('change', async function () {
+  currentStation = this.value;
+
+  rawFeedsStore = [];
+  liveFeeds24h = [];
+
+  await loadKPIs();
+  renderCharts();
 });
  
 /* =========================
