@@ -1014,7 +1014,7 @@ const startStr = formatLocalDateTime(startBuffer);
 const endStr = formatLocalDateTime(tEnd);
 
 const r = await fetch(
-  `https://api.thingspeak.com/channels/${CHANNEL}/feeds.json?start=${startStr}&end=${endStr}&results=8000`
+  `https://api.thingspeak.com/channels/${CHANNEL}/feeds.json?start=${startStr}&end=${endStr}&results=8000&api_key=${API_KEY}`
 );
 
     /* Se risposta HTTP non OK → errore */
@@ -1036,7 +1036,7 @@ const r = await fetch(
              pad(d.getHours())+':'+pad(d.getMinutes())+':'+pad(d.getSeconds());
     }
     const rLive = await fetch(
-      `https://api.thingspeak.com/channels/${CHANNEL}/feeds.json?start=${formatLDT(since24hKpi)}&end=${formatLDT(nowKpi)}&results=8000`
+      `https://api.thingspeak.com/channels/${CHANNEL}/feeds.json?start=${formatLDT(since24hKpi)}&end=${formatLDT(nowKpi)}&results=8000&api_key=${API_KEY}`
     );
     const jLive = rLive.ok ? await rLive.json() : { feeds: [] };
     const feedsLive = jLive.feeds || [];
@@ -2031,7 +2031,7 @@ const startStr = formatLocalDateTime(startBuffer);
 const endStr = formatLocalDateTime(tEnd);
 
       const r = await fetch(
-        `https://api.thingspeak.com/channels/${CHANNEL}/feeds.json?start=${startStr}&end=${endStr}&results=8000`
+        `https://api.thingspeak.com/channels/${CHANNEL}/feeds.json?start=${startStr}&end=${endStr}&results=8000&api_key=${API_KEY}`
       );
 
       if(!r.ok) throw new Error();
@@ -2154,7 +2154,7 @@ if(ch.dataset.id === "4"){
       const endStr = formatLocalDateTime(tEnd);
 
       const r = await fetch(
-        `https://api.thingspeak.com/channels/${CHANNEL}/feeds.json?start=${startStr}&end=${endStr}&results=8000`
+        `https://api.thingspeak.com/channels/${CHANNEL}/feeds.json?start=${startStr}&end=${endStr}&results=8000&api_key=${API_KEY}`
       );
       const j = await r.json();
       const allFeeds = j.feeds || [];
@@ -2325,7 +2325,7 @@ const startStr = formatLocalDateTime(startBuffer);
 const endStr = formatLocalDateTime(tEnd);
 
       const r = await fetch(
-        `https://api.thingspeak.com/channels/${CHANNEL}/feeds.json?start=${startStr}&end=${endStr}&results=8000`
+        `https://api.thingspeak.com/channels/${CHANNEL}/feeds.json?start=${startStr}&end=${endStr}&results=8000&api_key=${API_KEY}`
       );
 
       const j = await r.json();
@@ -2493,7 +2493,7 @@ const startStr = formatLocalDateTime(startBuffer);
 const endStr = formatLocalDateTime(tEnd);
 
 const r = await fetch(
-  `https://api.thingspeak.com/channels/${CHANNEL}/feeds.json?start=${startStr}&end=${endStr}&results=8000`
+  `https://api.thingspeak.com/channels/${CHANNEL}/feeds.json?start=${startStr}&end=${endStr}&results=8000&api_key=${API_KEY}`
 );
 
       if (!r.ok) throw new Error();
