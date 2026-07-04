@@ -929,6 +929,16 @@ const fmt1 = v => v == null || isNaN(v) ? '—' : Number(v).toFixed(1);
   - Usato per PM e valori medi
 */
 const fmt0 = v => v == null || isNaN(v) ? '—' : Math.round(Number(v));
+function formatLocalDateTime(d){
+  const pad = n => n.toString().padStart(2,'0');
+
+  return d.getFullYear() + '-' +
+         pad(d.getMonth()+1) + '-' +
+         pad(d.getDate()) + ' ' +
+         pad(d.getHours()) + ':' +
+         pad(d.getMinutes()) + ':' +
+         pad(d.getSeconds());
+}
 function parseField8(raw){
 
   if(!raw || typeof raw !== 'string') return null;
@@ -1111,7 +1121,7 @@ const r = await fetch(
              pad(d.getHours())+':'+pad(d.getMinutes())+':'+pad(d.getSeconds());
     }
     const rLive = await fetch(
-      `https://api.thingspeak.com/channels/${CHANNEL}/feeds.json?start=${formatLDT(since24hKpi)}&end=${formatLDT(nowKpi)}&results=8000`
+      `https://api.thingspeak.com/channels/${getCurrentChannel()}/feeds.json?start=${formatLDT(since24hKpi)}&end=${formatLDT(nowKpi)}&results=8000`
     );
     const jLive = rLive.ok ? await rLive.json() : { feeds: [] };
     const feedsLive = jLive.feeds || [];
@@ -1252,6 +1262,9 @@ function computeAQI(pm25, pm10){
 
   /* ===== STANDARD EEA ===== */
   if(mode.value === 'EEA'){
+  const aqiBtn = document.querySelector('.aqi-info-btn');
+  if(aqiBtn) aqiBtn.style.display = 'none';
+  
   aqiTitle.textContent = 'AQI (EEA 24h)';
   
   /* Classificazione PM secondo soglie EEA */
@@ -2945,10 +2958,6 @@ document.getElementById('viewMode').addEventListener('change', ()=>{
   refreshDashboard();
 });
 
-// 🔥 FIX BUG 1: salva il giorno ogni volta che cambia
-document.getElementById('day').addEventListener('change', ()=>{
-  localStorage.setItem('aqi_day', document.getElementById('day').value);
-});
 
 document.getElementById('stationSelect').addEventListener('change', async function () {
   currentStation = this.value;
