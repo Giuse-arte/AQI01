@@ -1038,10 +1038,13 @@ const r = await fetch(
     const rLive = await fetch(
       `https://api.thingspeak.com/channels/${CHANNEL}/feeds.json?start=${formatLDT(since24hKpi)}&end=${formatLDT(nowKpi)}&results=8000&api_key=${API_KEY}`
     );
+    if(!rLive.ok){
+      console.error('KPI live fetch fallita, HTTP', rLive.status, 'canale', CHANNEL);
+    }
     const jLive = rLive.ok ? await rLive.json() : { feeds: [] };
     const feedsLive = jLive.feeds || [];
-    // salva globalmente le ultime 24h reali
-    if(feedsLive.length) liveFeeds24h = feedsLive;
+    // sovrascrive sempre, anche se vuoto — evita dati stantii da centralina precedente
+    liveFeeds24h = feedsLive;
 
     // usa sempre liveFeeds24h per card KPI
     applyKPI(liveFeeds24h.length ? liveFeeds24h : feedsKpi);
@@ -2836,7 +2839,13 @@ stationSelect.addEventListener('change', () => {
   CHANNEL = station.id;
   API_KEY = station.apiKey;
   localStorage.setItem('aqi_station_idx', idx);
-  refreshDashboard(); // ricarica grafici + KPI con il nuovo canale/api_key
+
+  // reset stato globale — evita che dati stantii della centralina precedente
+  // restino visibili se il nuovo fetch fallisce o ritorna vuoto
+  liveFeeds24h = [];
+  rawFeedsStore = [];
+
+  refreshDashboard();
 });
 // dropdown Controllo schede grafici
 const togglePanel = document.getElementById('togglePanel');
