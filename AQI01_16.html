@@ -551,7 +551,7 @@
 <!-- HEADER CON TITOLO E FILTRI -->
 <header>
   <div>
-    <h1>Air Quality Index Device — AQI_01</h1>
+    <h1 id="mainTitle">Air Quality Index Device — AQI_01</h1>
     <!-- Qui viene aggiornato dinamicamente l'intervallo date -->
     <p id="subtitle">Inizio rilevamento dati: — | Fine: —</p>
     <p id="geoRssi">Geoloc.: — | RSSI: — (dBm)</p>
@@ -761,8 +761,8 @@
 /* ID del canale ThingSpeak da cui leggere i dati */
 // Configurazione centraline — aggiungere qui nuove centraline in futuro
 const STATIONS = [
-  { id: 2789658, apiKey: '4IMIXLC0RWW9K4PA', name: 'Centralina 1' },
-  { id: 3412629, apiKey: 'HP8HM37WZ9BAVB4A', name: 'Centralina 2' }
+  { id: 2789658, apiKey: '4IMIXLC0RWW9K4PA', name: 'AQI_01' },
+  { id: 3412629, apiKey: 'HP8HM37WZ9BAVB4A', name: 'AQI_02' }
 ];
 
 // Stato corrente — riassegnati dinamicamente al cambio centralina
@@ -2856,9 +2856,12 @@ STATIONS.forEach((st, idx) => {
 // ripristina ultima centralina scelta, fallback sulla prima
 const savedStationIdx = localStorage.getItem('aqi_station_idx');
 const initialIdx = (savedStationIdx !== null && STATIONS[savedStationIdx]) ? Number(savedStationIdx) : 0;
-stationSelect.value = initialIdx;
-CHANNEL = STATIONS[initialIdx].id;
-API_KEY = STATIONS[initialIdx].apiKey;
+// aggiorna titolo dashboard in base alla centralina attiva
+function updateMainTitle(stationName){
+  const titleEl = document.getElementById('mainTitle');
+  if(titleEl) titleEl.textContent = 'Air Quality Index Device — ' + stationName;
+}
+updateMainTitle(STATIONS[initialIdx].name); // titolo iniziale al caricamento
 
 stationSelect.addEventListener('change', () => {
   const idx = Number(stationSelect.value);
@@ -2870,6 +2873,7 @@ stationSelect.addEventListener('change', () => {
   CHANNEL = station.id;
   API_KEY = station.apiKey;
   localStorage.setItem('aqi_station_idx', idx);
+  updateMainTitle(station.name); // sync titolo con centralina selezionata
 
   // reset stato globale — evita che dati stantii della centralina precedente
   // restino visibili se il nuovo fetch fallisce o ritorna vuoto
