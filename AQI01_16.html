@@ -1121,13 +1121,13 @@ const r = await fetch(
              pad(d.getHours())+':'+pad(d.getMinutes())+':'+pad(d.getSeconds());
     }
     const rLive = await fetch(
-      `https://api.thingspeak.com/channels/${getCurrentChannel()}/feeds.json?start=${formatLDT(since24hKpi)}&end=${formatLDT(nowKpi)}&results=8000`
-    );
+  `https://api.thingspeak.com/channels/${getCurrentChannel()}/feeds.json?api_key=${getCurrentApiKey()}&start=${formatLDT(since24hKpi)}&end=${formatLDT(nowKpi)}&results=8000`
+);
     const jLive = rLive.ok ? await rLive.json() : { feeds: [] };
     const feedsLive = jLive.feeds || [];
     // salva globalmente le ultime 24h reali
-    if(feedsLive.length) liveFeeds24h = feedsLive;
-
+    liveFeeds24h = feedsLive;
+    
     // usa sempre liveFeeds24h per card KPI
     applyKPI(liveFeeds24h.length ? liveFeeds24h : feedsKpi);
   }catch{
@@ -1183,15 +1183,18 @@ const since24h = new Date(now.getTime() - 24*60*60*1000);
 const feeds24h = feeds.filter(f => new Date(f.created_at) >= since24h);
 const feedsForAvg = feeds24h.length ? feeds24h : feeds;
 
-const last = liveFeeds24h.length
-? liveFeeds24h[liveFeeds24h.length - 1]
-: feeds[feeds.length - 1];
+const sourceFeeds = liveFeeds24h?.length ? liveFeeds24h : feeds;
+
+if(!sourceFeeds.length){
+  applyDemoKPI();
+  return;
+}
+
+const last = sourceFeeds[sourceFeeds.length - 1];
 
 updateGeoInfo(last.field8);
 
-const lastRealFeed = liveFeeds24h.length
-? liveFeeds24h[liveFeeds24h.length - 1]
-: feeds[feeds.length - 1];
+const lastRealFeed = last;
 
 const lastDate = new Date(lastRealFeed.created_at);
 const lastUpdateEl = document.getElementById('lastUpdate');
