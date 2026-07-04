@@ -606,6 +606,9 @@
         flex-direction:column;
         gap:8px;
       ">
+        <label style="color:#0b3c5d;font-weight:700;">Centralina</label>
+        <select id="stationSelect" style="padding:6px 8px;border-radius:8px;border:1px solid #d1d5db;font-size:.8rem;"></select>
+        <hr style="border-color:#d1d5db;margin:4px 0;">
         <strong style="color:#0b3c5d;">Controlla grafici</strong>
         <button onclick="selectAll(true)" style="background:#0b3c5d;color:#fff;border:none;padding:6px 10px;border-radius:8px;cursor:pointer;">Seleziona tutti</button>
         <button onclick="selectAll(false)" style="background:#0b3c5d;color:#fff;border:none;padding:6px 10px;border-radius:8px;cursor:pointer;">Deseleziona tutti</button>
@@ -755,8 +758,15 @@
    ========================= */
 
 /* ID del canale ThingSpeak da cui leggere i dati */
-const CHANNEL = 2789658;
+// Configurazione centraline — aggiungere qui nuove centraline in futuro
+const STATIONS = [
+  { id: 2789658, apiKey: '4IMIXLC0RWW9K4PA', name: 'Centralina 1' },
+  { id: 3412629, apiKey: 'HP8HM37WZ9BAVB4A', name: 'Centralina 2' }
+];
 
+// Stato corrente — riassegnati dinamicamente al cambio centralina
+let CHANNEL = STATIONS[0].id;
+let API_KEY = STATIONS[0].apiKey;
 // configurazione tooltip globale per tutti i grafici
 const tooltipConfig = {
   enabled: true,
@@ -2796,7 +2806,38 @@ remember.addEventListener('change', savePreferences);
    ========================= */
 
 document.getElementById('exportCsv').addEventListener('click', exportCSV);
+/* =========================
+   SELEZIONE CENTRALINA
+   ========================= */
+const stationSelect = document.getElementById('stationSelect');
 
+// popola il menu dalle centraline configurate in STATIONS
+STATIONS.forEach((st, idx) => {
+  const opt = document.createElement('option');
+  opt.value = idx;
+  opt.textContent = st.name;
+  stationSelect.appendChild(opt);
+});
+
+// ripristina ultima centralina scelta, fallback sulla prima
+const savedStationIdx = localStorage.getItem('aqi_station_idx');
+const initialIdx = (savedStationIdx !== null && STATIONS[savedStationIdx]) ? Number(savedStationIdx) : 0;
+stationSelect.value = initialIdx;
+CHANNEL = STATIONS[initialIdx].id;
+API_KEY = STATIONS[initialIdx].apiKey;
+
+stationSelect.addEventListener('change', () => {
+  const idx = Number(stationSelect.value);
+  const station = STATIONS[idx];
+  if(!station){
+    console.error('Centralina non valida, indice:', idx);
+    return;
+  }
+  CHANNEL = station.id;
+  API_KEY = station.apiKey;
+  localStorage.setItem('aqi_station_idx', idx);
+  refreshDashboard(); // ricarica grafici + KPI con il nuovo canale/api_key
+});
 // dropdown Controllo schede grafici
 const togglePanel = document.getElementById('togglePanel');
 const panelDropdown = document.getElementById('panelDropdown');
