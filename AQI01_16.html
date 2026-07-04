@@ -1045,8 +1045,8 @@ const r = await fetch(
 
     // usa sempre liveFeeds24h per card KPI
     applyKPI(liveFeeds24h.length ? liveFeeds24h : feedsKpi);
-  }catch{
-    /* Fallback se fetch fallisce */
+  }catch(e){
+    console.error('loadKPIs error:', e); // debug temporaneo — rimuovere dopo verifica
     applyDemoKPI();
   }
 }
