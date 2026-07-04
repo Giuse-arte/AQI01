@@ -1398,7 +1398,9 @@ function exportCSV(){
     }).replace(/\//g,'-');
   }
 
-  const filename = `AQI01_${modeLabels[vm] || vm}_${dateTag}`;
+  // include nome centralina attiva per distinguere i file esportati
+  const stationName = STATIONS[Number(stationSelect.value)]?.name || 'UNKNOWN';
+  const filename = `${stationName}_${modeLabels[vm] || vm}_${dateTag}`;
 
   // =========================
   // GENERA PUNTI INTERPOLATI
