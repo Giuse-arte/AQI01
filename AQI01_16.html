@@ -1141,7 +1141,7 @@ function applyKPI(feeds){
       const rssiStr = isNaN(rssi) ? '—' : rssi.toFixed(0);
       const geoStr = (isNaN(lat) || isNaN(lon))
         ? 'N/D'
-        : ('lat=' + lat.toFixed(6) + ' lon=' + lon.toFixed(6));
+        : (lat.toFixed(6) + ',' + lon.toFixed(6)); // formato pastable in Google Maps
 
       geoRssiEl.textContent = 'GeoLocation: ' + geoStr + ' | RSSI: ' + rssiStr + ' (dBm)';
     } else {
