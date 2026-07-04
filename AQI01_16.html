@@ -1070,7 +1070,7 @@ function applyDemoKPI(){
   press.textContent = fmt1(d.press) + ' hPa';
 
   const geoRssiEl = document.getElementById('geoRssi');
-  if(geoRssiEl) geoRssiEl.textContent = 'Geoloc.: N/D | RSSI: — (dBm)';
+  if(geoRssiEl) geoRssiEl.textContent = 'GeoLocation: N/D | RSSI: — (dBm)';
   
   voc.textContent  = fmt1(50) + ' kOhm';
   document.getElementById('vocDelta').textContent = '+5,0 kOhm ↑';
@@ -1123,21 +1123,29 @@ function applyKPI(feeds){
   }
 
   // Parsing field8: "RSSI,lat,lon" oppure solo "RSSI" se geo non disponibile
+  // Parsing field8: "RSSI;lat,lon" — ';' separa RSSI da coordinate, ',' separa lat/lon
   const geoRssiEl = document.getElementById('geoRssi');
   if(geoRssiEl){
     const f8 = lastRealFeed.field8;
     if(f8 !== undefined && f8 !== null && f8 !== ''){
-      const parts = String(f8).split(',');
-      const rssi = parts[0] !== undefined ? Number(parts[0]) : NaN;
-      const lat  = parts[1] !== undefined ? Number(parts[1]) : NaN;
-      const lon  = parts[2] !== undefined ? Number(parts[2]) : NaN;
+      const semiParts = String(f8).split(';');
+      const rssi = semiParts[0] !== undefined ? Number(semiParts[0]) : NaN;
+
+      let lat = NaN, lon = NaN;
+      if(semiParts[1]){
+        const geoParts = semiParts[1].split(',');
+        lat = geoParts[0] !== undefined ? Number(geoParts[0]) : NaN;
+        lon = geoParts[1] !== undefined ? Number(geoParts[1]) : NaN;
+      }
 
       const rssiStr = isNaN(rssi) ? '—' : rssi.toFixed(0);
-      const geoStr = (isNaN(lat) || isNaN(lon)) ? 'N/D' : (lat.toFixed(6) + ',' + lon.toFixed(6));
+      const geoStr = (isNaN(lat) || isNaN(lon))
+        ? 'N/D'
+        : ('lat=' + lat.toFixed(6) + ' lon=' + lon.toFixed(6));
 
-      geoRssiEl.textContent = 'Geoloc.: ' + geoStr + ' | RSSI: ' + rssiStr + ' (dBm)';
+      geoRssiEl.textContent = 'GeoLocation: ' + geoStr + ' | RSSI: ' + rssiStr + ' (dBm)';
     } else {
-      geoRssiEl.textContent = 'Geoloc.: N/D | RSSI: — (dBm)';
+      geoRssiEl.textContent = 'GeoLocation: N/D | RSSI: — (dBm)';
     }
   }
 
