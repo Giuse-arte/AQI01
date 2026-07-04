@@ -227,7 +227,7 @@
       .layout{grid-template-columns:1fr}
     }
 
-    /* Pannello Controllo Grafici */
+    /* Pannello Controlla Grafici */
     .panel{
     background: var(--card);
     border: 1px solid #1e4eaf;
@@ -551,13 +551,9 @@
 <!-- HEADER CON TITOLO E FILTRI -->
 <header>
   <div>
-    <h1 id="dashboardTitle">Air Quality Index Device — AQI_01</h1>
+    <h1>Air Quality Index Device — AQI_01</h1>
     <!-- Qui viene aggiornato dinamicamente l'intervallo date -->
     <p id="subtitle">Inizio rilevamento dati: — | Fine: —</p>
-    <p id="geoInfo" style="margin:6px 0 0;font-size:.9rem;color:#374151;">
-      GeoLocation: — | RSSI: —
-    </p>
-    
   </div>
 
   <!-- Filtri temporali e standard AQI -->
@@ -610,25 +606,7 @@
         flex-direction:column;
         gap:8px;
       ">
-        <strong style="color:#0b3c5d;">Controllo grafici</strong>
-        <hr style="border-color:#d1d5db;margin:4px 0;">
-
-<label for="stationSelect" style="font-weight:600;">
-  Seleziona centralina
-</label>
-
-<select id="stationSelect" style="
-  padding:7px 10px;
-  border-radius:8px;
-  border:1px solid #d1d5db;
-  font-size:.8rem;
-">
-  <option value="1">AQI_01</option>
-<option value="2">AQI_02</option>
-</select>
-
-<hr style="border-color:#d1d5db;margin:4px 0;">
-        
+        <strong style="color:#0b3c5d;">Controlla grafici</strong>
         <button onclick="selectAll(true)" style="background:#0b3c5d;color:#fff;border:none;padding:6px 10px;border-radius:8px;cursor:pointer;">Seleziona tutti</button>
         <button onclick="selectAll(false)" style="background:#0b3c5d;color:#fff;border:none;padding:6px 10px;border-radius:8px;cursor:pointer;">Deseleziona tutti</button>
         <hr style="border-color:#d1d5db;margin:4px 0;">
@@ -777,35 +755,8 @@
    ========================= */
 
 /* ID del canale ThingSpeak da cui leggere i dati */
-const STATIONS = {
-  1: {
-    name: "AQI_01",
-    channel: 2789658,
-    apiKey: "4IMIXLC0RWW9K4PA"
-  },
-  2: {
-    name: "AQI_02",
-    channel: 3412629,
-    apiKey: "HP8HM37WZ9BAVB4A"
-  }
-};
+const CHANNEL = 2789658;
 
-let currentStation = "1";
-
-function getCurrentChannel(){
-  return STATIONS[currentStation].channel;
-}
-
-function getCurrentApiKey(){
-  return STATIONS[currentStation].apiKey;
-}
-function updateDashboardTitle(){
-  const titleEl = document.getElementById('dashboardTitle');
-  if(!titleEl) return;
-
-  titleEl.textContent =
-    `Air Quality Index Device — ${STATIONS[currentStation].name}`;
-}
 // configurazione tooltip globale per tutti i grafici
 const tooltipConfig = {
   enabled: true,
@@ -929,36 +880,6 @@ const fmt1 = v => v == null || isNaN(v) ? '—' : Number(v).toFixed(1);
   - Usato per PM e valori medi
 */
 const fmt0 = v => v == null || isNaN(v) ? '—' : Math.round(Number(v));
-function formatLocalDateTime(d){
-  const pad = n => n.toString().padStart(2,'0');
-
-  return d.getFullYear() + '-' +
-         pad(d.getMonth()+1) + '-' +
-         pad(d.getDate()) + ' ' +
-         pad(d.getHours()) + ':' +
-         pad(d.getMinutes()) + ':' +
-         pad(d.getSeconds());
-}
-function parseField8(raw){
-
-  if(!raw || typeof raw !== 'string') return null;
-
-  const cleaned = raw.trim();
-
-  if(cleaned === '') return null;
-
-  const parts = cleaned.split(',');
-
-  if(parts.length !== 3) return null;
-
-  const rssi = parts[0].trim();
-  const lat  = parts[1].trim();
-  const lon  = parts[2].trim();
-
-  if(!rssi || !lat || !lon) return null;
-
-  return { rssi, lat, lon };
-}
 
 /* =========================
    DATI DI DEMO (FALLBACK)
@@ -969,22 +890,6 @@ function parseField8(raw){
   Viene usato SOLO se la chiamata API fallisce
   (offline, rate limit, errore di rete, ecc.)
 */
-function updateGeoInfo(field8Value){
-
-  const geoEl = document.getElementById('geoInfo');
-  if(!geoEl) return;
-
-  const parsed = parseField8(field8Value);
-
-  if(!parsed){
-    geoEl.textContent = 'GeoLocation: — | RSSI: —';
-    return;
-  }
-
-  geoEl.textContent =
-    `GeoLocation: lat=${parsed.lat} lon=${parsed.lon} | RSSI: ${parsed.rssi} (dBm)`;
-}
-  
 function demoData(){
   return {
     hum:55.4,
@@ -1099,7 +1004,7 @@ const startStr = formatLocalDateTime(startBuffer);
 const endStr = formatLocalDateTime(tEnd);
 
 const r = await fetch(
-  `https://api.thingspeak.com/channels/${getCurrentChannel()}/feeds.json?api_key=${getCurrentApiKey()}&start=${startStr}&end=${endStr}&results=8000`
+  `https://api.thingspeak.com/channels/${CHANNEL}/feeds.json?start=${startStr}&end=${endStr}&results=8000`
 );
 
     /* Se risposta HTTP non OK → errore */
@@ -1121,13 +1026,13 @@ const r = await fetch(
              pad(d.getHours())+':'+pad(d.getMinutes())+':'+pad(d.getSeconds());
     }
     const rLive = await fetch(
-  `https://api.thingspeak.com/channels/${getCurrentChannel()}/feeds.json?api_key=${getCurrentApiKey()}&start=${formatLDT(since24hKpi)}&end=${formatLDT(nowKpi)}&results=8000`
-);
+      `https://api.thingspeak.com/channels/${CHANNEL}/feeds.json?start=${formatLDT(since24hKpi)}&end=${formatLDT(nowKpi)}&results=8000`
+    );
     const jLive = rLive.ok ? await rLive.json() : { feeds: [] };
     const feedsLive = jLive.feeds || [];
     // salva globalmente le ultime 24h reali
-    liveFeeds24h = feedsLive;
-    
+    if(feedsLive.length) liveFeeds24h = feedsLive;
+
     // usa sempre liveFeeds24h per card KPI
     applyKPI(liveFeeds24h.length ? liveFeeds24h : feedsKpi);
   }catch{
@@ -1164,7 +1069,6 @@ function applyDemoKPI(){
 
   /* Calcolo AQI su dati demo */
   computeAQI(d.pm25, d.pm10);
-  updateGeoInfo(null);
 }
 
 /* =========================
@@ -1175,87 +1079,68 @@ function applyDemoKPI(){
   feeds → array di misurazioni ThingSpeak
 */
 function applyKPI(feeds){
-if(!feeds.length) return;
+  if(!feeds.length) return;
 
-const now = new Date();
-const since24h = new Date(now.getTime() - 24*60*60*1000);
+  const now = new Date();
+  const since24h = new Date(now.getTime() - 24*60*60*1000);
+  const feeds24h = feeds.filter(f => new Date(f.created_at) >= since24h);
+  const feedsForAvg = feeds24h.length ? feeds24h : feeds;
 
-const feeds24h = feeds.filter(f => new Date(f.created_at) >= since24h);
-const feedsForAvg = feeds24h.length ? feeds24h : feeds;
+ // usa sempre l'ultimo feed reale delle ultime 24h
+  console.log("applyKPI chiamata con feeds:", feeds.length, "liveFeeds24h:", liveFeeds24h.length);
+  const last = liveFeeds24h.length ? liveFeeds24h.at(-1) : feeds.at(-1);
+  console.log("last used:", last?.created_at, "field1:", last?.field1);
 
-const sourceFeeds = liveFeeds24h?.length ? liveFeeds24h : feeds;
+// aggiorna data ultima rilevazione — sempre da liveFeeds24h
+  const lastRealFeed = liveFeeds24h.length
+    ? liveFeeds24h.at(-1)
+    : last;
+  const lastDate = new Date(lastRealFeed.created_at);
+  const lastUpdateEl = document.getElementById('lastUpdate');
+  if(lastUpdateEl){
+    lastUpdateEl.textContent = 'Ultima rilevazione: ' + lastDate.toLocaleDateString('it-IT',{
+      day:'2-digit', month:'2-digit', year:'numeric'
+    }) + ' ' + lastDate.toLocaleTimeString('it-IT',{
+      hour:'2-digit', minute:'2-digit', second:'2-digit'
+    });
+  }
 
-if(!sourceFeeds.length){
-  applyDemoKPI();
-  return;
+  // prime 4 card → sempre ultimo valore
+  hum.textContent   = fmt1(last.field1) + ' %';
+  temp.textContent  = fmt1(last.field2) + ' °C';
+  press.textContent = fmt1(last.field3) + ' hPa';
+  pm1.textContent   = fmt0(last.field5) + ' µg/m³';
+
+  // min/max per tutte le modalità tranne LIVE
+  const vm = document.getElementById('viewMode').value;
+  const minVal = f => Math.min(...feeds.map(x => Number(x[f])).filter(v => !isNaN(v)));
+  const maxVal = f => Math.max(...feeds.map(x => Number(x[f])).filter(v => !isNaN(v)));
+  humMM.textContent   = fmt1(minVal('field1')) + ' % — ' + fmt1(maxVal('field1')) + ' %';
+  tempMM.textContent  = fmt1(minVal('field2')) + ' °C — ' + fmt1(maxVal('field2')) + ' °C';
+  pressMM.textContent = fmt1(minVal('field3')) + ' hPa — ' + fmt1(maxVal('field3')) + ' hPa';
+  pm1MM.textContent   = fmt0(minVal('field5')) + ' µg/m³ — ' + fmt0(maxVal('field5')) + ' µg/m³';
+
+  // VOC → aggiornato dal grafico tramite callback
+  // il grafico VOC aggiornerà la card dopo il suo rendering
+
+  // PM2.5 e PM10 → ultimo valore + media mobile 24h sotto
+  const avg24 = f =>
+    feedsForAvg.reduce((s,x) => s + Number(x[f] || 0), 0) / feedsForAvg.length;
+  const pm25_24 = avg24('field6');
+  const pm10_24 = avg24('field7');
+
+  // ultimo valore istantaneo
+  pm25.textContent = fmt0(last.field6) + ' µg/m³';
+  pm10.textContent = fmt0(last.field7) + ' µg/m³';
+
+  // media mobile 24h sotto
+  const pm25avgEl = document.getElementById('pm25avg');
+  const pm10avgEl = document.getElementById('pm10avg');
+  if(pm25avgEl) pm25avgEl.textContent = 'media 24h: ' + fmt0(pm25_24) + ' µg/m³';
+  if(pm10avgEl) pm10avgEl.textContent = 'media 24h: ' + fmt0(pm10_24) + ' µg/m³';
+
+  computeAQI(pm25_24, pm10_24);
 }
-
-const last = sourceFeeds[sourceFeeds.length - 1];
-
-updateGeoInfo(last.field8);
-
-const lastRealFeed = last;
-
-const lastDate = new Date(lastRealFeed.created_at);
-const lastUpdateEl = document.getElementById('lastUpdate');
-
-if(lastUpdateEl && !isNaN(lastDate.getTime())){
-const dateStr = lastDate.toLocaleDateString('it-IT',{
-day:'2-digit',
-month:'2-digit',
-year:'numeric'
-});
-
-```
-const timeStr = lastDate.toLocaleTimeString('it-IT',{
-  hour:'2-digit',
-  minute:'2-digit'
-});
-
-lastUpdateEl.textContent =
-  `Ultima rilevazione: ${dateStr} ${timeStr}`;
-}
-
-// prime 4 card → sempre ultimo valore
-hum.textContent   = fmt1(last.field1) + ' %';
-temp.textContent  = fmt1(last.field2) + ' °C';
-press.textContent = fmt1(last.field3) + ' hPa';
-pm1.textContent   = fmt0(last.field5) + ' µg/m³';
-
-const vm = document.getElementById('viewMode').value;
-
-const minVal = f =>
-Math.min(...feeds.map(x => Number(x[f])).filter(v => !isNaN(v)));
-
-const maxVal = f =>
-Math.max(...feeds.map(x => Number(x[f])).filter(v => !isNaN(v)));
-
-humMM.textContent   = fmt1(minVal('field1')) + ' % — ' + fmt1(maxVal('field1')) + ' %';
-tempMM.textContent  = fmt1(minVal('field2')) + ' °C — ' + fmt1(maxVal('field2')) + ' °C';
-pressMM.textContent = fmt1(minVal('field3')) + ' hPa — ' + fmt1(maxVal('field3')) + ' hPa';
-pm1MM.textContent   = fmt0(minVal('field5')) + ' µg/m³ — ' + fmt0(maxVal('field5')) + ' µg/m³';
-
-const avg24 = f =>
-feedsForAvg.reduce((s,x) => s + Number(x[f] || 0), 0) / feedsForAvg.length;
-
-const pm25_24 = avg24('field6');
-const pm10_24 = avg24('field7');
-
-pm25.textContent = fmt0(last.field6) + ' µg/m³';
-pm10.textContent = fmt0(last.field7) + ' µg/m³';
-
-const pm25avgEl = document.getElementById('pm25avg');
-const pm10avgEl = document.getElementById('pm10avg');
-
-if(pm25avgEl)
-pm25avgEl.textContent = 'media 24h: ' + fmt0(pm25_24) + ' µg/m³';
-
-if(pm10avgEl)
-pm10avgEl.textContent = 'media 24h: ' + fmt0(pm10_24) + ' µg/m³';
-
-computeAQI(pm25_24, pm10_24);
-}
-
 
 /* =========================
    CALCOLO AQI (EEA / EPA)
@@ -1265,9 +1150,6 @@ function computeAQI(pm25, pm10){
 
   /* ===== STANDARD EEA ===== */
   if(mode.value === 'EEA'){
-  const aqiBtn = document.querySelector('.aqi-info-btn');
-  if(aqiBtn) aqiBtn.style.display = 'none';
-  
   aqiTitle.textContent = 'AQI (EEA 24h)';
   
   /* Classificazione PM secondo soglie EEA */
@@ -2139,8 +2021,8 @@ const startStr = formatLocalDateTime(startBuffer);
 const endStr = formatLocalDateTime(tEnd);
 
       const r = await fetch(
-  `https://api.thingspeak.com/channels/${getCurrentChannel()}/feeds.json?api_key=${getCurrentApiKey()}&start=${startStr}&end=${endStr}&results=8000`
-);
+        `https://api.thingspeak.com/channels/${CHANNEL}/feeds.json?start=${startStr}&end=${endStr}&results=8000`
+      );
 
       if(!r.ok) throw new Error();
 
@@ -2262,8 +2144,8 @@ if(ch.dataset.id === "4"){
       const endStr = formatLocalDateTime(tEnd);
 
       const r = await fetch(
-  `https://api.thingspeak.com/channels/${getCurrentChannel()}/feeds.json?api_key=${getCurrentApiKey()}&start=${startStr}&end=${endStr}&results=8000`
-);
+        `https://api.thingspeak.com/channels/${CHANNEL}/feeds.json?start=${startStr}&end=${endStr}&results=8000`
+      );
       const j = await r.json();
       const allFeeds = j.feeds || [];
       if(!allFeeds.length) return;
@@ -2433,8 +2315,8 @@ const startStr = formatLocalDateTime(startBuffer);
 const endStr = formatLocalDateTime(tEnd);
 
       const r = await fetch(
-  `https://api.thingspeak.com/channels/${getCurrentChannel()}/feeds.json?api_key=${getCurrentApiKey()}&start=${startStr}&end=${endStr}&results=8000`
-);
+        `https://api.thingspeak.com/channels/${CHANNEL}/feeds.json?start=${startStr}&end=${endStr}&results=8000`
+      );
 
       const j = await r.json();
       const feeds = j.feeds || [];
@@ -2601,7 +2483,7 @@ const startStr = formatLocalDateTime(startBuffer);
 const endStr = formatLocalDateTime(tEnd);
 
 const r = await fetch(
-  `https://api.thingspeak.com/channels/${getCurrentChannel()}/feeds.json?api_key=${getCurrentApiKey()}&start=${startStr}&end=${endStr}&results=8000`
+  `https://api.thingspeak.com/channels/${CHANNEL}/feeds.json?start=${startStr}&end=${endStr}&results=8000`
 );
 
       if (!r.ok) throw new Error();
@@ -2961,17 +2843,9 @@ document.getElementById('viewMode').addEventListener('change', ()=>{
   refreshDashboard();
 });
 
-
-document.getElementById('stationSelect').addEventListener('change', async function () {
-  currentStation = this.value;
-
-  updateDashboardTitle();
-
-  rawFeedsStore = [];
-  liveFeeds24h = [];
-
-  await loadKPIs();
-  renderCharts();
+// 🔥 FIX BUG 1: salva il giorno ogni volta che cambia
+document.getElementById('day').addEventListener('change', ()=>{
+  localStorage.setItem('aqi_day', document.getElementById('day').value);
 });
  
 /* =========================
