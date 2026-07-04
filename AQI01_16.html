@@ -2873,6 +2873,7 @@ stationSelect.addEventListener('change', () => {
   CHANNEL = station.id;
   API_KEY = station.apiKey;
   localStorage.setItem('aqi_station_idx', idx);
+
   updateMainTitle(station.name); // sync titolo con centralina selezionata
 
   // reset stato globale — evita che dati stantii della centralina precedente
