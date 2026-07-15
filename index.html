@@ -551,9 +551,10 @@
 <!-- HEADER CON TITOLO E FILTRI -->
 <header>
   <div>
-    <h1>Air Quality Index Device — AQI_01</h1>
+    <h1 id="mainTitle">Air Quality Index Device — AQI_01</h1>
     <!-- Qui viene aggiornato dinamicamente l'intervallo date -->
     <p id="subtitle">Inizio rilevamento dati: — | Fine: —</p>
+    <p id="geoRssi">Geoloc.: — | RSSI: — (dBm)</p>
   </div>
 
   <!-- Filtri temporali e standard AQI -->
@@ -587,7 +588,7 @@
 
     <button id="exportCsv" style="background:#16a34a;">Estrai CSV</button>
     <div style="position:relative;display:inline-block;">
-      <button id="togglePanel" style="background:#1e4eaf;">Contr. grafici</button>
+      <button id="togglePanel" style="background:#1e4eaf;">Contr. Centraline</button>
       <div id="panelDropdown" style="
         display:none;
         position:absolute;
@@ -606,6 +607,9 @@
         flex-direction:column;
         gap:8px;
       ">
+        <label style="color:#0b3c5d;font-weight:700;">Scegli Centralina</label>
+        <select id="stationSelect" style="padding:6px 8px;border-radius:8px;border:1px solid #d1d5db;font-size:.8rem;"></select>
+        <hr style="border-color:#d1d5db;margin:4px 0;">
         <strong style="color:#0b3c5d;">Controlla grafici</strong>
         <button onclick="selectAll(true)" style="background:#0b3c5d;color:#fff;border:none;padding:6px 10px;border-radius:8px;cursor:pointer;">Seleziona tutti</button>
         <button onclick="selectAll(false)" style="background:#0b3c5d;color:#fff;border:none;padding:6px 10px;border-radius:8px;cursor:pointer;">Deseleziona tutti</button>
@@ -755,8 +759,15 @@
    ========================= */
 
 /* ID del canale ThingSpeak da cui leggere i dati */
-const CHANNEL = 2789658;
+// Configurazione centraline — aggiungere qui nuove centraline in futuro
+const STATIONS = [
+  { id: 2789658, apiKey: '4IMIXLC0RWW9K4PA', name: 'AQI_01' },
+  { id: 3412629, apiKey: 'HP8HM37WZ9BAVB4A', name: 'AQI_02' }
+];
 
+// Stato corrente — riassegnati dinamicamente al cambio centralina
+let CHANNEL = STATIONS[0].id;
+let API_KEY = STATIONS[0].apiKey;
 // configurazione tooltip globale per tutti i grafici
 const tooltipConfig = {
   enabled: true,
@@ -1004,7 +1015,7 @@ const startStr = formatLocalDateTime(startBuffer);
 const endStr = formatLocalDateTime(tEnd);
 
 const r = await fetch(
-  `https://api.thingspeak.com/channels/${CHANNEL}/feeds.json?start=${startStr}&end=${endStr}&results=8000`
+  `https://api.thingspeak.com/channels/${CHANNEL}/feeds.json?start=${startStr}&end=${endStr}&results=8000&api_key=${API_KEY}`
 );
 
     /* Se risposta HTTP non OK → errore */
@@ -1026,17 +1037,20 @@ const r = await fetch(
              pad(d.getHours())+':'+pad(d.getMinutes())+':'+pad(d.getSeconds());
     }
     const rLive = await fetch(
-      `https://api.thingspeak.com/channels/${CHANNEL}/feeds.json?start=${formatLDT(since24hKpi)}&end=${formatLDT(nowKpi)}&results=8000`
+      `https://api.thingspeak.com/channels/${CHANNEL}/feeds.json?start=${formatLDT(since24hKpi)}&end=${formatLDT(nowKpi)}&results=8000&api_key=${API_KEY}`
     );
+    if(!rLive.ok){
+      console.error('KPI live fetch fallita, HTTP', rLive.status, 'canale', CHANNEL);
+    }
     const jLive = rLive.ok ? await rLive.json() : { feeds: [] };
     const feedsLive = jLive.feeds || [];
-    // salva globalmente le ultime 24h reali
-    if(feedsLive.length) liveFeeds24h = feedsLive;
+    // sovrascrive sempre, anche se vuoto — evita dati stantii da centralina precedente
+    liveFeeds24h = feedsLive;
 
     // usa sempre liveFeeds24h per card KPI
     applyKPI(liveFeeds24h.length ? liveFeeds24h : feedsKpi);
-  }catch{
-    /* Fallback se fetch fallisce */
+  }catch(e){
+    console.error('loadKPIs error:', e); // debug temporaneo — rimuovere dopo verifica
     applyDemoKPI();
   }
 }
@@ -1055,6 +1069,9 @@ function applyDemoKPI(){
   temp.textContent  = fmt1(d.temp)  + ' °C';
   press.textContent = fmt1(d.press) + ' hPa';
 
+  const geoRssiEl = document.getElementById('geoRssi');
+  if(geoRssiEl) geoRssiEl.textContent = 'GeoLocation: N/D | RSSI: — (dBm)';
+  
   voc.textContent  = fmt1(50) + ' kOhm';
   document.getElementById('vocDelta').textContent = '+5,0 kOhm ↑';
   document.getElementById('vocDelta').style.color = '#16a34a';
@@ -1103,6 +1120,33 @@ function applyKPI(feeds){
     }) + ' ' + lastDate.toLocaleTimeString('it-IT',{
       hour:'2-digit', minute:'2-digit', second:'2-digit'
     });
+  }
+
+  // Parsing field8: "RSSI,lat,lon" oppure solo "RSSI" se geo non disponibile
+  // Parsing field8: "RSSI;lat,lon" — ';' separa RSSI da coordinate, ',' separa lat/lon
+  const geoRssiEl = document.getElementById('geoRssi');
+  if(geoRssiEl){
+    const f8 = lastRealFeed.field8;
+    if(f8 !== undefined && f8 !== null && f8 !== ''){
+      const semiParts = String(f8).split(';');
+      const rssi = semiParts[0] !== undefined ? Number(semiParts[0]) : NaN;
+
+      let lat = NaN, lon = NaN;
+      if(semiParts[1]){
+        const geoParts = semiParts[1].split(',');
+        lat = geoParts[0] !== undefined ? Number(geoParts[0]) : NaN;
+        lon = geoParts[1] !== undefined ? Number(geoParts[1]) : NaN;
+      }
+
+      const rssiStr = isNaN(rssi) ? '—' : rssi.toFixed(0);
+      const geoStr = (isNaN(lat) || isNaN(lon))
+        ? 'N/D'
+        : (lat.toFixed(6) + ',' + lon.toFixed(6)); // formato pastable in Google Maps
+
+      geoRssiEl.textContent = 'GeoLocation: ' + geoStr + ' | RSSI: ' + rssiStr + ' (dBm)';
+    } else {
+      geoRssiEl.textContent = 'GeoLocation: N/D | RSSI: — (dBm)';
+    }
   }
 
   // prime 4 card → sempre ultimo valore
@@ -1354,7 +1398,9 @@ function exportCSV(){
     }).replace(/\//g,'-');
   }
 
-  const filename = `AQI01_${modeLabels[vm] || vm}_${dateTag}`;
+  // include nome centralina attiva per distinguere i file esportati
+  const stationName = STATIONS[Number(stationSelect.value)]?.name || 'UNKNOWN';
+  const filename = `${stationName}_${modeLabels[vm] || vm}_${dateTag}`;
 
   // =========================
   // GENERA PUNTI INTERPOLATI
@@ -2021,7 +2067,7 @@ const startStr = formatLocalDateTime(startBuffer);
 const endStr = formatLocalDateTime(tEnd);
 
       const r = await fetch(
-        `https://api.thingspeak.com/channels/${CHANNEL}/feeds.json?start=${startStr}&end=${endStr}&results=8000`
+        `https://api.thingspeak.com/channels/${CHANNEL}/feeds.json?start=${startStr}&end=${endStr}&results=8000&api_key=${API_KEY}`
       );
 
       if(!r.ok) throw new Error();
@@ -2144,7 +2190,7 @@ if(ch.dataset.id === "4"){
       const endStr = formatLocalDateTime(tEnd);
 
       const r = await fetch(
-        `https://api.thingspeak.com/channels/${CHANNEL}/feeds.json?start=${startStr}&end=${endStr}&results=8000`
+        `https://api.thingspeak.com/channels/${CHANNEL}/feeds.json?start=${startStr}&end=${endStr}&results=8000&api_key=${API_KEY}`
       );
       const j = await r.json();
       const allFeeds = j.feeds || [];
@@ -2315,7 +2361,7 @@ const startStr = formatLocalDateTime(startBuffer);
 const endStr = formatLocalDateTime(tEnd);
 
       const r = await fetch(
-        `https://api.thingspeak.com/channels/${CHANNEL}/feeds.json?start=${startStr}&end=${endStr}&results=8000`
+        `https://api.thingspeak.com/channels/${CHANNEL}/feeds.json?start=${startStr}&end=${endStr}&results=8000&api_key=${API_KEY}`
       );
 
       const j = await r.json();
@@ -2483,7 +2529,7 @@ const startStr = formatLocalDateTime(startBuffer);
 const endStr = formatLocalDateTime(tEnd);
 
 const r = await fetch(
-  `https://api.thingspeak.com/channels/${CHANNEL}/feeds.json?start=${startStr}&end=${endStr}&results=8000`
+  `https://api.thingspeak.com/channels/${CHANNEL}/feeds.json?start=${startStr}&end=${endStr}&results=8000&api_key=${API_KEY}`
 );
 
       if (!r.ok) throw new Error();
@@ -2796,7 +2842,48 @@ remember.addEventListener('change', savePreferences);
    ========================= */
 
 document.getElementById('exportCsv').addEventListener('click', exportCSV);
+/* =========================
+   SELEZIONE CENTRALINA
+   ========================= */
+const stationSelect = document.getElementById('stationSelect');
 
+// popola il menu dalle centraline configurate in STATIONS
+STATIONS.forEach((st, idx) => {
+  const opt = document.createElement('option');
+  opt.value = idx;
+  opt.textContent = st.name;
+  stationSelect.appendChild(opt);
+});
+
+// dichiarazione funzione — hoisted, eseguita in DOMContentLoaded per garantire ordine
+function updateMainTitle(stationName){
+  const titleEl = document.getElementById('mainTitle');
+  if(titleEl) titleEl.textContent = 'Air Quality Index Device — ' + stationName;
+}
+
+stationSelect.addEventListener('change', () => {
+  const idx = Number(stationSelect.value);
+  const station = STATIONS[idx];
+  if(!station){
+    console.error('Centralina non valida, indice:', idx);
+    return;
+  }
+  CHANNEL = station.id;
+  API_KEY = station.apiKey;
+  localStorage.setItem('aqi_station_idx', idx);
+
+  updateMainTitle(station.name); // sync titolo con centralina selezionata
+
+  // reset stato globale — evita che dati stantii della centralina precedente
+  // restino visibili se il nuovo fetch fallisce o ritorna vuoto
+  liveFeeds24h = [];
+  rawFeedsStore = [];
+
+  refreshDashboard();
+
+  panelDropdown.style.display = 'none'; // chiude il pannello dopo la selezione
+});
+  
 // dropdown Controllo schede grafici
 const togglePanel = document.getElementById('togglePanel');
 const panelDropdown = document.getElementById('panelDropdown');
@@ -2856,6 +2943,14 @@ document.getElementById('day').addEventListener('change', ()=>{
    RIPRISTINO PREFERENZE
    ========================= */
 document.addEventListener('DOMContentLoaded', () => {
+  // STEP 0: ripristina centralina PRIMA di qualsiasi fetch/render — fix reset su F5
+  const savedStationIdx = localStorage.getItem('aqi_station_idx');
+  const initialIdx = (savedStationIdx !== null && STATIONS[savedStationIdx]) ? Number(savedStationIdx) : 0;
+  stationSelect.value = initialIdx;
+  CHANNEL = STATIONS[initialIdx].id;
+  API_KEY = STATIONS[initialIdx].apiKey;
+  updateMainTitle(STATIONS[initialIdx].name);
+
   // 1. Cerchiamo se ci sono preferenze salvate
   const saved = localStorage.getItem('aqi_dashboard_preferences');
 
