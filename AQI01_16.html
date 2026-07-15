@@ -2880,7 +2880,10 @@ stationSelect.addEventListener('change', () => {
   rawFeedsStore = [];
 
   refreshDashboard();
+
+  panelDropdown.style.display = 'none'; // chiude il pannello dopo la selezione
 });
+  
 // dropdown Controllo schede grafici
 const togglePanel = document.getElementById('togglePanel');
 const panelDropdown = document.getElementById('panelDropdown');
