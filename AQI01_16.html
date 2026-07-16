@@ -768,8 +768,6 @@ const STATIONS = [
 // Stato corrente — riassegnati dinamicamente al cambio centralina
 let CHANNEL = STATIONS[0].id;
 let API_KEY = STATIONS[0].apiKey;
-// Posizione statica della centralina (Channel Location ThingSpeak) — non più nel feed dati
-let stationLocation = { lat: null, lon: null, elevation: null };  
 // configurazione tooltip globale per tutti i grafici
 const tooltipConfig = {
   enabled: true,
@@ -997,26 +995,6 @@ function getTimeRange(){
   - results=48 → ~24 ore se campionamento ogni 30 min
   - Se qualcosa va storto → fallback su dati demo
 */
-
-  /* =========================
-   POSIZIONE STATICA CENTRALINA
-   ========================= */
-
-// Legge lat/lon/elevation dalla Channel Location del canale ThingSpeak (impostata da pannello web)
-async function loadStationLocation(){
-  try{
-    const r = await fetch(`https://api.thingspeak.com/channels/${CHANNEL}.json?api_key=${API_KEY}`);
-    if(!r.ok) throw new Error();
-    const j = await r.json();
-    stationLocation.lat = (j.latitude !== undefined && j.latitude !== null && j.latitude !== '') ? Number(j.latitude) : null;
-    stationLocation.lon = (j.longitude !== undefined && j.longitude !== null && j.longitude !== '') ? Number(j.longitude) : null;
-    stationLocation.elevation = (j.elevation !== undefined && j.elevation !== null && j.elevation !== '') ? Number(j.elevation) : null;
-  }catch(e){
-    console.error('loadStationLocation error:', e);
-    stationLocation = { lat: null, lon: null, elevation: null };
-  }
-}
-  
 async function loadKPIs(){
   try{
     const { start: tStart, end: tEnd } = getTimeRange();
@@ -1144,18 +1122,31 @@ function applyKPI(feeds){
     });
   }
 
- // field8 ora contiene solo RSSI (posizione statica letta da Channel Location, non più dal feed)
+  // Parsing field8: "RSSI,lat,lon" oppure solo "RSSI" se geo non disponibile
+  // Parsing field8: "RSSI;lat,lon" — ';' separa RSSI da coordinate, ',' separa lat/lon
   const geoRssiEl = document.getElementById('geoRssi');
   if(geoRssiEl){
     const f8 = lastRealFeed.field8;
-    const rssi = (f8 !== undefined && f8 !== null && f8 !== '') ? Number(f8) : NaN;
-    const rssiStr = isNaN(rssi) ? '—' : rssi.toFixed(0);
+    if(f8 !== undefined && f8 !== null && f8 !== ''){
+      const semiParts = String(f8).split(';');
+      const rssi = semiParts[0] !== undefined ? Number(semiParts[0]) : NaN;
 
-    const geoStr = (stationLocation.lat !== null && stationLocation.lon !== null)
-      ? (stationLocation.lat.toFixed(6) + ',' + stationLocation.lon.toFixed(6)) // formato pastable in Google Maps
-      : 'N/D';
+      let lat = NaN, lon = NaN;
+      if(semiParts[1]){
+        const geoParts = semiParts[1].split(',');
+        lat = geoParts[0] !== undefined ? Number(geoParts[0]) : NaN;
+        lon = geoParts[1] !== undefined ? Number(geoParts[1]) : NaN;
+      }
 
-    geoRssiEl.textContent = 'GeoLocation: ' + geoStr + ' | RSSI: ' + rssiStr + ' (dBm)';
+      const rssiStr = isNaN(rssi) ? '—' : rssi.toFixed(0);
+      const geoStr = (isNaN(lat) || isNaN(lon))
+        ? 'N/D'
+        : (lat.toFixed(6) + ',' + lon.toFixed(6)); // formato pastable in Google Maps
+
+      geoRssiEl.textContent = 'GeoLocation: ' + geoStr + ' | RSSI: ' + rssiStr + ' (dBm)';
+    } else {
+      geoRssiEl.textContent = 'GeoLocation: N/D | RSSI: — (dBm)';
+    }
   }
 
   // prime 4 card → sempre ultimo valore
@@ -2879,7 +2870,6 @@ stationSelect.addEventListener('change', () => {
   }
   CHANNEL = station.id;
   API_KEY = station.apiKey;
-  loadStationLocation(); // ricarica la posizione statica della nuova centralina selezionata
   localStorage.setItem('aqi_station_idx', idx);
 
   updateMainTitle(station.name); // sync titolo con centralina selezionata
@@ -3020,7 +3010,6 @@ document.addEventListener('DOMContentLoaded', () => {
     localStorage.setItem('aqi_day', document.getElementById('day').value);
   });
 
-  loadStationLocation(); // posizione statica della centralina selezionata all'avvio
   renderCharts();
   loadKPIs();
 });
