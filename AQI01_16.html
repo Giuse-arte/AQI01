@@ -936,25 +936,22 @@ function savePreferences(){
   const idx = Number(stationSelect.value) || 0;
   const prefKey = getStationPrefKey(idx);
 
-  // se "Ricorda preferenze" NON è attivo per QUESTA centralina, non salvare nulla
-  if(!remember.checked){
-    localStorage.removeItem(prefKey);
-    return;
-  }
-
-  const selectedCharts = [...document.querySelectorAll('input[data-id]:checked')]
-    .map(c => c.dataset.id);
-
-  // oggetto preferenze per-centralina, include viewMode/day
+  // oggetto preferenze per-centralina: mode/date/viewMode/day sempre salvati,
+  // "remember" controlla SOLO la persistenza dei grafici selezionati
   const prefs = {
-    charts: selectedCharts,
     start: start.value,
     end: end.value,
     mode: mode.value,
     startDate: document.getElementById('startDate').value,
     viewMode: document.getElementById('viewMode').value,
-    day: document.getElementById('day').value
+    day: document.getElementById('day').value,
+    remember: remember.checked
   };
+
+  if(remember.checked){
+    prefs.charts = [...document.querySelectorAll('input[data-id]:checked')]
+      .map(c => c.dataset.id);
+  }
 
   localStorage.setItem(prefKey, JSON.stringify(prefs));
 }
@@ -967,10 +964,11 @@ function migrateLegacyPreferences(){
   const legacy = localStorage.getItem('aqi_dashboard_preferences');
   if(!legacy) return;
 
-  try{
+ try{
     const prefs = JSON.parse(legacy);
     prefs.viewMode = prefs.viewMode || localStorage.getItem('aqi_viewMode') || 'live';
     prefs.day = prefs.day || localStorage.getItem('aqi_day') || '';
+    prefs.remember = true; // il vecchio formato esisteva solo con salvataggio attivo
     localStorage.setItem(newKey0, JSON.stringify(prefs));
   }catch(e){
     console.error('Migrazione preferenze fallita:', e);
@@ -987,7 +985,7 @@ function applyStationPreferences(idx){
 
   if(saved){
     const prefs = JSON.parse(saved);
-    remember.checked = true;
+    remember.checked = !!prefs.remember;
 
     if(prefs.start) start.value = prefs.start;
     if(prefs.end) end.value = prefs.end;
@@ -996,10 +994,14 @@ function applyStationPreferences(idx){
     if(prefs.viewMode) document.getElementById('viewMode').value = prefs.viewMode;
     document.getElementById('day').value = prefs.day || '';
 
-    if(Array.isArray(prefs.charts)){
+    // grafici: ripristinati solo se "remember" era attivo E l'array è presente,
+    // altrimenti default (tutti attivi)
+    if(prefs.remember && Array.isArray(prefs.charts)){
       document.querySelectorAll('input[data-id]').forEach(cb => {
         cb.checked = prefs.charts.includes(cb.dataset.id);
       });
+    } else {
+      document.querySelectorAll('input[data-id]').forEach(cb => { cb.checked = true; });
     }
   } else {
     // nessuna preferenza per questa centralina: default di fabbrica
