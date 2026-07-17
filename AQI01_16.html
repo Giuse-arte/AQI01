@@ -2720,17 +2720,15 @@ if(isExtended){
   const agg25 = aggFn(feeds, 'field6');
   const agg10 = aggFn(feeds, 'field7');
 
-  // primo timestamp disponibile nei feed
-  const firstFeedTs = new Date(feeds[0].created_at).getTime();
+  // soglia: nessun punto prima che siano trascorse 24h dalla "Data Inizio"
+  const availableFrom = tStart.getTime() + 24*60*60*1000;
 
   // per ogni punto aggregato calcola media mobile 24h sui dati grezzi
-  // solo se sono passate almeno 24h dal primo dato disponibile
+  // solo se sono trascorse almeno 24h dalla Data Inizio selezionata
   agg25.forEach(p => {
-    const cutoff = p.x.getTime() - 24*60*60*1000;
-    
-    // salta se non ci sono ancora 24h di dati
-    if(cutoff < firstFeedTs) return;
+    if(p.x.getTime() < availableFrom) return;
 
+    const cutoff = p.x.getTime() - 24*60*60*1000;
     const window = feeds.filter(f => {
       const t = new Date(f.created_at).getTime();
       return t >= cutoff && t <= p.x.getTime() && !isNaN(Number(f.field6));
@@ -2743,11 +2741,9 @@ if(isExtended){
   });
 
   agg10.forEach(p => {
+    if(p.x.getTime() < availableFrom) return;
+
     const cutoff = p.x.getTime() - 24*60*60*1000;
-
-    // salta se non ci sono ancora 24h di dati
-    if(cutoff < firstFeedTs) return;
-
     const window = feeds.filter(f => {
       const t = new Date(f.created_at).getTime();
       return t >= cutoff && t <= p.x.getTime() && !isNaN(Number(f.field7));
@@ -2759,10 +2755,13 @@ if(isExtended){
   });
 
 } else {
+  // stessa soglia anche in live/day: nessun punto prima di 24h da Data Inizio
+  const availableFrom = tStart.getTime() + 24*60*60*1000;
   const fullPM25 = avgSeries('field6');
   const fullPM10 = avgSeries('field7');
   feeds.forEach((f, i) => {
     const d = new Date(f.created_at);
+    if(d.getTime() < availableFrom) return;
     if(d >= tStart && d <= tEnd){
       labels.push(d);
       pm25.push(fullPM25[i]);
@@ -2771,19 +2770,19 @@ if(isExtended){
   });
 }
 
-    // 🔥 CONTROLLO ANTI-GRAFICO VUOTO
+    // se non ci sono punti (es. prime 24h dopo "Data Inizio"), il grafico viene
+    // comunque creato ma resta vuoto: attesa dati per la media mobile 24h, non un errore
     if (!labels.length) {
-      console.warn("COMBO: nessun dato nel range");
-      return;
+      console.warn("COMBO: nessun punto disponibile (probabile attesa 24h da Data Inizio) — grafico vuoto");
     }
 
-   // avvia solo se ci sono almeno 2 acquisizioni
+   // avvia solo se il sensore ha fornito almeno 2 acquisizioni (dato realmente assente)
     if(feeds.length < 2){
       console.warn("COMBO: nessun dato disponibile");
       return;
     }
     console.log("COMBO: feeds ok:", feeds.length, "labels:", labels.length);
-
+      
       // =========================
       // CREA GRAFICO
       // =========================
