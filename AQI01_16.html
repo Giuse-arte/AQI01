@@ -1012,7 +1012,7 @@ function applyStationPreferences(idx){
     document.querySelectorAll('input[data-id]').forEach(cb => { cb.checked = true; });
   }
 
-  // visibilità campo giorno + fallback data odierna in modalità "day"
+// visibilità campo giorno + fallback data odierna in modalità "day"
   const vm = document.getElementById('viewMode').value;
   if(vm === "day"){
     day.style.display = "inline-block";
@@ -1024,6 +1024,66 @@ function applyStationPreferences(idx){
     day.style.display = "none";
     dayLabel.style.display = "none";
   }
+
+  // sincronizza il tracker con lo stato appena ripristinato/di default
+  _lastFieldValues.startDate = document.getElementById('startDate').value;
+  _lastFieldValues.viewMode = document.getElementById('viewMode').value;
+  _lastFieldValues.day = document.getElementById('day').value;
+}
+
+// Ultimo valore noto dei campi soggetti a reset con conferma
+const _lastFieldValues = { startDate: '', viewMode: 'live', day: '' };
+
+// Reset totale preferenze centralina corrente, mantiene il nuovo valore del campo che ha scatenato il reset
+function resetStationPreferencesKeepField(fieldName, newValue){
+  const idx = Number(stationSelect.value) || 0;
+  localStorage.removeItem(getStationPrefKey(idx));
+
+  remember.checked = false;
+  document.querySelectorAll('input[data-id]').forEach(cb => { cb.checked = true; });
+  mode.value = 'EEA';
+  const oggi = new Date().toISOString().slice(0, 10);
+  start.value = oggi;
+  end.value = oggi;
+  document.getElementById('startDate').value = '';
+  document.getElementById('viewMode').value = 'live';
+  document.getElementById('day').value = '';
+
+  // riapplica il valore appena scelto dall'utente
+  if(fieldName === 'startDate') document.getElementById('startDate').value = newValue;
+  if(fieldName === 'viewMode') document.getElementById('viewMode').value = newValue;
+  if(fieldName === 'day') document.getElementById('day').value = newValue;
+
+  _lastFieldValues.startDate = document.getElementById('startDate').value;
+  _lastFieldValues.viewMode = document.getElementById('viewMode').value;
+  _lastFieldValues.day = document.getElementById('day').value;
+}
+
+// Handler comune: conferma bloccante, poi reset totale oppure revert al valore precedente
+function handleResettableFieldChange(fieldName, el){
+  const newValue = el.value;
+  const ok = confirm("Questa modifica azzera tutte le preferenze salvate per la centralina corrente (grafici, filtri, modalita'). Continuare?");
+
+  if(!ok){
+    el.value = _lastFieldValues[fieldName];
+    return;
+  }
+
+  resetStationPreferencesKeepField(fieldName, newValue);
+
+  const vm = document.getElementById('viewMode').value;
+  if(vm === "day"){
+    day.style.display = "inline-block";
+    dayLabel.style.display = "inline-block";
+    if(!document.getElementById('day').value){
+      document.getElementById('day').value = new Date().toISOString().slice(0,10);
+    }
+  } else {
+    day.style.display = "none";
+    dayLabel.style.display = "none";
+  }
+
+  refreshDashboard();
 }
 
 function getTimeRange(){
@@ -2902,7 +2962,7 @@ document.querySelectorAll('input[data-id]').forEach(cb=>{
 // date inizio / fine
 start.addEventListener('change', savePreferences);
 end.addEventListener('change', savePreferences);
-document.getElementById('startDate').addEventListener('change', savePreferences);
+document.getElementById('startDate').addEventListener('change', (e) => handleResettableFieldChange('startDate', e.target));
 
 // standard AQI
 mode.addEventListener('change', savePreferences);
@@ -2987,24 +3047,8 @@ function refreshDashboard(){
 
 mode.addEventListener('change', refreshDashboard);
 
-document.getElementById('day').addEventListener('change', refreshDashboard);
-document.getElementById('startDate').addEventListener('change', refreshDashboard);
-document.getElementById('viewMode').addEventListener('change', ()=>{
-  const vm = document.getElementById('viewMode').value;
-  if(vm === "day"){
-    day.style.display = "inline-block";
-    dayLabel.style.display = "inline-block";
-  } else {
-    day.style.display = "none";
-    dayLabel.style.display = "none";
-  }
-  savePreferences();
-  refreshDashboard();
-});
-
-document.getElementById('day').addEventListener('change', ()=>{
-  savePreferences();
-});
+document.getElementById('viewMode').addEventListener('change', (e) => handleResettableFieldChange('viewMode', e.target));
+document.getElementById('day').addEventListener('change', (e) => handleResettableFieldChange('day', e.target));
  
 /* =========================
    INIZIALIZZAZIONE
