@@ -627,6 +627,7 @@
           <input type="checkbox" id="remember"> Ricorda preferenze
         </label>
         <small style="color:#6b7280;">Le preferenze sono salvate nel tuo browser se attivi "Ricorda preferenze".</small>
+        <button id="applyChartsBtn" style="background:#16a34a;color:#fff;border:none;padding:8px 10px;border-radius:8px;cursor:pointer;font-weight:700;margin-top:4px;">Applica</button>
       </div>
     </div>
   </div>
@@ -1874,6 +1875,7 @@ function selectAll(v){
     .forEach(c => c.checked = v);
 
   renderCharts();
+  savePreferences();
 }
 
 /* =========================
@@ -2954,11 +2956,6 @@ setTimeout(reorderCharts, 100);
    EVENTI → SALVA PREFERENZE
    ========================= */
 
-// checkbox singoli grafici
-document.querySelectorAll('input[data-id]').forEach(cb=>{
-  cb.addEventListener('change', savePreferences);
-});
-
 // date inizio / fine
 start.addEventListener('change', savePreferences);
 end.addEventListener('change', savePreferences);
@@ -3033,6 +3030,14 @@ document.addEventListener('click', ()=>{
 
 panelDropdown.addEventListener('click', (e)=>{
   e.stopPropagation();
+});
+
+// applica le selezioni dei grafici e chiude il pannello
+document.getElementById('applyChartsBtn').addEventListener('click', (e)=>{
+  e.stopPropagation();
+  renderCharts();
+  savePreferences();
+  panelDropdown.style.display = 'none';
 });
 
 /* Aggiornamento automatico al cambio di qualsiasi parametro */
