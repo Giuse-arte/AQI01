@@ -3047,8 +3047,26 @@ function refreshDashboard(){
 
 mode.addEventListener('change', refreshDashboard);
 
-document.getElementById('viewMode').addEventListener('change', (e) => handleResettableFieldChange('viewMode', e.target));
-document.getElementById('day').addEventListener('change', (e) => handleResettableFieldChange('day', e.target));
+document.getElementById('viewMode').addEventListener('change', ()=>{
+  const vm = document.getElementById('viewMode').value;
+  if(vm === "day"){
+    day.style.display = "inline-block";
+    dayLabel.style.display = "inline-block";
+    if(!document.getElementById('day').value){
+      document.getElementById('day').value = new Date().toISOString().slice(0,10);
+    }
+  } else {
+    day.style.display = "none";
+    dayLabel.style.display = "none";
+  }
+  savePreferences();
+  refreshDashboard();
+});
+
+document.getElementById('day').addEventListener('change', ()=>{
+  savePreferences();
+  refreshDashboard();
+});
  
 /* =========================
    INIZIALIZZAZIONE
