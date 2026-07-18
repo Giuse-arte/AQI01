@@ -48,8 +48,19 @@
       color:#111827
     }
 
-    .line-red{ color:#dc2626; font-weight:600; }
-    .line-orange{ color:#f97316; font-weight:600; }
+    /* LED indicatore tipo di geolocalizzazione */
+.geo-led{
+  display:inline-block;
+  width:10px;
+  height:10px;
+  border-radius:50%;
+  margin-right:6px;
+  vertical-align:middle;
+  box-shadow:0 0 4px rgba(0,0,0,.3);
+}
+.geo-led.configurata{ background:#16a34a; } /* verde */
+.geo-led.automatica{ background:#3b82f6; }  /* blu */
+.geo-led.non-disponibile{ background:#dc2626; } /* rosso */
 
     .kpi{
   position:relative;
@@ -553,8 +564,7 @@
   <div>
     <h1 id="mainTitle">Air Quality Index Device — AQI_01</h1>
     <!-- Qui viene aggiornato dinamicamente l'intervallo date -->
-    <p id="subtitle">Inizio rilevamento dati: — | Fine: —</p>
-    <p id="geoRssi">Geoloc.: — | RSSI: — (dBm)</p>
+    <p i<p id="geoRssi"><span id="geoLed" class="geo-led non-disponibile"></span>Geoloc.: — | RSSI: — (dBm)</p>d="geoRssi">Geoloc.: — | RSSI: — (dBm)</p>
   </div>
 
   <!-- Filtri temporali e standard AQI -->
@@ -809,7 +819,7 @@ const tooltipConfig = {
 
 const chartDataStore = {};
 let rawFeedsStore = [];
-let liveFeeds24h = []; // sempre ultime 24h reali per card KPI
+let livelet channelManualGeo = { lat: null, lon: null }; // posizione configurata manualmente in ThingSpeak (Channel Settings)Feeds24h = []; // sempre ultime 24h reali per card KPI
 
 Chart.register({
   id: 'hourGrid',
@@ -1178,8 +1188,15 @@ const r = await fetch(
     if(!rLive.ok){
       console.error('KPI live fetch fallita, HTTP', rLive.status, 'canale', CHANNEL);
     }
-    const jLive = rLive.ok ? await rLive.json() : { feeds: [] };
+    const jLive = rLive.ok ? await rLive.json() : { feeds: [], channel: {} };
     const feedsLive = jLive.feeds || [];
+
+    // Posizione manuale da ThingSpeak Channel Settings (latitude/longitude), default "0.0" se non impostata
+    const chLat = parseFloat(jLive.channel?.latitude);
+    const chLon = parseFloat(jLive.channel?.longitude);
+    channelManualGeo = (!isNaN(chLat) && !isNaN(chLon) && (chLat !== 0 || chLon !== 0))
+      ? { lat: chLat, lon: chLon }
+      : { lat: null, lon: null };
     // sovrascrive sempre, anche se vuoto — evita dati stantii da centralina precedente
     liveFeeds24h = feedsLive;
 
@@ -1263,26 +1280,53 @@ function applyKPI(feeds){
   const geoRssiEl = document.getElementById('geoRssi');
   if(geoRssiEl){
     const f8 = lastRealFeed.field8;
+    let rssi = NaN;
     if(f8 !== undefined && f8 !== null && f8 !== ''){
-      const semiParts = String(f8).split(';');
-      const rssi = semiParts[0] !== undefined ? Number(semiParts[0]) : NaN;
+      rssi = Number(String(f8).split(';')[0]);
+    }
+    const rssiStr = isNaN(rssi) ? '—' : rssi.toFixed(0);
 
-      let lat = NaN, lon = NaN;
+    let geoStr = null, geoLabel = null;
+
+    if(channelManualGeo.lat !== null){
+      // Priorità 1: posizione configurata manualmente (ThingSpeak Channel Settings)
+      geoStr = channelManualGeo.lat.toFixed(6) + ',' + channelManualGeo.lon.toFixed(6);
+      geoLabel = 'Configurata';
+    } else if(f8 !== undefined && f8 !== null && f8 !== ''){
+      // Priorità 2: posizione automatica (field8) — presente solo se accuracy<500m (gestito dal firmware)
+      const semiParts = String(f8).split(';');
       if(semiParts[1]){
         const geoParts = semiParts[1].split(',');
-        lat = geoParts[0] !== undefined ? Number(geoParts[0]) : NaN;
-        lon = geoParts[1] !== undefined ? Number(geoParts[1]) : NaN;
+        const lat = Number(geoParts[0]);
+        const lon = Number(geoParts[1]);
+        if(!isNaN(lat) && !isNaN(lon)){
+          geoStr = lat.toFixed(6) + ',' + lon.toFixed(6);
+          geoLabel = 'Automatica';
+        }
       }
-
-      const rssiStr = isNaN(rssi) ? '—' : rssi.toFixed(0);
-      const geoStr = (isNaN(lat) || isNaN(lon))
-        ? 'N/D'
-        : (lat.toFixed(6) + ',' + lon.toFixed(6)); // formato pastable in Google Maps
-
-      geoRssiEl.textContent = 'GeoLocation: ' + geoStr + ' | RSSI: ' + rssiStr + ' (dBm)';
-    } else {
-      geoRssiEl.textContent = 'GeoLocation: N/D | RSSI: — (dBm)';
     }
+
+    if(!geoStr){
+      geoStr = '-';
+      geoLabel = 'Non disponibile';
+    }
+
+    // Mappa label → classe CSS del LED
+    const ledClassMap = {
+      'Configurata': 'configurata',
+      'Automatica': 'automatica',
+      'Non disponibile': 'non-disponibile'
+    };
+    const ledClass = ledClassMap[geoLabel] || 'non-disponibile';
+
+    const geoLedEl = document.getElementById('geoLed');
+    if(geoLedEl) geoLedEl.className = 'geo-led ' + ledClass;
+
+    geoRssiEl.textContent = ''; // pulisce prima di ricostruire con nodo LED
+    if(geoLedEl) geoRssiEl.appendChild(geoLedEl);
+    geoRssiEl.appendChild(document.createTextNode(
+      'GeoLocation (' + geoLabel + '): ' + geoStr + ' | RSSI: ' + rssiStr + ' (dBm)'
+    ));
   }
 
   // prime 4 card → sempre ultimo valore
