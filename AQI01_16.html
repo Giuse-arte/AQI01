@@ -564,7 +564,7 @@
   <div>
     <h1 id="mainTitle">Air Quality Index Device — AQI_01</h1>
     <!-- Qui viene aggiornato dinamicamente l'intervallo date -->
-    <p i<p id="geoRssi"><span id="geoLed" class="geo-led non-disponibile"></span>Geoloc.: — | RSSI: — (dBm)</p>d="geoRssi">Geoloc.: — | RSSI: — (dBm)</p>
+    <p i<p id="geoRssi"><span i<p id="geoRssi"><span id="geoLed" class="geo-led non-disponibile"></span>Geoloc.: — | RSSI: — (dBm)</p>d="geoLed" class="geo-led non-disponibile"></span>Geoloc.: — | RSSI: — (dBm)</p>d="geoRssi">Geoloc.: — | RSSI: — (dBm)</p>
   </div>
 
   <!-- Filtri temporali e standard AQI -->
@@ -819,8 +819,9 @@ const tooltipConfig = {
 
 const chartDataStore = {};
 let rawFeedsStore = [];
-let livelet channelManualGeo = { lat: null, lon: null }; // posizione configurata manualmente in ThingSpeak (Channel Settings)Feeds24h = []; // sempre ultime 24h reali per card KPI
-
+let liveFeeds24h = []; // sempre ultime 24h reali per card KPI
+let channelManualGeo = { lat: null, lon: null }; // posizione configurata manualmente in ThingSpeak (Channel Settings)
+  
 Chart.register({
   id: 'hourGrid',
   afterDraw(chart) {
