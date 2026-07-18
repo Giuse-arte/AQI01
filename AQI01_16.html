@@ -2201,11 +2201,13 @@ function xAxisConfig(){
 
   /* Aggiorna sottotitolo */
   const subtitle = document.getElementById('subtitle');
-    subtitle.textContent =
-      'Inizio rilevamento dati: ' +
-    tStart.toLocaleDateString('it-IT') +
-      ' | Fine: ' +
-    tEnd.toLocaleDateString('it-IT');
+    if (subtitle) {
+      subtitle.textContent =
+        'Inizio rilevamento dati: ' +
+      tStart.toLocaleDateString('it-IT') +
+        ' | Fine: ' +
+      tEnd.toLocaleDateString('it-IT');
+    }
 
   /* Metadati grafici */
   const meta = {
