@@ -2771,8 +2771,10 @@ if(isExtended){
   const agg25 = aggFn(feeds, 'field6');
   const agg10 = aggFn(feeds, 'field7');
 
-  // soglia: nessun punto prima che siano trascorse 24h dalla "Data Inizio"
-  const availableFrom = tStart.getTime() + 24*60*60*1000;
+  // soglia: nessun punto prima che siano trascorse 24h dal primo dato REALE disponibile
+  // (non dalla finestra selezionata — fix bug che azzerava sempre il grafico in Live/Giorno)
+  const firstRawTs = feeds.length ? new Date(feeds[0].created_at).getTime() : tStart.getTime();
+  const availableFrom = firstRawTs + 24*60*60*1000;
 
   // per ogni punto aggregato calcola media mobile 24h sui dati grezzi
   // solo se sono trascorse almeno 24h dalla Data Inizio selezionata
@@ -2806,8 +2808,9 @@ if(isExtended){
   });
 
 } else {
-  // stessa soglia anche in live/day: nessun punto prima di 24h da Data Inizio
-  const availableFrom = tStart.getTime() + 24*60*60*1000;
+  // stessa soglia anche in live/day: nessun punto prima di 24h dal primo dato REALE
+  const firstRawTs = feeds.length ? new Date(feeds[0].created_at).getTime() : tStart.getTime();
+  const availableFrom = firstRawTs + 24*60*60*1000;
   const fullPM25 = avgSeries('field6');
   const fullPM10 = avgSeries('field7');
   feeds.forEach((f, i) => {
