@@ -2171,10 +2171,12 @@ function xAxisConfig(){
     }
 
     // LIVE / GIORNO
+    const liveMin = viewMode === 'live' ? new Date(now.getTime() - 24*60*60*1000) : undefined;
+    const liveMax = viewMode === 'live' ? now : undefined;
     return {
       type:'time',
-      min: viewMode === 'day' ? new Date(document.getElementById('day').value + "T00:00:00") : undefined,
-      max: viewMode === 'day' ? new Date(document.getElementById('day').value + "T23:59:59") : undefined,
+      min: viewMode === 'day' ? new Date(document.getElementById('day').value + "T00:00:00") : liveMin,
+      max: viewMode === 'day' ? new Date(document.getElementById('day').value + "T23:59:59") : liveMax,
       time:{ unit:'hour', stepSize:1 },
       afterBuildTicks: function(axis){
         if(!axis.min || !axis.max) return;
