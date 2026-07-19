@@ -1194,6 +1194,10 @@ const r = await fetch(
     const jLive = rLive.ok ? await rLive.json() : { feeds: [], channel: {} };
     const feedsLive = jLive.feeds || [];
 
+    console.log('DEBUG channel object per canale', requestedChannel, ':', jLive.channel); // TEMPORANEO — rimuovere dopo verifica
+
+    // Scarta la risposta se nel frattempo l'utente ha cambiato centralina — evita contaminazione tra canali
+
     // Posizione manuale da ThingSpeak Channel Settings (latitude/longitude), default "0.0" se non impostata
     const chLat = parseFloat(jLive.channel?.latitude);
     const chLon = parseFloat(jLive.channel?.longitude);
