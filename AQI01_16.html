@@ -1989,30 +1989,21 @@ function aggregateDaily(feeds, field){
     const valid = feeds.filter(f => !isNaN(Number(f[field])));
     if(!valid.length) return [];
 
-    const points = [];
+    // raggruppa per ora di calendario — stessa logica di csvAggregateHourly, garantisce coerenza grafico/CSV
+    const map = {};
+    valid.forEach(f => {
+      const d = new Date(f.created_at);
+      const hourTs = Math.floor(d.getTime() / 3600000) * 3600000;
+      if(!map[hourTs]) map[hourTs] = [];
+      map[hourTs].push(Number(f[field]));
+    });
 
-    // accoppia 1a+2a, 3a+4a, 5a+6a ...
-    for(let i = 0; i < valid.length - 1; i += 2){
-      const tA = new Date(valid[i].created_at).getTime();
-      const tB = new Date(valid[i+1].created_at).getTime();
-      const vA = Number(valid[i][field]);
-      const vB = Number(valid[i+1][field]);
-      points.push({
-        x: new Date(Math.round((tA + tB) / 2)),
-        y: (vA + vB) / 2
-      });
-    }
-
-    // se numero dispari aggiunge l'ultimo da solo
-    if(valid.length % 2 !== 0){
-      const last = valid[valid.length - 1];
-      points.push({
-        x: new Date(last.created_at),
-        y: Number(last[field])
-      });
-    }
-
-    return points;
+    return Object.entries(map)
+      .sort((a,b) => a[0] - b[0]) // ordine crescente, coerente con l'uso originale nei grafici
+      .map(([hourTs, vals]) => ({
+        x: new Date(Number(hourTs)),
+        y: vals.reduce((s,v) => s+v, 0) / vals.length
+      }));
   }
 
 function xAxisConfig(){
