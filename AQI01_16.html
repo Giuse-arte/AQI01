@@ -1144,6 +1144,7 @@ function getTimeRange(){
   - Se qualcosa va storto → fallback su dati demo
 */
 async function loadKPIs(){
+  const requestedChannel = CHANNEL; // snapshot del canale al momento della richiesta
   try{
     const { start: tStart, end: tEnd } = getTimeRange();
 
