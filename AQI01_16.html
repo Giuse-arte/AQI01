@@ -1172,6 +1172,7 @@ const r = await fetch(
 
     /* Parsing JSON */
     const j = await r.json();
+    if(requestChannel !== CHANNEL) return; // centralina cambiata durante il fetch, risultato stale
 
     /* Applica i KPI reali */
    const feedsKpi = j.feeds || [];
@@ -1192,11 +1193,8 @@ const r = await fetch(
       console.error('KPI live fetch fallita, HTTP', rLive.status, 'canale', CHANNEL);
     }
     const jLive = rLive.ok ? await rLive.json() : { feeds: [], channel: {} };
+    if(requestChannel !== CHANNEL) return; // centralina cambiata durante il fetch, risultato stale
     const feedsLive = jLive.feeds || [];
-
-    console.log('DEBUG canale', requestedChannel, '→ latitude:', jLive.channel?.latitude, '| longitude:', jLive.channel?.longitude, '| show_location flag non esposto via API'); // TEMPORANEO — rimuovere dopo verifica
-
-    // Scarta la risposta se nel frattempo l'utente ha cambiato centralina — evita contaminazione tra canali
 
     // Posizione manuale da ThingSpeak Channel Settings (latitude/longitude), default "0.0" se non impostata
     const chLat = parseFloat(jLive.channel?.latitude);
