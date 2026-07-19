@@ -1194,7 +1194,7 @@ const r = await fetch(
     const jLive = rLive.ok ? await rLive.json() : { feeds: [], channel: {} };
     const feedsLive = jLive.feeds || [];
 
-    console.log('DEBUG channel object per canale', requestedChannel, ':', jLive.channel); // TEMPORANEO — rimuovere dopo verifica
+    console.log('DEBUG canale', requestedChannel, '→ latitude:', jLive.channel?.latitude, '| longitude:', jLive.channel?.longitude, '| show_location flag non esposto via API'); // TEMPORANEO — rimuovere dopo verifica
 
     // Scarta la risposta se nel frattempo l'utente ha cambiato centralina — evita contaminazione tra canali
 
